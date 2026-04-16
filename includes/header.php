@@ -31,7 +31,19 @@ require_once __DIR__ . '/bootstrap.php';
     <div class="nav-links">
         <a href="<?php echo BASE_URL; ?>/pages/browse.php">Browse</a>
         <?php if (isLoggedIn()): ?>
+            <?php 
+                $unreadCount = countUnreadNotifications($pdo, currentUserId());
+            ?>
             <a href="<?php echo BASE_URL; ?>/pages/inbox.php">Messages</a>
+            <a href="<?php echo BASE_URL; ?>/pages/my_orders.php">Orders</a>
+            <a href="<?php echo BASE_URL; ?>/pages/notifications.php">
+                Notifications
+                <?php if ($unreadCount > 0): ?>
+                    <span style="background: #ef4444; color: #fff; padding: 2px 6px; border-radius: 999px; font-size: 0.75rem; vertical-align: top; margin-left: 2px;">
+                        <?php echo $unreadCount; ?>
+                    </span>
+                <?php endif; ?>
+            </a>
             <a href="<?php echo BASE_URL; ?>/pages/profile.php">Profile</a>
             <a href="<?php echo BASE_URL; ?>/pages/logout.php">Logout</a>
         <?php else: ?>
