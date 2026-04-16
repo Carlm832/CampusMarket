@@ -1,0 +1,15 @@
+# XAMPP / Local Server
+/config/db.php
+/config/private_keys.php
+
+# Operating System
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+
+# Temporary / Uploads
+public/uploads/*
+!public/uploads/.gitkeep

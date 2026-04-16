@@ -1,0 +1,16 @@
+# Deny direct directory listing
+Options -Indexes
+
+# Block access to sensitive files
+<FilesMatch "\.(sql|log|env|json|md)$">
+    Order deny,allow
+    Deny from all
+</FilesMatch>
+
+# Block access to config and includes from browser
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^config/ - [F,L]
+    RewriteRule ^includes/ - [F,L]
+    RewriteRule ^database/ - [F,L]
+</IfModule>
