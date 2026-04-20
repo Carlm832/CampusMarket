@@ -13,6 +13,20 @@ function sanitize(string $input): string {
 }
 
 /**
+ * Sanitize user input (from local work)
+ */
+function sanitizeInput($input) {
+    return htmlspecialchars(trim($input), ENT_QUOTES, 'UTF-8');
+}
+
+/**
+ * Validate email
+ */
+function validateEmail($email) {
+    return filter_var($email, FILTER_VALIDATE_EMAIL);
+}
+
+/**
  * Redirect to a URL
  */
 function redirect(string $url): void {
@@ -86,10 +100,10 @@ function requireAdmin(): void {
 // ─── Formatting ──────────────────────────────────────────
 
 /**
- * Format a price in KES currency
+ * Format a price in Turkish Lira (Local work)
  */
-function formatPrice(float $amount): string {
-    return APP_CURRENCY . ' ' . number_format($amount, 2);
+function formatPrice($amount): string {
+    return number_format((float)$amount) . ' TL';
 }
 
 /**
