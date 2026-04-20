@@ -1,125 +1,133 @@
 <?php
-// pages/profile.php — Member 2
-// View a user profile: avatar, username, join date, average rating.
-// Defaults to the logged-in user. ?id=N shows another user.
+// pages/profile.php
+require_once __DIR__ . '/../config/constants.php';
+require_once __DIR__ . '/../includes/header.php';
 
-require_once '../config/constants.php';
-require_once '../includes/bootstrap.php';
-require_once '../includes/functions_member2.php';
+// Decide which profile to show
+$viewId = isset($_GET['id']) ? (int)$_GET['id'] : (int)(currentUserId() ?? 0);
 
-// Decide which profile to show.
-$viewId = isset($_GET['id']) ? (int) $_GET['id'] : (int) (currentUserId() ?? 0);
-
-// If nobody specified and not logged in, require login.
 if ($viewId <= 0) {
     requireLogin();
-    $viewId = (int) currentUserId();
+    $viewId = (int)currentUserId();
 }
 
-$stmt = $pdo->prepare('
-    SELECT id, username, email, role, phone, avatar, created_at
-    FROM users
-    WHERE id = :id
-    LIMIT 1
-');
+// Fetch User
+$stmt = $pdo->prepare("SELECT id, username, email, role, phone, avatar, created_at FROM users WHERE id = :id");
 $stmt->execute([':id' => $viewId]);
 $user = $stmt->fetch();
 
-$pageTitle = $user ? $user['username'] . "'s profile" : 'User not found';
-require_once '../includes/header.php';
+if (!$user) {
+    echo '<div class="container mt-12 text-center"><h2>User not found</h2><a href="index.php" class="btn btn-primary mt-4">Back Home</a></div>';
+    include __DIR__ . '/../includes/footer.php';
+    exit;
+}
+
+$isSelf = isLoggedIn() && (int)currentUserId() === (int)$user['id'];
+$rating = getSellerRating($pdo, (int)$user['id']);
+$pageTitle = sanitize($user['username']) . "'s Profile";
 ?>
 
-<?php if (!$user): ?>
-  <div class="alert-error" style="background:#fef3c7;color:#92400e;border:1px solid #fde68a;padding:1rem;border-radius:0.5rem;">
-    No user with id <?php echo (int) $viewId; ?>.
-  </div>
-<?php else:
-    $isSelf  = isLoggedIn() && (int) currentUserId() === (int) $user['id'];
-    $rating  = sellerRatingSummary($pdo, (int) $user['id']);
-?>
-
-<style>
-  .profile-card { background:#fff; border:1px solid #e2e8f0; border-radius:0.75rem; padding:2rem; margin-bottom:1.5rem; }
-  .profile-head { display:flex; gap:1.5rem; align-items:center; flex-wrap:wrap; }
-  .avatar-lg    { width:120px; height:120px; object-fit:cover; border-radius:50%; border:3px solid #fff; box-shadow:0 2px 6px rgba(0,0,0,.08); background:#f1f5f9; }
-  .admin-badge  { background:#111827; color:#fff; font-size:0.75rem; padding:0.15rem 0.55rem; border-radius:9999px; margin-left:0.5rem; letter-spacing:0.04em; }
-  .stars        { color:#f59e0b; font-size:1.1rem; letter-spacing:0.08em; }
-  .dim          { color:#64748b; }
-  .meta dt      { color:#64748b; font-weight:400; }
-  .meta dd      { margin:0 0 0.75rem 0; }
-  .meta dl      { display:grid; grid-template-columns: 8rem 1fr; gap:0.5rem 1rem; margin:0; }
-  .profile-actions { margin-top:1rem; display:flex; gap:0.5rem; flex-wrap:wrap; }
-  .btn-outline  { background:#fff; color:var(--primary); border:1px solid var(--primary); }
-</style>
-
-<div class="profile-card">
-  <div class="profile-head">
-    <img class="avatar-lg"
-         src="<?php echo sanitize(avatarUrl($user['avatar'])); ?>"
-         alt="<?php echo sanitize($user['username']); ?>'s avatar">
-
-    <div style="flex:1; min-width:260px;">
-      <h1 style="margin:0 0 0.25rem 0;">
-        <?php echo sanitize($user['username']); ?>
-        <?php if ($user['role'] === 'admin'): ?>
-          <span class="admin-badge">ADMIN</span>
-        <?php endif; ?>
-      </h1>
-
-      <p class="dim" style="margin:0 0 0.75rem 0;">
-        Joined <?php echo sanitize(formatJoinDate($user['created_at'])); ?>
-      </p>
-
-      <div>
-        <?php if ($rating['count'] > 0): ?>
-          <span class="stars" aria-label="<?php echo number_format($rating['avg'], 1); ?> out of 5">
-            <?php echo renderStars($rating['avg']); ?>
-          </span>
-          <strong style="margin-left:0.4rem;"><?php echo number_format($rating['avg'], 1); ?></strong>
-          <span class="dim" style="font-size:0.9rem;">
-            (<?php echo (int) $rating['count']; ?>
-            rating<?php echo $rating['count'] === 1 ? '' : 's'; ?>)
-          </span>
-        <?php else: ?>
-          <span class="dim">No ratings yet</span>
-        <?php endif; ?>
-      </div>
-
-      <?php if ($isSelf): ?>
-        <div class="profile-actions">
-          <a href="<?php echo BASE_URL; ?>/pages/edit_profile.php" class="btn btn-outline">Edit profile</a>
-          <a href="<?php echo BASE_URL; ?>/pages/logout.php" class="btn btn-outline">Log out</a>
+<div class="container mt-12 mb-20">
+    <!-- Profile Header -->
+    <div class="card p-8 mb-8" style="background: linear-gradient(rgba(255,255,255,0.7), rgba(255,255,255,0.9)); backdrop-filter: blur(20px);">
+        <div class="flex items-center gap-8 flex-wrap">
+            <div class="relative">
+                <img src="<?php echo avatarUrl($user['avatar']); ?>" alt="Avatar" class="shadow-xl" style="width: 140px; height: 140px; border-radius: var(--radius-full); object-fit: cover; border: 4px solid white;">
+                <?php if ($user['role'] === 'admin'): ?>
+                    <span class="absolute bottom-0 right-0 badge badge-primary py-1 px-3 shadow-md">ADMIN</span>
+                <?php endif; ?>
+            </div>
+            
+            <div class="flex-grow">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h1 class="mb-1" style="font-size: 2.5rem;"><?php echo sanitize($user['username']); ?></h1>
+                        <p class="text-muted mb-4">Member since <?php echo formatJoinDate($user['created_at']); ?></p>
+                        
+                        <div class="flex items-center gap-2">
+                            <?php if ($rating['count'] > 0): ?>
+                                <span style="color: #f59e0b; font-size: 1.25rem;">
+                                    <?php echo renderStars($rating['avg']); ?>
+                                </span>
+                                <span class="font-bold"><?php echo $rating['avg']; ?></span>
+                                <span class="text-muted small">(<?php echo $rating['count']; ?> reviews)</span>
+                            <?php else: ?>
+                                <span class="text-muted small">No reviews yet</span>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                    
+                    <?php if ($isSelf): ?>
+                        <div class="flex gap-2">
+                            <a href="edit_profile.php" class="btn btn-secondary btn-sm">Edit Profile</a>
+                            <a href="logout.php" class="btn btn-danger btn-sm">Logout</a>
+                        </div>
+                    <?php else: ?>
+                        <a href="messages.php?to=<?php echo $user['id']; ?>" class="btn btn-primary px-6">Message</a>
+                    <?php endif; ?>
+                </div>
+            </div>
         </div>
-      <?php endif; ?>
     </div>
-  </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Sidebar Info -->
+        <div class="lg:col-span-1">
+            <div class="card p-6 h-full">
+                <h3 class="mb-6">About Seller</h3>
+                <div class="grid gap-4">
+                    <div>
+                        <p class="text-muted small uppercase font-bold mb-1">Email</p>
+                        <p><?php echo $isSelf || isAdmin() ? sanitize($user['email']) : '••••••••@••••.com'; ?></p>
+                    </div>
+                    <?php if ($user['phone']): ?>
+                    <div>
+                        <p class="text-muted small uppercase font-bold mb-1">Phone</p>
+                        <p><?php echo sanitize($user['phone']); ?></p>
+                    </div>
+                    <?php endif; ?>
+                    <div>
+                        <p class="text-muted small uppercase font-bold mb-1">Verified</p>
+                        <p class="text-success flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+                            University Email Student
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Listings -->
+        <div class="lg:col-span-2">
+            <div class="card p-6 h-full">
+                <h3 class="mb-6">Active Listings</h3>
+                <?php
+                $stmt = $pdo->prepare("SELECT p.*, c.name as category_name, i.image_path FROM products p JOIN categories c ON p.category_id = c.id LEFT JOIN product_images i ON p.id = i.product_id AND i.is_primary = 1 WHERE p.user_id = :uid AND p.status = 'active' ORDER BY p.created_at DESC");
+                $stmt->execute([':uid' => $viewId]);
+                $userProducts = $stmt->fetchAll();
+                ?>
+
+                <?php if (empty($userProducts)): ?>
+                    <div class="text-center py-12">
+                        <p class="text-muted">No active listings at the moment.</p>
+                    </div>
+                <?php else: ?>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <?php foreach ($userProducts as $prod): ?>
+                            <a href="product.php?id=<?php echo $prod['id']; ?>" class="flex gap-4 p-3 border rounded-lg hover:bg-gray-50 transition-colors">
+                                <img src="<?php echo $prod['image_path'] ? BASE_URL.'/public/'.$prod['image_path'] : '../public/images/placeholder.png'; ?>" style="width: 80px; height: 80px; object-fit: cover; border-radius: var(--radius-sm);">
+                                <div class="flex-grow">
+                                    <h4 class="mb-1" style="font-size: 0.95rem;"><?php echo sanitize($prod['title']); ?></h4>
+                                    <p class="text-primary font-bold mb-1"><?php echo formatPrice($prod['price']); ?></p>
+                                    <span class="badge badge-secondary py-0 px-2" style="font-size: 0.75rem;"><?php echo sanitize($prod['category_name']); ?></span>
+                                </div>
+                            </a>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
 </div>
 
-<?php if ($isSelf): ?>
-  <!-- Visible only to the account owner. -->
-  <div class="profile-card">
-    <h2 style="font-size:1rem; text-transform:uppercase; letter-spacing:0.06em; color:#64748b; margin-top:0;">
-      Account details
-    </h2>
-    <div class="meta">
-      <dl>
-        <dt>Email</dt>
-        <dd><?php echo sanitize($user['email']); ?></dd>
-
-        <dt>Phone</dt>
-        <dd>
-          <?php echo $user['phone']
-              ? sanitize($user['phone'])
-              : '<span class="dim">—</span>'; ?>
-        </dd>
-
-        <dt>Member since</dt>
-        <dd><?php echo sanitize(date('F j, Y', strtotime($user['created_at']))); ?></dd>
-      </dl>
-    </div>
-  </div>
-<?php endif; ?>
-
-<?php endif; // $user exists ?>
-
-<?php require_once '../includes/footer.php'; ?>
+<?php require_once __DIR__ . '/../includes/footer.php'; ?>
