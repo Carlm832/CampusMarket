@@ -1,29 +1,26 @@
 <?php
-// Database configuration
-$servername = "localhost";
-$username = "root";
-$password = "";
-$dbname = "campusmarket";
+// config/db.php
+// Central Database Connection using PDO
 
-// Create connection (without database first)
-$conn = new mysqli($servername, $username, $password);
+$host = 'localhost';
+$db   = 'campusmarket';
+$user = 'root';
+$pass = '';
+$charset = 'utf8mb4';
 
-// Check connection
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
+$dsn = "mysql:host=$host;dbname=$db;charset=$charset";
+$options = [
+    PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+    PDO::ATTR_EMULATE_PREPARES   => false,
+];
+
+try {
+     $pdo = new PDO($dsn, $user, $pass, $options);
+} catch (\PDOException $e) {
+     // If the database doesn't exist, we might want to catch and handle or just fail
+     die("Database connection failed: " . $e->getMessage());
 }
 
-// Create database if it doesn't exist
-$sql = "CREATE DATABASE IF NOT EXISTS $dbname";
-if (!$conn->query($sql)) {
-    die("Error creating database: " . $conn->error);
-}
-
-// Select the database
-if (!$conn->select_db($dbname)) {
-    die("Error selecting database: " . $conn->error);
-}
-
-// Set charset
-$conn->set_charset("utf8");
-// $conn is available if you add SQL-backed features later.
+// Global accessor for the database
+return $pdo;
