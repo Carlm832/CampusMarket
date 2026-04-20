@@ -1,29 +1,25 @@
 <?php
 // Database configuration
-$servername = "localhost";
-$username = "root";
-$password = "";
+$host = "localhost";
+$user = "root";
+$pass = "";
 $dbname = "campusmarket";
 
-// Create connection (without database first)
-$conn = new mysqli($servername, $username, $password);
+try {
+    // 1. Create connection without database first to ensure it exists
+    $pdo = new PDO("mysql:host=$host", $user, $pass);
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    
+    // 2. Create database if it doesn't exist
+    $pdo->exec("CREATE DATABASE IF NOT EXISTS `$dbname` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+    
+    // 3. Connect to the actual database
+    $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $user, $pass);
+    
+    // Set default fetch mode to associative array
+    $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-// Check connection
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
+} catch (PDOException $e) {
+    die("Database connection failed: " . $e->getMessage());
 }
-
-// Create database if it doesn't exist
-$sql = "CREATE DATABASE IF NOT EXISTS $dbname";
-if (!$conn->query($sql)) {
-    die("Error creating database: " . $conn->error);
-}
-
-// Select the database
-if (!$conn->select_db($dbname)) {
-    die("Error selecting database: " . $conn->error);
-}
-
-// Set charset
-$conn->set_charset("utf8");
-// $conn is available if you add SQL-backed features later.
