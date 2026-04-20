@@ -47,9 +47,7 @@ require_once __DIR__ . '/../includes/header.php';
     <?php else: ?>
         <ul style="list-style: none; padding: 0; margin: 0;">
             <?php foreach ($notifications as $n): ?>
-                <?php
-                    // Determine link context based on type
-                <div class="card p-5 flex gap-5 items-start hover:bg-gray-50 transition-colors border-l-4 <?php echo $n['type'] === 'order' ? 'border-primary' : 'border-secondary'; ?>">
+                <div class="card p-5 flex gap-5 items-start hover:bg-gray-50 transition-colors border-l-4 <?php echo $n['type'] === 'order' ? 'border-primary' : 'border-secondary'; ?>" style="margin-bottom: 1rem;">
                     <div class="p-3 rounded-xl bg-white shadow-sm">
                         <?php echo $n['type'] === 'order' ? '📦' : '✨'; ?>
                     </div>

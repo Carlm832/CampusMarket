@@ -6,11 +6,11 @@ USE campusmarket;
 -- ─── Admin & Demo Users ───────────────────────────────────
 -- All passwords are: Password@123  (bcrypt hashed)
 INSERT INTO users (username, email, password_hash, role, phone) VALUES
-('admin',       'admin@campusmarket.com',   '$2y$12$eEagliqPqCkFRGfkKPMJkuAFDXPrCVuq3XRDIw6kqvJ7kJVUbqNuu', 'admin', NULL),
-('alice_sells',  'alice@student.edu',        '$2y$12$eEagliqPqCkFRGfkKPMJkuAFDXPrCVuq3XRDIw6kqvJ7kJVUbqNuu', 'user',  '0712345001'),
-('bob_buys',     'bob@student.edu',          '$2y$12$eEagliqPqCkFRGfkKPMJkuAFDXPrCVuq3XRDIw6kqvJ7kJVUbqNuu', 'user',  '0712345002'),
-('carol_uni',    'carol@student.edu',        '$2y$12$eEagliqPqCkFRGfkKPMJkuAFDXPrCVuq3XRDIw6kqvJ7kJVUbqNuu', 'user',  '0712345003'),
-('dave_campus',  'dave@student.edu',         '$2y$12$eEagliqPqCkFRGfkKPMJkuAFDXPrCVuq3XRDIw6kqvJ7kJVUbqNuu', 'user',  '0712345004');
+('admin',       'admin@campusmarket.com',   '$2y$10$i7/TFw9XGl/D2mKRKtqc3upAdpeX5tZTtC6.fVMcmRAu7qorHkqs2', 'admin', NULL),
+('alice_sells',  'alice@student.edu',        '$2y$10$i7/TFw9XGl/D2mKRKtqc3upAdpeX5tZTtC6.fVMcmRAu7qorHkqs2', 'user',  '0712345001'),
+('bob_buys',     'bob@student.edu',          '$2y$10$i7/TFw9XGl/D2mKRKtqc3upAdpeX5tZTtC6.fVMcmRAu7qorHkqs2', 'user',  '0712345002'),
+('carol_uni',    'carol@student.edu',        '$2y$10$i7/TFw9XGl/D2mKRKtqc3upAdpeX5tZTtC6.fVMcmRAu7qorHkqs2', 'user',  '0712345003'),
+('dave_campus',  'dave@student.edu',         '$2y$10$i7/TFw9XGl/D2mKRKtqc3upAdpeX5tZTtC6.fVMcmRAu7qorHkqs2', 'user',  '0712345004');
 
 -- ─── Categories ───────────────────────────────────────────
 INSERT INTO categories (name, slug) VALUES
