@@ -138,27 +138,42 @@ function conditionBadge(string $condition): array {
 // ─── File Upload ─────────────────────────────────────────
 
 /**
- * Upload an image file and return the saved path (relative to public/uploads/)
- * Returns false on failure.
+ * Professional Image Upload Handler
+ * Returns ['success' => bool, 'path' => string]
  */
-function uploadImage(array $file, string $subfolder = 'products'): string|false {
-    if ($file['error'] !== UPLOAD_ERR_OK) return false;
-    if ($file['size']  > MAX_FILE_SIZE)   return false;
-    if (!in_array($file['type'], ALLOWED_TYPES)) return false;
-
-    $ext       = pathinfo($file['name'], PATHINFO_EXTENSION);
-    $filename  = uniqid('img_', true) . '.' . strtolower($ext);
-    $targetDir = UPLOAD_PATH . $subfolder . '/';
-    $targetPath = $targetDir . $filename;
-
-    if (!is_dir($targetDir)) {
-        mkdir($targetDir, 0755, true);
+function handleUpload(array $file, string $subfolder = 'products/'): array {
+    if ($file['error'] !== UPLOAD_ERR_OK) {
+        return ['success' => false, 'error' => 'Upload error code: ' . $file['error']];
     }
 
-    if (move_uploaded_file($file['tmp_name'], $targetPath)) {
-        return 'uploads/' . $subfolder . '/' . $filename;
+    // Basic Validation
+    $max_size = 5 * 1024 * 1024; // 5MB
+    if ($file['size'] > $max_size) {
+        return ['success' => false, 'error' => 'File too large'];
     }
-    return false;
+
+    $allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    if (!in_array($file['type'], $allowed)) {
+        return ['success' => false, 'error' => 'Invalid file type'];
+    }
+
+    // Path setup
+    $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
+    $filename = uniqid('img_', true) . '.' . $ext;
+    $relPath = 'uploads/' . ltrim($subfolder, '/') . $filename;
+    $absPath = __DIR__ . '/../public/' . $relPath;
+
+    // Create directory
+    $dir = dirname($absPath);
+    if (!is_dir($dir)) {
+        mkdir($dir, 0755, true);
+    }
+
+    if (move_uploaded_file($file['tmp_name'], $absPath)) {
+        return ['success' => true, 'path' => $relPath];
+    }
+
+    return ['success' => false, 'error' => 'Failed to move file'];
 }
 
 // ─── Pagination ──────────────────────────────────────────
