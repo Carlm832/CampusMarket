@@ -103,7 +103,7 @@ function requireAdmin(): void {
  * Format a price in Turkish Lira (Local work)
  */
 function formatPrice($amount): string {
-    return number_format((float)$amount) . ' TL';
+    return number_format((float)$amount) . ' ' . APP_CURRENCY;
 }
 
 /**
