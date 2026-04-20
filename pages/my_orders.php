@@ -1,7 +1,6 @@
 <?php
 // pages/my_orders.php
-require_once __DIR__ . '/../config/constants.php';
-require_once __DIR__ . '/../includes/header.php';
+require_once __DIR__ . '/../includes/bootstrap.php';
 requireLogin();
 
 $currentUserId = currentUserId();
@@ -37,7 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'], $_POST['ord
             $pdo->commit();
         } catch (PDOException $e) { $pdo->rollBack(); setFlash('error', 'Update failed.'); }
     }
-    redirect('my_orders.php');
+    redirect(BASE_URL . '/pages/my_orders.php');
 }
 
 // Fetch buying orders
@@ -51,6 +50,7 @@ $stmtSelling->execute([':uid' => $currentUserId]);
 $sellingOrders = $stmtSelling->fetchAll();
 
 $pageTitle = "My Transactions";
+require_once __DIR__ . '/../includes/header.php';
 ?>
 
 <div class="container mt-12 mb-20">
