@@ -1,183 +1,170 @@
 <?php
-session_start();
-include __DIR__ . '/../config/db.php';
-include __DIR__ . '/../includes/functions.php';
-include __DIR__ . '/../includes/data.php';
+// pages/browse.php
+require_once __DIR__ . '/../config/constants.php';
+require_once __DIR__ . '/../includes/header.php';
 
-$selected_category = isset($_GET['category']) ? trim((string)$_GET['category']) : '';
-$min_price = isset($_GET['min_price']) ? trim((string)$_GET['min_price']) : '';
-$max_price = isset($_GET['max_price']) ? trim((string)$_GET['max_price']) : '';
-$condition = isset($_GET['condition']) ? trim((string)$_GET['condition']) : '';
-$sort = $_GET['sort'] ?? 'latest';
+$pageTitle = "Browse Marketplace";
 
-/**
- * Build browse URL keeping current filters; $overrides replace those keys (empty string drops the param).
- */
-function browse_url(array $overrides = []): string {
-    $params = array_merge([
-        'category' => $_GET['category'] ?? '',
-        'min_price' => $_GET['min_price'] ?? '',
-        'max_price' => $_GET['max_price'] ?? '',
-        'condition' => $_GET['condition'] ?? '',
-        'sort' => $_GET['sort'] ?? '',
-    ], $overrides);
-    $out = [];
-    foreach ($params as $k => $v) {
-        if ($v === '' || $v === null) {
-            continue;
-        }
-        $out[$k] = $v;
+// Get Filters
+$catFilter   = $_GET['category'] ?? '';
+$minPrice    = $_GET['min_price'] ?? '';
+$maxPrice    = $_GET['max_price'] ?? '';
+$condFilter  = $_GET['condition'] ?? '';
+$sort        = $_GET['sort'] ?? 'latest';
+
+// Fetch Categories for Sidebar
+$categories = getTopCategories($pdo);
+
+// Build SQL Query
+$sql = "SELECT p.*, c.name as category_name, i.image_path, u.username as seller_name 
+        FROM products p
+        JOIN categories c ON p.category_id = c.id
+        JOIN users u ON p.user_id = u.id
+        LEFT JOIN product_images i ON p.id = i.product_id AND i.is_primary = 1
+        WHERE p.status = 'active'";
+
+$params = [];
+
+if ($catFilter) {
+    if (is_numeric($catFilter)) {
+        $sql .= " AND p.category_id = :cat";
+        $params[':cat'] = $catFilter;
+    } else {
+        $sql .= " AND c.name = :cat";
+        $params[':cat'] = $catFilter;
     }
-    return $out === [] ? 'browse.php' : 'browse.php?' . http_build_query($out);
 }
 
-$filtered_products = $products;
-
-if ($selected_category !== '') {
-    $filtered_products = array_filter($filtered_products, fn($p) => $p['category'] === $selected_category);
-}
-if ($condition !== '') {
-    $filtered_products = array_filter($filtered_products, function ($p) use ($condition) {
-        return strcasecmp(trim((string)($p['condition'] ?? '')), $condition) === 0;
-    });
-}
-if ($min_price !== '') {
-    $filtered_products = array_filter($filtered_products, fn($p) => $p['price'] >= (float)$min_price);
-}
-if ($max_price !== '') {
-    $filtered_products = array_filter($filtered_products, fn($p) => $p['price'] <= (float)$max_price);
+if ($minPrice) {
+    $sql .= " AND p.price >= :min";
+    $params[':min'] = $minPrice;
 }
 
-$filtered_products = array_values($filtered_products);
-
-if ($sort === 'price_asc') {
-    usort($filtered_products, fn($a, $b) => $a['price'] <=> $b['price']);
-} elseif ($sort === 'price_desc') {
-    usort($filtered_products, fn($a, $b) => $b['price'] <=> $a['price']);
-} else {
-    // latest (default, reverse id)
-    usort($filtered_products, fn($a, $b) => $b['id'] <=> $a['id']);
+if ($maxPrice) {
+    $sql .= " AND p.price <= :max";
+    $params[':max'] = $maxPrice;
 }
+
+if ($condFilter) {
+    $sql .= " AND p.condition = :cond";
+    $params[':cond'] = $condFilter;
+}
+
+// Sorting
+switch ($sort) {
+    case 'price_asc':  $sql .= " ORDER BY p.price ASC"; break;
+    case 'price_desc': $sql .= " ORDER BY p.price DESC"; break;
+    default:           $sql .= " ORDER BY p.created_at DESC"; break;
+}
+
+$stmt = $pdo->prepare($sql);
+$stmt->execute($params);
+$products = $stmt->fetchAll();
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Browse - CampusMarket</title>
-</head>
-<body>
 
-<nav aria-label="Catalog" style="padding:.5rem 1rem;font-size:.95rem;">
-  <a href="index.php">Home</a> ·
-  <a href="search.php">Search</a> ·
-  <a href="create_listing.php">Create listing</a> ·
-  <a href="wishlist.php">Wishlist</a>
-</nav>
+<div class="container mt-8 mb-16">
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        
+        <!-- Sidebar Filters -->
+        <aside class="lg:col-span-1">
+            <div class="card p-6 sticky top-24">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="mb-0">Filters</h3>
+                    <a href="browse.php" class="text-muted small">Clear all</a>
+                </div>
 
-<div class="breadcrumb">
-  <a href="index.php">Home</a> <span>›</span> Browse
+                <form method="GET" action="browse.php">
+                    <!-- Category -->
+                    <div class="mb-6">
+                        <label class="block mb-3 font-bold">Category</label>
+                        <select name="category" class="w-full" onchange="this.form.submit()">
+                            <option value="">All Categories</option>
+                            <?php foreach ($categories as $cat): ?>
+                                <option value="<?php echo $cat['id']; ?>" <?php echo $catFilter == $cat['id'] ? 'selected' : ''; ?>>
+                                    <?php echo sanitize($cat['name']); ?> (<?php echo $cat['product_count']; ?>)
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <!-- Price -->
+                    <div class="mb-6">
+                        <label class="block mb-3 font-bold">Price Range</label>
+                        <div class="flex gap-2 items-center">
+                            <input type="number" name="min_price" placeholder="Min" value="<?php echo sanitize($minPrice); ?>" class="w-full">
+                            <span class="text-muted">-</span>
+                            <input type="number" name="max_price" placeholder="Max" value="<?php echo sanitize($maxPrice); ?>" class="w-full">
+                        </div>
+                    </div>
+
+                    <!-- Condition -->
+                    <div class="mb-8">
+                        <label class="block mb-3 font-bold">Condition</label>
+                        <select name="condition" class="w-full" onchange="this.form.submit()">
+                            <option value="">Any Condition</option>
+                            <option value="new" <?php echo $condFilter == 'new' ? 'selected' : ''; ?>>New</option>
+                            <option value="like_new" <?php echo $condFilter == 'like_new' ? 'selected' : ''; ?>>Like New</option>
+                            <option value="used" <?php echo $condFilter == 'used' ? 'selected' : ''; ?>>Used</option>
+                            <option value="fair" <?php echo $condFilter == 'fair' ? 'selected' : ''; ?>>Fair</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-full">Apply Filters</button>
+                </form>
+            </div>
+        </aside>
+
+        <!-- Results -->
+        <main class="lg:col-span-3">
+            <div class="flex justify-between items-center mb-8">
+                <h2 class="mb-0"><?php echo count($products); ?> Items Found</h2>
+                <form method="GET" class="flex items-center gap-2">
+                    <?php if($catFilter) echo '<input type="hidden" name="category" value="'.$catFilter.'">'; ?>
+                    <?php if($condFilter) echo '<input type="hidden" name="condition" value="'.$condFilter.'">'; ?>
+                    <select name="sort" class="sort-select" onchange="this.form.submit()">
+                        <option value="latest" <?php echo $sort == 'latest' ? 'selected' : ''; ?>>Latest First</option>
+                        <option value="price_asc" <?php echo $sort == 'price_asc' ? 'selected' : ''; ?>>Price: Low to High</option>
+                        <option value="price_desc" <?php echo $sort == 'price_desc' ? 'selected' : ''; ?>>Price: High to Low</option>
+                    </select>
+                </form>
+            </div>
+
+            <?php if (empty($products)): ?>
+                <div class="card p-12 text-center">
+                    <div class="mb-4" style="font-size: 3rem;">🔍</div>
+                    <h3>No items found</h3>
+                    <p class="text-muted">Try adjusting your filters or search keywords.</p>
+                    <a href="browse.php" class="btn btn-secondary mt-4">Reset Browse</a>
+                </div>
+            <?php else: ?>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <?php foreach ($products as $prod): ?>
+                        <a href="product.php?id=<?php echo $prod['id']; ?>" class="card card-hover">
+                            <div style="height: 180px; background: var(--bg-main); overflow: hidden; position: relative;">
+                                <?php if ($prod['image_path']): ?>
+                                    <img src="<?php echo BASE_URL; ?>/public/<?php echo $prod['image_path']; ?>" alt="<?php echo sanitize($prod['title']); ?>" style="width: 100%; height: 100%; object-fit: cover;">
+                                <?php else: ?>
+                                    <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-center; color: #999;">No Image</div>
+                                <?php endif; ?>
+                                <div style="position: absolute; top: 0.5rem; right: 0.5rem;">
+                                    <?php $badge = conditionBadge($prod['condition']); ?>
+                                    <span class="badge <?php echo $badge['class']; ?> shadow-sm"><?php echo $badge['label']; ?></span>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <p class="text-muted small mb-1"><?php echo sanitize($prod['category_name']); ?></p>
+                                <h4 class="mb-2" style="font-size: 1rem; line-height: 1.4;"><?php echo sanitize($prod['title']); ?></h4>
+                                <div class="flex justify-between items-end mt-4">
+                                    <span style="font-weight: 800; color: var(--text-main); font-size: 1.15rem;"><?php echo formatPrice($prod['price']); ?></span>
+                                    <span class="text-muted small">@<?php echo sanitize($prod['seller_name']); ?></span>
+                                </div>
+                            </div>
+                        </a>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
+        </main>
+    </div>
 </div>
 
-<div class="browse-layout">
-  <!-- SIDEBAR -->
-  <aside class="filter-sidebar">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
-      <h3 style="margin:0;">Filters</h3>
-      <a href="browse.php" class="filter-clear">Clear all</a>
-    </div>
-    <form method="GET" action="browse.php" id="browseFiltersForm">
-      <input type="hidden" name="sort" value="<?= htmlspecialchars($sort) ?>">
-      <div class="filter-section">
-        <h4>Category</h4>
-        <div style="max-height:200px;overflow-y:auto;">
-          <label class="filter-option">
-            <input type="radio" name="category" value="" <?= $selected_category===''?'checked':'' ?> onclick="window.location.href='<?= htmlspecialchars(browse_url(['category' => '']), ENT_QUOTES, 'UTF-8') ?>'"> All Categories
-          </label>
-          <?php foreach($categories as $cat): ?>
-          <label class="filter-option">
-            <input type="radio" name="category" value="<?= htmlspecialchars($cat['name']) ?>" <?= $selected_category===$cat['name']?'checked':'' ?> onclick="window.location.href='<?= htmlspecialchars(browse_url(['category' => $cat['name']]), ENT_QUOTES, 'UTF-8') ?>'"> <?= htmlspecialchars($cat['name']) ?>
-          </label>
-          <?php endforeach; ?>
-        </div>
-      </div>
-
-      <div class="filter-section">
-        <h4>Price Range</h4>
-        <div class="price-inputs">
-          <input type="number" name="min_price" placeholder="0 TL" value="<?= htmlspecialchars($min_price) ?>">
-          <span>-</span>
-          <input type="number" name="max_price" placeholder="1000 TL+" value="<?= htmlspecialchars($max_price) ?>">
-        </div>
-      </div>
-
-      <div class="filter-section">
-        <h4>Condition</h4>
-        <label class="filter-option">
-          <input type="radio" name="condition" value="" <?= $condition===''?'checked':'' ?> onchange="this.form.submit()"> All Conditions
-        </label>
-        <label class="filter-option">
-          <input type="radio" name="condition" value="New" <?= $condition==='New'?'checked':'' ?> onchange="this.form.submit()"> New
-        </label>
-        <label class="filter-option">
-          <input type="radio" name="condition" value="Like New" <?= $condition==='Like New'?'checked':'' ?> onchange="this.form.submit()"> Like New
-        </label>
-        <label class="filter-option">
-          <input type="radio" name="condition" value="Used" <?= $condition==='Used'?'checked':'' ?> onchange="this.form.submit()"> Used
-        </label>
-      </div>
-
-      <button type="submit" class="apply-btn">Apply Filters</button>
-    </form>
-  </aside>
-
-  <!-- RESULTS -->
-  <main class="browse-results">
-    <div class="results-bar">
-      <div class="results-count"><?= count($filtered_products) ?> items found</div>
-      <form method="GET" id="sortForm">
-        <?php foreach($_GET as $k=>$v): if($k!=='sort'): ?>
-        <input type="hidden" name="<?= htmlspecialchars($k) ?>" value="<?= htmlspecialchars($v) ?>">
-        <?php endif; endforeach; ?>
-        <select name="sort" class="sort-select" onchange="document.getElementById('sortForm').submit()">
-          <option value="latest" <?= $sort==='latest'?'selected':'' ?>>Sort by: Latest</option>
-          <option value="price_asc" <?= $sort==='price_asc'?'selected':'' ?>>Sort by: Price (Low to High)</option>
-          <option value="price_desc" <?= $sort==='price_desc'?'selected':'' ?>>Sort by: Price (High to Low)</option>
-        </select>
-      </form>
-    </div>
-
-    <div class="products-grid">
-      <?php foreach($filtered_products as $p): ?>
-      <div class="product-card" onclick="window.location.href='product.php?id=<?= $p['id'] ?>'">
-        <img class="product-img" src="<?= $p['img'] ?>" alt="<?= htmlspecialchars($p['title']) ?>" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-        <div class="product-img-placeholder" style="display:none">📦</div>
-        <button class="heart-btn" type="button" id="heart-<?= $p['id'] ?>" onclick="event.stopPropagation();toggleWishlist(<?= $p['id'] ?>,<?= htmlspecialchars(json_encode($p),ENT_QUOTES) ?>)" aria-label="Add to wishlist">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"/></svg>
-        </button>
-        <div class="product-body">
-          <div class="product-title"><?= htmlspecialchars($p['title']) ?></div>
-          <div class="product-category"><?= htmlspecialchars($p['category']) ?></div>
-          <div class="product-price"><?= formatPrice($p['price']) ?></div>
-        </div>
-      </div>
-      <?php endforeach; ?>
-      <?php if(empty($filtered_products)): ?>
-      <div style="grid-column:1/-1;text-align:center;padding:3rem;background:#fff;border-radius:8px;">
-        <h3>No items found matching your filters.</h3>
-        <a href="browse.php" class="view-all" style="margin-top:1rem;display:inline-block;">Clear Filters</a>
-      </div>
-      <?php endif; ?>
-    </div>
-  </main>
-</div>
-
-<style>
-  .product-card { position: relative; }
-  .heart-btn { position: absolute; top: 8px; right: 8px; z-index: 2; width: 36px; height: 36px; border: none; border-radius: 50%; background: rgba(255,255,255,.95); cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 4px rgba(0,0,0,.12); color: #64748b; }
-  .heart-btn.active { color: #dc2626; }
-</style>
-<script src="../public/js/wishlist.js"></script>
-<script>updateWishlistUI();</script>
-</body>
-</html>
+<?php require_once __DIR__ . '/../includes/footer.php'; ?>

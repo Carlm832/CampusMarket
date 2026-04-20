@@ -1,76 +1,68 @@
 <?php
-session_start();
-include __DIR__ . '/../config/db.php';
-include __DIR__ . '/../includes/functions.php';
-include __DIR__ . '/../includes/data.php';
+// pages/search.php
+require_once __DIR__ . '/../config/constants.php';
+require_once __DIR__ . '/../includes/header.php';
 
-$search_query = $_GET['q'] ?? '';
+$query = sanitize($_GET['q'] ?? '');
+$pageTitle = "Search Results: " . $query;
 
 $results = [];
-if ($search_query) {
-    $query_lower = strtolower($search_query);
-    $results = array_filter($products, function($p) use ($query_lower) {
-        return strpos(strtolower($p['title']), $query_lower) !== false ||
-               strpos(strtolower($p['category']), $query_lower) !== false;
-    });
+if ($query) {
+    $stmt = $pdo->prepare("
+        SELECT p.*, c.name as category_name, i.image_path, u.username as seller_name
+        FROM products p
+        JOIN categories c ON p.category_id = c.id
+        JOIN users u ON p.user_id = u.id
+        LEFT JOIN product_images i ON p.id = i.product_id AND i.is_primary = 1
+        WHERE (p.title LIKE :q OR p.description LIKE :q OR c.name LIKE :q)
+        AND p.status = 'active'
+        ORDER BY p.created_at DESC
+    ");
+    $stmt->execute([':q' => "%$query%"]);
+    $results = $stmt->fetchAll();
 }
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Search Results - CampusMarket</title>
 
-</head>
-<body>
-
-<nav aria-label="Catalog" style="padding:.5rem 1rem;font-size:.95rem;">
-  <a href="index.php">Home</a> ·
-  <a href="browse.php">Browse</a> ·
-  <a href="create_listing.php">Create listing</a> ·
-  <a href="wishlist.php">Wishlist</a>
-</nav>
-
-<div class="search-page">
-  <div class="search-results-header">
-    <h1>Search results for "<?= htmlspecialchars($search_query) ?>"</h1>
-    <p><?= count($results) ?> items found</p>
-  </div>
-
-  <?php if(count($results)>0): ?>
-  <div class="products-grid">
-    <?php foreach($results as $p): ?>
-    <div class="product-card" onclick="window.location.href='product.php?id=<?= $p['id'] ?>'">
-      <img class="product-img" src="<?= $p['img'] ?>" alt="<?= htmlspecialchars($p['title']) ?>" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-      <div class="product-img-placeholder" style="display:none">📦</div>
-      <button class="heart-btn" type="button" id="heart-<?= $p['id'] ?>" onclick="event.stopPropagation();toggleWishlist(<?= $p['id'] ?>,<?= htmlspecialchars(json_encode($p),ENT_QUOTES) ?>)" aria-label="Add to wishlist">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"/></svg>
-      </button>
-      <div class="product-body">
-        <div class="product-title"><?= htmlspecialchars($p['title']) ?></div>
-        <div class="product-category"><?= htmlspecialchars($p['category']) ?></div>
-        <div class="product-price"><?= formatPrice($p['price']) ?></div>
-      </div>
+<div class="container mt-12 mb-20">
+    <div class="mb-8">
+        <h1 class="mb-2">Search Results</h1>
+        <p class="text-muted">Showing results for "<strong><?php echo $query; ?></strong>" — <?php echo count($results); ?> items found.</p>
     </div>
-    <?php endforeach; ?>
-  </div>
-  <?php else: ?>
-  <div class="empty-wishlist">
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
-    <h3>No items found</h3>
-    <p>Try searching with different keywords or check out all listings.</p>
-    <a href="browse.php" class="btn-publish" style="display:inline-block;text-decoration:none;">Browse All Items</a>
-  </div>
-  <?php endif; ?>
+
+    <?php if (empty($results)): ?>
+        <div class="card p-16 text-center">
+            <div class="text-4xl mb-4">🔦</div>
+            <h3>No items matched your search</h3>
+            <p class="text-muted">Try using different keywords or broader terms.</p>
+            <a href="browse.php" class="btn btn-primary mt-6">Browse All Items</a>
+        </div>
+    <?php else: ?>
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <?php foreach ($results as $prod): ?>
+                <a href="product.php?id=<?php echo $prod['id']; ?>" class="card card-hover">
+                    <div style="height: 200px; background: var(--bg-main); overflow: hidden; position: relative;">
+                        <?php if ($prod['image_path']): ?>
+                            <img src="<?php echo BASE_URL; ?>/public/<?php echo $prod['image_path']; ?>" alt="<?php echo sanitize($prod['title']); ?>" style="width: 100%; height: 100%; object-fit: cover;">
+                        <?php else: ?>
+                            <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-center; color: #999;">No Image</div>
+                        <?php endif; ?>
+                        <div style="position: absolute; top: 0.75rem; right: 0.75rem;">
+                            <?php $badge = conditionBadge($prod['condition']); ?>
+                            <span class="badge <?php echo $badge['class']; ?> shadow-sm"><?php echo $badge['label']; ?></span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted small mb-1"><?php echo sanitize($prod['category_name']); ?></p>
+                        <h4 class="mb-2" style="font-size: 1.1rem; line-height: 1.4;"><?php echo sanitize($prod['title']); ?></h4>
+                        <div class="flex justify-between items-center mt-4">
+                            <span style="font-weight: 800; color: var(--text-main); font-size: 1.25rem;"><?php echo formatPrice($prod['price']); ?></span>
+                            <span class="text-muted small">@<?php echo sanitize($prod['seller_name']); ?></span>
+                        </div>
+                    </div>
+                </a>
+            <?php endforeach; ?>
+        </div>
+    <?php endif; ?>
 </div>
 
-<style>
-  .product-card { position: relative; }
-  .heart-btn { position: absolute; top: 8px; right: 8px; z-index: 2; width: 36px; height: 36px; border: none; border-radius: 50%; background: rgba(255,255,255,.95); cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 4px rgba(0,0,0,.12); color: #64748b; }
-  .heart-btn.active { color: #dc2626; }
-</style>
-<script src="../public/js/wishlist.js"></script>
-<script>updateWishlistUI();</script>
-</body>
-</html>
+<?php require_once __DIR__ . '/../includes/footer.php'; ?>
