@@ -1,49 +1,98 @@
 <?php
-session_start();
+// pages/wishlist.php
+require_once __DIR__ . '/../config/constants.php';
+require_once __DIR__ . '/../includes/header.php';
+
+$pageTitle = "My Wishlist";
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>My Wishlist - CampusMarket</title>
-<style>
-  .wishlist-page { max-width: 960px; margin: 0 auto; padding: 1rem 1.25rem 2rem; }
-  .wishlist-empty-msg { color: #555; margin: 1rem 0; }
-  .wishlist-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; }
-  .wishlist-item {
-    display: flex; gap: 0.75rem; align-items: flex-start;
-    border: 1px solid #e5e7eb; border-radius: 10px; padding: 0.75rem;
-    background: #fff; cursor: pointer;
-  }
-  .wishlist-item:hover { box-shadow: 0 4px 14px rgba(0,0,0,.08); }
-  .wishlist-item-img { width: 88px; height: 88px; object-fit: cover; border-radius: 8px; flex-shrink: 0; background: #f3f4f6; }
-  .wishlist-item-title { font-weight: 600; margin-bottom: 0.25rem; }
-  .wishlist-item-meta { font-size: 0.9rem; color: #64748b; margin-bottom: 0.5rem; }
-  .wishlist-unlike-btn {
-    font: inherit; cursor: pointer; border: 1px solid #fecaca; background: #fff1f2; color: #b91c1c;
-    border-radius: 8px; padding: 0.35rem 0.65rem; font-size: 0.9rem;
-  }
-  .wishlist-unlike-btn:hover { background: #fee2e2; }
-</style>
-</head>
-<body>
 
-<nav aria-label="Catalog" style="padding:.5rem 1rem;font-size:.95rem;">
-  <a href="index.php">Home</a> ·
-  <a href="browse.php">Browse</a> ·
-  <a href="search.php">Search</a> ·
-  <a href="create_listing.php">Create listing</a>
-</nav>
+<div class="container mt-12 mb-20">
+    <div class="mb-8">
+        <h1 class="mb-2">My Wishlist</h1>
+        <p class="text-muted">Items you've saved to look at later.</p>
+    </div>
 
-<div class="wishlist-page">
-  <h1>My Wishlist</h1>
-  <p class="subtitle">Items you've saved for later. Use <strong>Remove</strong> to undo a like.</p>
-
-  <div id="wishlist-container"></div>
+    <!-- This container is populated by public/js/wishlist.js -->
+    <div id="wishlist-container">
+        <div class="text-center py-20">
+            <div class="text-4xl mb-4">⌛</div>
+            <p class="text-muted">Loading your saved items...</p>
+        </div>
+    </div>
 </div>
 
+<!-- Custom styles for the wishlist items dynamic injection -->
+<style>
+.wishlist-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+.wishlist-card {
+    background: white;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-color);
+    padding: 1rem;
+    display: flex;
+    gap: 1rem;
+    transition: all 0.3s ease;
+}
+.wishlist-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+}
+.wishlist-card img {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: var(--radius-md);
+    background: var(--bg-main);
+}
+</style>
+
 <script src="../public/js/wishlist.js"></script>
-<script>updateWishlistUI();</script>
-</body>
-</html>
+<script>
+// Overriding the default updateWishlistUI to use our new Design System classes
+function updateWishlistUI() {
+    const container = document.getElementById('wishlist-container');
+    const items = getWishlist();
+    
+    if (items.length === 0) {
+        container.innerHTML = `
+            <div class="card p-16 text-center">
+                <div class="text-4xl mb-4">❤️</div>
+                <h3>Your wishlist is empty</h3>
+                <p class="text-muted">Start browsing and click the heart icon to save items.</p>
+                <a href="browse.php" class="btn btn-primary mt-6">Start Browsing</a>
+            </div>
+        `;
+        return;
+    }
+
+    let html = '<div class="wishlist-grid">';
+    items.forEach(item => {
+        html += `
+            <div class="wishlist-card">
+                <img src="${item.img}" alt="${item.title}">
+                <div class="flex-grow flex flex-col justify-between py-1">
+                    <div>
+                        <h4 class="mb-1">${item.title}</h4>
+                        <p class="text-muted small mb-2">${item.category}</p>
+                        <p class="font-bold text-primary">${item.price}</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <a href="product.php?id=${item.id}" class="btn btn-secondary btn-sm">View</a>
+                        <button onclick="toggleWishlist(${item.id}, {}); updateWishlistUI();" class="btn btn-sm" style="color: #ef4444; background: #fee2e2; border: none;">Remove</button>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+document.addEventListener('DOMContentLoaded', updateWishlistUI);
+</script>
+
+<?php require_once __DIR__ . '/../includes/footer.php'; ?>

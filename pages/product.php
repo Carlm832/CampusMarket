@@ -1,113 +1,113 @@
 <?php
-session_start();
-include __DIR__ . '/../config/db.php';
-include __DIR__ . '/../includes/functions.php';
-include __DIR__ . '/../includes/data.php';
+// pages/product.php
+require_once __DIR__ . '/../config/constants.php';
+require_once __DIR__ . '/../includes/header.php';
 
-$product_id = $_GET['id'] ?? 1;
-$product = null;
-foreach($products as $p) {
-    if($p['id'] == $product_id) {
-        $product = $p;
-        break;
-    }
+$productId = $_GET['id'] ?? 0;
+
+// Fetch Product Details
+$stmt = $pdo->prepare("
+    SELECT p.*, c.name as category_name, u.username as seller_name, u.id as seller_id, u.created_at as seller_since
+    FROM products p
+    JOIN categories c ON p.category_id = c.id
+    JOIN users u ON p.user_id = u.id
+    WHERE p.id = :id AND p.status = 'active'
+");
+$stmt->execute([':id' => $productId]);
+$product = $stmt->fetch();
+
+if (!$product) {
+    echo '<div class="container mt-12 text-center"><h2>Product not found</h2><a href="browse.php" class="btn btn-primary mt-4">Back to Browse</a></div>';
+    include __DIR__ . '/../includes/footer.php';
+    exit;
 }
-if(!$product) $product = $products[0];
+
+// Fetch Images
+$stmt = $pdo->prepare("SELECT * FROM product_images WHERE product_id = :id ORDER BY is_primary DESC");
+$stmt->execute([':id' => $productId]);
+$images = $stmt->fetchAll();
+
+// Seller Rating
+$rating = getSellerRating($pdo, $product['seller_id']);
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title><?= htmlspecialchars($product['title']) ?> - CampusMarket</title>
 
-</head>
-<body>
-
-<nav aria-label="Catalog" style="padding:.5rem 1rem;font-size:.95rem;">
-  <a href="index.php">Home</a> ·
-  <a href="browse.php">Browse</a> ·
-  <a href="search.php">Search</a> ·
-  <a href="create_listing.php">Create listing</a> ·
-  <a href="wishlist.php">Wishlist</a>
-</nav>
-
-<div class="detail-layout">
-  <div class="detail-gallery">
-    <div class="gallery-main">
-      <img src="<?= $product['img'] ?>" alt="<?= htmlspecialchars($product['title']) ?>" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-      <div class="gallery-main-placeholder" style="display:none">📦</div>
-    </div>
-    <div class="gallery-thumbs">
-      <div class="gallery-thumb active"><img src="<?= $product['img'] ?>" alt=""></div>
-    </div>
-  </div>
-
-  <div class="detail-info">
-    <h1 class="detail-title"><?= htmlspecialchars($product['title']) ?></h1>
-    <div class="detail-price"><?= formatPrice($product['price']) ?></div>
-
-    <div class="detail-badges">
-      <span class="badge badge-category"><?= htmlspecialchars($product['category']) ?></span>
-      <span class="badge badge-condition <?= strtolower(str_replace(' ','-',$product['condition'])) ?>"><?= htmlspecialchars($product['condition']) ?></span>
-    </div>
-
-    <p class="detail-desc">
-      <?= htmlspecialchars($product['desc']) ?>
-    </p>
-
-    <div class="detail-meta-row">
-      <span>📍 Main Library</span>
-      <span>📅 Posted recently</span>
-    </div>
-
-    <div class="seller-box">
-      <div class="seller-left">
-        <div class="seller-avatar">JD</div>
-        <div>
-          <div class="seller-name">john_doe</div>
-          <div class="seller-rating">⭐ 4.8 (24 reviews)</div>
-          <div class="seller-join">Member since Mar 2024</div>
+<div class="container mt-12 mb-20">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+        
+        <!-- Gallery -->
+        <div class="gallery-container">
+            <div class="card overflow-hidden" style="background: var(--bg-main); min-height: 400px; display: flex; align-items: center; justify-content: center; position: relative;">
+                <?php if (!empty($images)): ?>
+                    <img src="<?php echo BASE_URL; ?>/public/<?php echo $images[0]['image_path']; ?>" alt="<?php echo sanitize($product['title']); ?>" style="max-width: 100%; max-height: 500px; object-fit: contain;">
+                <?php else: ?>
+                    <div class="text-muted" style="font-size: 4rem;">📦</div>
+                <?php endif; ?>
+                
+                <div style="position: absolute; top: 1.5rem; right: 1.5rem;">
+                    <?php $badge = conditionBadge($product['condition']); ?>
+                    <span class="badge <?php echo $badge['class']; ?> shadow-lg px-4 py-2" style="font-size: 1rem;"><?php echo $badge['label']; ?></span>
+                </div>
+            </div>
+            
+            <?php if (count($images) > 1): ?>
+                <div class="flex gap-4 mt-4">
+                    <?php foreach ($images as $img): ?>
+                        <div class="card p-1 cursor-pointer hover-scale" style="width: 80px; height: 80px; overflow: hidden;">
+                            <img src="<?php echo BASE_URL; ?>/public/<?php echo $img['image_path']; ?>" alt="Thumb" style="width: 100%; height: 100%; object-fit: cover; border-radius: var(--radius-sm);">
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
         </div>
-      </div>
-      <button class="btn-view-profile">View Profile</button>
-    </div>
 
-    <div class="action-row">
-      <button type="button" class="btn-contact">Message Seller</button>
-      <button type="button" class="btn-wishlist-detail" id="heart-btn-detail" onclick="toggleWishlistDetail(<?= $product['id'] ?>,<?= htmlspecialchars(json_encode($product),ENT_QUOTES) ?>)">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" style="width:20px;height:20px;vertical-align:middle;margin-right:6px;"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"/></svg>
-        Add to Wishlist
-      </button>
+        <!-- Info -->
+        <div>
+            <div class="flex items-center gap-2 text-muted small mb-4">
+                <a href="index.php">Home</a>
+                <span>/</span>
+                <a href="browse.php?category=<?php echo $product['category_id']; ?>"><?php echo sanitize($product['category_name']); ?></a>
+            </div>
+
+            <h1 class="mb-4" style="font-size: 2.75rem; color: var(--text-main);"><?php echo sanitize($product['title']); ?></h1>
+            <div class="flex items-center gap-4 mb-8">
+                <span style="font-size: 2.25rem; font-weight: 800; color: var(--primary);"><?php echo formatPrice($product['price']); ?></span>
+            </div>
+
+            <div class="card p-6 mb-8" style="background: rgba(255,255,255,0.5); backdrop-filter: blur(10px);">
+                <h3 class="mb-4">Description</h3>
+                <p style="line-height: 1.8; color: var(--text-muted); font-size: 1.1rem;">
+                    <?php echo nl2br(sanitize($product['description'])); ?>
+                </p>
+            </div>
+
+            <!-- Seller Card -->
+            <div class="card p-6 border-accent bg-accent-light flex items-center justify-between mb-8">
+                <div class="flex items-center gap-4">
+                    <div style="width: 56px; height: 56px; background: var(--primary); color: white; border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.5rem;">
+                        <?php echo strtoupper(substr($product['seller_name'], 0, 1)); ?>
+                    </div>
+                    <div>
+                        <h4 class="mb-0">@<?php echo sanitize($product['seller_name']); ?></h4>
+                        <div class="flex items-center gap-2 text-sm">
+                            <span style="color: #f59e0b;">★ <?php echo $rating['avg']; ?></span>
+                            <span class="text-muted">(<?php echo $rating['count']; ?> reviews)</span>
+                        </div>
+                    </div>
+                </div>
+                <a href="profile.php?id=<?php echo $product['seller_id']; ?>" class="btn btn-secondary btn-sm">Visit Profile</a>
+            </div>
+
+            <div class="flex gap-4">
+                <a href="messages.php?to=<?php echo $product['seller_id']; ?>&product=<?php echo $product['id']; ?>" class="btn btn-primary flex-grow justify-center py-4 text-lg">
+                    Message Seller
+                </a>
+                <button class="btn btn-secondary flex items-center justify-center p-4">
+                    <svg style="width: 24px; height: 24px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                </button>
+            </div>
+        </div>
+
     </div>
-  </div>
 </div>
 
-<style>
-  .btn-wishlist-detail { font: inherit; cursor: pointer; display: inline-flex; align-items: center; padding: 0.5rem 1rem; border-radius: 8px; border: 1px solid #e5e7eb; background: #fff; }
-  .btn-wishlist-detail.active { border-color: #fecaca; background: #fff1f2; color: #b91c1c; }
-</style>
-<script src="../public/js/wishlist.js"></script>
-<script>
-function toggleWishlistDetail(id, item) {
-  toggleWishlist(id, item);
-  updateDetailBtn(id);
-}
-function updateDetailBtn(id) {
-  var w = getWishlist();
-  var btn = document.getElementById('heart-btn-detail');
-  var n = Number(id);
-  var on = w.some(function (x) { return Number(x.id) === n; });
-  if (on) {
-    btn.classList.add('active');
-    btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:20px;height:20px;vertical-align:middle;margin-right:6px;"><path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-.383-.218 25.18 25.18 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0112 5.052 5.5 5.5 0 0116.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 01-4.244 3.17 15.247 15.247 0 01-.383.219l-.022.012-.007.004-.003.001a.752.752 0 01-.704 0l-.003-.001z"/></svg> Remove from Wishlist';
-  } else {
-    btn.classList.remove('active');
-    btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" style="width:20px;height:20px;vertical-align:middle;margin-right:6px;"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"/></svg> Add to Wishlist';
-  }
-}
-updateWishlistUI();
-updateDetailBtn(<?= (int)$product['id'] ?>);
-</script>
-</body>
-</html>
+<?php require_once __DIR__ . '/../includes/footer.php'; ?>
