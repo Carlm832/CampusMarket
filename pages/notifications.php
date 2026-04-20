@@ -49,31 +49,25 @@ require_once __DIR__ . '/../includes/header.php';
             <?php foreach ($notifications as $n): ?>
                 <?php
                     // Determine link context based on type
-                    $link = '#';
-                    if ($n['type'] === 'message') {
-                        // Assuming reference_id here is product_id, maybe we need the other_user_id though
-                        // In CampusMarket MVP, we might just redirect to inbox where they can find the message thread
-                        $link = BASE_URL . '/pages/inbox.php';
-                    } elseif ($n['type'] === 'order') {
-                        $link = BASE_URL . '/pages/my_orders.php';
-                    }
-                    
-                    $bg = ($n['is_read'] == 0) ? 'var(--bg-card-highlight, #f0f8ff)' : 'transparent';
-                ?>
-                <li style="background: <?= $bg ?>; padding: 1rem; border-bottom: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 5px;">
-                    <strong style="font-size: 1.1em;">
-                        <?php if ($link !== '#'): ?>
-                            <a href="<?= $link ?>" style="text-decoration: none; color: inherit;"><?= htmlspecialchars($n['title']) ?></a>
-                        <?php else: ?>
-                            <?= htmlspecialchars($n['title']) ?>
+                <div class="card p-5 flex gap-5 items-start hover:bg-gray-50 transition-colors border-l-4 <?php echo $n['type'] === 'order' ? 'border-primary' : 'border-secondary'; ?>">
+                    <div class="p-3 rounded-xl bg-white shadow-sm">
+                        <?php echo $n['type'] === 'order' ? '📦' : '✨'; ?>
+                    </div>
+                    <div class="flex-grow">
+                        <div class="flex justify-between items-start">
+                            <h4 class="mb-1 font-bold"><?php echo sanitize($n['title']); ?></h4>
+                            <span class="text-muted small"><?php echo timeAgo($n['created_at']); ?></span>
+                        </div>
+                        <p class="text-muted small mb-0"><?php echo sanitize($n['body']); ?></p>
+                        
+                        <?php if ($n['type'] === 'order'): ?>
+                            <a href="my_orders.php" class="btn btn-secondary btn-sm mt-3 py-1">View Order →</a>
                         <?php endif; ?>
-                    </strong>
-                    <span><?= htmlspecialchars($n['body']) ?></span>
-                    <span style="font-size: 0.8em; color: var(--text-muted);"><?= timeAgo($n['created_at']) ?></span>
-                </li>
+                    </div>
+                </div>
             <?php endforeach; ?>
-        </ul>
-    <?php endif; ?>
+        <?php endif; ?>
+    </div>
 </div>
 
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>
