@@ -1,0 +1,166 @@
+<?php
+// pages/login.php — Member 2
+// Authenticate via email-or-username + password.
+// Uses Member 1's foundation (bootstrap, sanitize, setFlash, redirect, $pdo).
+
+require_once '../config/constants.php';
+require_once '../includes/bootstrap.php';
+
+if (isLoggedIn()) {
+    redirect(BASE_URL . '/pages/profile.php');
+}
+
+$errors   = [];
+$identity = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+
+    $identity = trim($_POST['identity'] ?? '');
+    $password = $_POST['password'] ?? '';
+
+    if ($identity === '' || $password === '') {
+        $errors['form'] = 'Please enter your email/username and password.';
+    } else {
+        // Look up by email (case-insensitive) OR username.
+        // Note: named placeholders can't be reused when EMULATE_PREPARES=false,
+        // so :id_email and :id_user are bound separately to the same value.
+        $stmt = $pdo->prepare('
+            SELECT id, username, email, password_hash, role
+            FROM users
+            WHERE LOWER(email) = LOWER(:id_email) OR username = :id_user
+            LIMIT 1
+        ');
+        $stmt->execute([
+            ':id_email' => $identity,
+            ':id_user'  => $identity,
+        ]);
+        $user = $stmt->fetch();
+
+        // Same error message for "no such user" and "wrong password"
+        // prevents account enumeration.
+        $bad = 'Incorrect email/username or password.';
+
+        if (!$user || !password_verify($password, $user['password_hash'])) {
+            $errors['form'] = $bad;
+        } else {
+            // Transparent rehash if default cost moved up since last login.
+            if (password_needs_rehash($user['password_hash'], PASSWORD_DEFAULT)) {
+                $upd = $pdo->prepare('UPDATE users SET password_hash = :h WHERE id = :id');
+                $upd->execute([
+                    ':h'  => password_hash($password, PASSWORD_DEFAULT),
+                    ':id' => $user['id'],
+                ]);
+            }
+
+            // Fixation defense.
+            session_regenerate_id(true);
+            $_SESSION['user_id']  = (int) $user['id'];
+            $_SESSION['role']     = $user['role'];
+            $_SESSION['username'] = $user['username'];
+
+            setFlash('success', 'Welcome back, ' . sanitize($user['username']) . '!');
+
+            // Safe internal redirect: allow ?redirect=/pages/..., reject anything else.
+            $target = $_GET['redirect'] ?? '';
+            if ($target && strpos($target, '/') === 0 && strpos($target, '//') !== 0) {
+                redirect(BASE_URL . $target);
+            }
+            redirect(BASE_URL . '/pages/profile.php');
+        }
+    }
+}
+
+$pageTitle = 'Log in';
+require_once '../includes/header.php';
+?>
+
+<style>
+  .auth-card { max-width: 400px; margin: 2rem auto; background: #fff; border-radius: 0.5rem; border: 1px solid #e2e8f0; padding: 2rem; }
+  .auth-card h1 { margin-top: 0; }
+  .form-row { margin-bottom: 1rem; }
+  .form-row label { display: block; font-weight: 500; margin-bottom: 0.35rem; }
+  .form-row input { width: 100%; padding: 0.55rem 0.75rem; border: 1px solid #cbd5e1; border-radius: 0.375rem; font-size: 1rem; box-sizing: border-box; }
+  .form-row input:focus { outline: 2px solid var(--primary); border-color: transparent; }
+  .btn-full { width: 100%; padding: 0.7rem; font-size: 1rem; }
+  .alert-error { background:#fee2e2; color:#991b1b; border:1px solid #fecaca; padding:0.6rem 0.8rem; border-radius:0.375rem; margin-bottom:1rem; }
+  .auth-foot { text-align: center; color: #64748b; margin-top: 1.25rem; font-size: 0.9rem; }
+
+  /* Password eye toggle */
+  .password-wrap { position: relative; }
+  .password-wrap input { padding-right: 2.6rem; }
+  .password-toggle {
+    position: absolute; top: 50%; right: 0.4rem; transform: translateY(-50%);
+    background: none; border: 0; padding: 0.35rem;
+    color: #64748b; cursor: pointer; display: flex; align-items: center;
+    border-radius: 0.25rem;
+  }
+  .password-toggle:hover       { color: #0f172a; }
+  .password-toggle:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+  .password-toggle svg         { width: 1.15rem; height: 1.15rem; }
+  .password-toggle .icon-hide  { display: none; }
+  .password-toggle.is-shown .icon-show { display: none; }
+  .password-toggle.is-shown .icon-hide { display: block; }
+</style>
+
+<div class="auth-card">
+  <h1>Log in</h1>
+
+  <?php if (!empty($errors['form'])): ?>
+    <div class="alert-error"><?php echo sanitize($errors['form']); ?></div>
+  <?php endif; ?>
+
+  <form method="post" novalidate>
+    <div class="form-row">
+      <label for="identity">Email or username</label>
+      <input type="text" id="identity" name="identity"
+             value="<?php echo sanitize($identity); ?>"
+             required autofocus autocomplete="username">
+    </div>
+
+    <div class="form-row">
+      <label for="password">Password</label>
+      <div class="password-wrap">
+        <input type="password" id="password" name="password"
+               required autocomplete="current-password">
+        <button type="button" class="password-toggle" data-target="password" aria-label="Show password">
+          <svg class="icon-show" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+               fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+          <svg class="icon-hide" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+               fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-6.5 0-10-7-10-7a19.8 19.8 0 0 1 5.06-5.94"/>
+            <path d="M9.9 4.24A10.94 10.94 0 0 1 12 4c6.5 0 10 7 10 7a19.9 19.9 0 0 1-3.17 4.19"/>
+            <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/>
+            <path d="M1 1l22 22"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <button type="submit" class="btn btn-full">Log in</button>
+  </form>
+
+  <p class="auth-foot">
+    New here?
+    <a href="<?php echo BASE_URL; ?>/pages/register.php">Create an account</a>
+  </p>
+</div>
+
+<script>
+  document.querySelectorAll('.password-toggle').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var input = document.getElementById(btn.dataset.target);
+      if (!input) return;
+      var show = input.type === 'password';
+      input.type = show ? 'text' : 'password';
+      btn.classList.toggle('is-shown', show);
+      btn.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+    });
+  });
+</script>
+
+<?php require_once '../includes/footer.php'; ?>

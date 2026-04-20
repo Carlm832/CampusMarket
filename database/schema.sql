@@ -48,7 +48,7 @@ CREATE TABLE products (
     title       VARCHAR(200)   NOT NULL,
     description TEXT,
     price       DECIMAL(10,2)  NOT NULL,
-    condition   ENUM('new', 'like_new', 'used', 'poor') NOT NULL DEFAULT 'used',
+    `condition`   ENUM('new', 'like_new', 'used', 'poor') NOT NULL DEFAULT 'used',
     status      ENUM('active', 'sold', 'flagged')       NOT NULL DEFAULT 'active',
     created_at  TIMESTAMP      NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at  TIMESTAMP      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -177,7 +177,7 @@ CREATE TABLE reports (
 CREATE TABLE notifications (
     id           INT AUTO_INCREMENT PRIMARY KEY,
     user_id      INT          NOT NULL,
-    type         ENUM('message', 'order', 'wishlist', 'system') NOT NULL,
+    `type`         ENUM('message', 'order', 'wishlist', 'system') NOT NULL,
     title        VARCHAR(200) NOT NULL,
     body         TEXT         NOT NULL,
     is_read      BOOLEAN      NOT NULL DEFAULT 0,
