@@ -98,7 +98,7 @@ $rating = getSellerRating($pdo, $product['seller_id']);
             </div>
 
             <div class="flex gap-4">
-                <a href="messages.php?to=<?php echo $product['seller_id']; ?>&product=<?php echo $product['id']; ?>" class="btn btn-primary flex-grow justify-center py-4 text-lg">
+                <a href="messages.php?other_user_id=<?php echo $product['seller_id']; ?>&product_id=<?php echo $product['id']; ?>" class="btn btn-primary flex-grow justify-center py-4 text-lg">
                     Message Seller
                 </a>
                 <button class="btn btn-secondary flex items-center justify-center p-4">
