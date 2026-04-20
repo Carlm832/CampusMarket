@@ -219,3 +219,54 @@ function countUnreadNotifications(PDO $pdo, int $userId): int {
     $stmt->execute([':uid' => $userId]);
     return (int) $stmt->fetchColumn();
 }
+
+// ─── Marketplace Data Helpers ────────────────────────────
+
+/**
+ * Fetch the latest active products for the homepage
+ */
+function getRecentProducts(PDO $pdo, int $limit = 8): array {
+    $stmt = $pdo->prepare("
+        SELECT p.*, c.name as category_name, i.image_path, u.username as seller_name
+        FROM products p
+        JOIN categories c ON p.category_id = c.id
+        JOIN users u ON p.user_id = u.id
+        LEFT JOIN product_images i ON p.id = i.product_id AND i.is_primary = 1
+        WHERE p.status = 'active'
+        ORDER BY p.created_at DESC
+        LIMIT :limit
+    ");
+    $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+    $stmt->execute();
+    return $stmt->fetchAll();
+}
+
+/**
+ * Fetch all categories with a count of active products in each
+ */
+function getTopCategories(PDO $pdo): array {
+    return $pdo->query("
+        SELECT c.*, COUNT(p.id) as product_count
+        FROM categories c
+        LEFT JOIN products p ON c.id = p.category_id AND p.status = 'active'
+        GROUP BY c.id
+        ORDER BY product_count DESC
+    ")->fetchAll();
+}
+
+/**
+ * Get average rating and count for a seller
+ */
+function getSellerRating(PDO $pdo, int $sellerId): array {
+    $stmt = $pdo->prepare("
+        SELECT ROUND(AVG(rating), 1) as avg_rating, COUNT(*) as review_count
+        FROM ratings
+        WHERE seller_id = :sid
+    ");
+    $stmt->execute([':sid' => $sellerId]);
+    $result = $stmt->fetch();
+    return [
+        'avg'   => $result['avg_rating'] ?? 0,
+        'count' => $result['review_count']
+    ];
+}

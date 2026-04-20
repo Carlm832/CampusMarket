@@ -1,221 +1,162 @@
 <?php
-session_start();
-include __DIR__ . '/../config/db.php';
-include __DIR__ . '/../includes/data.php';
+// pages/create_listing.php
+require_once __DIR__ . '/../config/constants.php';
+require_once __DIR__ . '/../includes/header.php';
+
+// Auth Check
+if (!isLoggedIn()) {
+    setFlash('error', 'Please login to list an item.');
+    redirect('login.php');
+}
 
 $success = false;
-$error_message = '';
+$error = '';
+
+// Handle Form Submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $title = trim($_POST['title'] ?? '');
-    $category = trim($_POST['category'] ?? '');
-    $condition = trim($_POST['condition'] ?? '');
-    $price = (float)($_POST['price'] ?? 0);
-    $description = trim($_POST['description'] ?? '');
+    $title       = sanitize($_POST['title']);
+    $categoryId  = (int)$_POST['category_id'];
+    $price       = (float)$_POST['price'];
+    $condition   = sanitize($_POST['condition']);
+    $description = sanitize($_POST['description']);
+    $userId      = currentUserId();
 
-    if ($title === '' || $category === '' || $condition === '' || $price <= 0 || $description === '') {
-        $error_message = 'Please fill in all required fields.';
-    } elseif (!isset($_FILES['images']) || !isset($_FILES['images']['tmp_name'][0]) || $_FILES['images']['tmp_name'][0] === '') {
-        $error_message = 'Please select at least one image.';
-    } else {
-        $upload_dir_fs = __DIR__ . '/../public/images/';
-        if (!is_dir($upload_dir_fs)) {
-            mkdir($upload_dir_fs, 0777, true);
-        }
+    try {
+        $pdo->beginTransaction();
 
-        $original_name = basename($_FILES['images']['name'][0]);
-        $extension = strtolower(pathinfo($original_name, PATHINFO_EXTENSION));
-        $allowed = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
+        // 1. Insert Product
+        $stmt = $pdo->prepare("INSERT INTO products (user_id, category_id, title, description, price, `condition`, status) VALUES (?, ?, ?, ?, ?, ?, 'active')");
+        $stmt->execute([$userId, $categoryId, $title, $description, $price, $condition]);
+        $productId = $pdo->lastInsertId();
 
-        if (!in_array($extension, $allowed, true)) {
-            $error_message = 'Only JPG, JPEG, PNG, WEBP, and GIF images are allowed.';
-        } else {
-            $safe_base = preg_replace('/[^a-zA-Z0-9_-]/', '_', pathinfo($original_name, PATHINFO_FILENAME));
-            $new_file_name = time() . '_' . $safe_base . '.' . $extension;
-            $target_fs = $upload_dir_fs . $new_file_name;
+        // 2. Handle Image Uploads
+        if (!empty($_FILES['images']['name'][0])) {
+            $files = $_FILES['images'];
+            for ($i = 0; $i < count($files['name']); $i++) {
+                if ($i >= MAX_IMAGES) break; // Limit per listing
 
-            if (!move_uploaded_file($_FILES['images']['tmp_name'][0], $target_fs)) {
-                $error_message = 'Image upload failed. Please try again.';
-            } else {
-                $max_id = 0;
-                foreach ($products as $product) {
-                    $max_id = max($max_id, (int)$product['id']);
-                }
-
-                $new_product = [
-                    'id' => $max_id + 1,
-                    'title' => $title,
-                    'price' => $price,
-                    'category' => $category,
-                    'condition' => $condition,
-                    'img' => '../public/images/' . rawurlencode($new_file_name),
-                    'desc' => $description,
+                $fileData = [
+                    'name'     => $files['name'][$i],
+                    'type'     => $files['type'][$i],
+                    'tmp_name' => $files['tmp_name'][$i],
+                    'error'    => $files['error'][$i],
+                    'size'     => $files['size'][$i]
                 ];
 
-                if (!isset($_SESSION['custom_products']) || !is_array($_SESSION['custom_products'])) {
-                    $_SESSION['custom_products'] = [];
+                $upload = handleUpload($fileData, 'products/');
+                if ($upload['success']) {
+                    $isPrimary = ($i === 0) ? 1 : 0;
+                    $stmtImg = $pdo->prepare("INSERT INTO product_images (product_id, image_path, is_primary) VALUES (?, ?, ?)");
+                    $stmtImg->execute([$productId, $upload['path'], $isPrimary]);
                 }
-                array_unshift($_SESSION['custom_products'], $new_product);
-                $success = true;
             }
         }
+
+        $pdo->commit();
+        $success = true;
+        setFlash('success', 'Your listing is live!');
+        redirect('browse.php');
+
+    } catch (Exception $e) {
+        $pdo->rollBack();
+        $error = "Failed to create listing: " . $e->getMessage();
     }
 }
+
+// Fetch Categories
+$categories = $pdo->query("SELECT * FROM categories ORDER BY name ASC")->fetchAll();
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Create a Listing - CampusMarket</title>
 
-</head>
-<body>
+<div class="container mt-12 mb-20">
+    <div class="max-w-2xl mx-auto">
+        <h1 class="mb-2">List an Item</h1>
+        <p class="text-muted mb-8">Reach thousands of students instantly.</p>
 
-<nav aria-label="Catalog" style="padding:.5rem 1rem;font-size:.95rem;">
-  <a href="index.php">Home</a> ·
-  <a href="browse.php">Browse</a> ·
-  <a href="search.php">Search</a> ·
-  <a href="wishlist.php">Wishlist</a>
-</nav>
+        <?php if ($error): ?>
+            <div class="flash flash-error mb-6"><?php echo $error; ?></div>
+        <?php endif; ?>
 
-<div class="create-layout">
-  <form class="create-listing-form" method="POST" enctype="multipart/form-data">
-  <div class="create-form-col">
-    <h1>Create a New Listing</h1>
-    <p class="subtitle">Fill in the details below to list your item.</p>
+        <div class="card p-8">
+            <form action="create_listing.php" method="POST" enctype="multipart/form-data" class="grid gap-6">
+                
+                <div class="form-group">
+                    <label class="font-bold mb-2 block">What are you selling? *</label>
+                    <input type="text" name="title" placeholder="e.g. Macbeth Textbook, 10th Edition" class="w-full" required>
+                </div>
 
-    <?php if($success): ?>
-    <div class="alert-success">✅ Listing created successfully! Your item is now live.</div>
-    <?php endif; ?>
-    <?php if($error_message !== ''): ?>
-    <div class="alert-success" style="background:#fee2e2;color:#991b1b;border:1px solid #fecaca;">⚠️ <?= htmlspecialchars($error_message) ?></div>
-    <?php endif; ?>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="form-group">
+                        <label class="font-bold mb-2 block">Category *</label>
+                        <select name="category_id" class="w-full" required>
+                            <option value="">Select Category</option>
+                            <?php foreach ($categories as $cat): ?>
+                                <option value="<?php echo $cat['id']; ?>"><?php echo sanitize($cat['name']); ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="font-bold mb-2 block">Price (<?php echo APP_CURRENCY; ?>) *</label>
+                        <input type="number" name="price" step="0.01" placeholder="0.00" class="w-full" required>
+                    </div>
+                </div>
 
-    <div class="form-card">
-      <h2>Item Details</h2>
-      <div class="form-group">
-        <label>Title *</label>
-        <input type="text" name="title" placeholder="e.g., iPad Air 4th Gen" required>
-      </div>
+                <div class="form-group">
+                    <label class="font-bold mb-2 block">Condition *</label>
+                    <div class="flex gap-4">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="condition" value="new" required> <span>New</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="condition" value="like_new"> <span>Like New</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="condition" value="used" checked> <span>Used</span>
+                        </label>
+                    </div>
+                </div>
 
-      <div class="form-row">
-        <div class="form-group">
-          <label>Category *</label>
-          <select name="category" required>
-            <option value="">Select a category</option>
-            <?php foreach($categories as $cat): ?>
-            <option value="<?= htmlspecialchars($cat['name']) ?>"><?= htmlspecialchars($cat['name']) ?></option>
-            <?php endforeach; ?>
-          </select>
+                <div class="form-group">
+                    <label class="font-bold mb-2 block">Description *</label>
+                    <textarea name="description" rows="5" placeholder="Mention age, defects, or why you're selling..." class="w-full" required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="font-bold mb-2 block">Photos (Max 5)</label>
+                    <div class="border-2 border-dashed border-gray-200 rounded-lg p-8 text-center bg-gray-50 hover-scale cursor-pointer" onclick="document.getElementById('imgInput').click()">
+                        <div class="text-3xl mb-2">📸</div>
+                        <p class="text-muted small">Click to upload images</p>
+                        <input type="file" id="imgInput" name="images[]" multiple accept="image/*" class="hidden">
+                    </div>
+                    <div id="preview" class="flex gap-2 mt-4 overflow-x-auto"></div>
+                </div>
+
+                <hr class="my-4">
+
+                <div class="flex justify-between items-center">
+                    <a href="browse.php" class="text-muted">Cancel</a>
+                    <button type="submit" class="btn btn-primary px-8 py-3">Publish Listing</button>
+                </div>
+
+            </form>
         </div>
-        <div class="form-group">
-          <label>Condition *</label>
-          <div style="display: flex; gap: 8px; align-items: center;">
-            <select name="condition" id="condition-select" required>
-              <option value="">Select condition</option>
-              <option value="New">New</option>
-              <option value="Like New">Like New</option>
-              <option value="Used">Used</option>
-            </select>
-            <input type="text" id="new-condition-input" placeholder="Add new..." style="display:none; width: 120px;" />
-            <button type="button" id="add-condition-btn">Add</button>
-          </div>
-        </div>
-        <script>
-        document.addEventListener('DOMContentLoaded', function() {
-          const addBtn = document.getElementById('add-condition-btn');
-          const input = document.getElementById('new-condition-input');
-          const select = document.getElementById('condition-select');
-          let adding = false;
-          addBtn.addEventListener('click', function() {
-            if (!adding) {
-              input.style.display = 'inline-block';
-              input.focus();
-              addBtn.textContent = 'Save';
-              adding = true;
-            } else {
-              const val = input.value.trim();
-              if (val) {
-                const opt = document.createElement('option');
-                opt.value = val;
-                opt.textContent = val;
-                select.appendChild(opt);
-                select.value = val;
-                input.value = '';
-              }
-              input.style.display = 'none';
-              addBtn.textContent = 'Add';
-              adding = false;
-            }
-          });
-        });
-        </script>
-      </div>
-
-      <div class="form-group">
-        <label>Price *</label>
-        <input type="number" name="price" placeholder="TL" step="0.01" required>
-      </div>
-
-      <div class="form-group">
-        <label>Description *</label>
-        <textarea name="description" placeholder="Describe your item in detail..." required></textarea>
-      </div>
     </div>
-  </div>
-
-  <div class="create-photos-col" style="margin-top:4rem;">
-    <div class="form-card">
-      <h2>Photos</h2>
-      <div class="upload-area" onclick="document.getElementById('images').click()">
-        <p>Drag &amp; drop photos here or click to upload</p>
-        <small>You can upload up to 5 images.</small>
-        <input type="file" id="images" name="images[]" multiple accept="image/*">
-      </div>
-      <div class="preview-grid" id="preview"></div>
-
-      <h2 style="margin-top:1.5rem;">Location & Contact</h2>
-      <div class="form-group">
-        <label>Location</label>
-        <input type="text" name="location" placeholder="e.g., Main Library, Building A">
-      </div>
-      <div class="form-group">
-        <label>Contact Preference</label>
-        <select name="contact_pref">
-          <option>In-app messaging</option>
-          <option>Phone call</option>
-          <option>Email</option>
-        </select>
-      </div>
-
-      <div class="form-actions">
-        <a href="index.php" class="btn-cancel" style="text-decoration:none;text-align:center;">Cancel</a>
-        <button type="submit" class="btn-publish">Publish Listing</button>
-      </div>
-    </div>
-  </div>
-  </form>
 </div>
 
-
-
 <script>
-document.getElementById('images').addEventListener('change', function(e) {
+document.getElementById('imgInput').addEventListener('change', function(e) {
     const preview = document.getElementById('preview');
     preview.innerHTML = '';
-    Array.from(e.target.files).forEach((file, index) => {
-        if (file.type.startsWith('image/')) {
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                const div = document.createElement('div');
-                div.className = 'preview-item';
-                div.innerHTML = `<img src="${event.target.result}"><button class="preview-remove" onclick="event.preventDefault();">✕</button>`;
-                preview.appendChild(div);
-            };
-            reader.readAsDataURL(file);
+    [...e.target.files].forEach(file => {
+        const reader = new FileReader();
+        reader.onload = (re) => {
+            const div = document.createElement('div');
+            div.style = "width:60px; height:60px; border-radius:8px; overflow:hidden;";
+            div.innerHTML = `<img src="${re.target.result}" style="width:100%; height:100%; object-fit:cover;">`;
+            preview.appendChild(div);
         }
+        reader.readAsDataURL(file);
     });
 });
 </script>
-</body>
-</html>
+
+<?php require_once __DIR__ . '/../includes/footer.php'; ?>
