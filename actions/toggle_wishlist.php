@@ -1,0 +1,45 @@
+<?php
+// actions/toggle_wishlist.php
+require_once __DIR__ . '/../includes/bootstrap.php';
+
+// Check if user is logged in
+if (!isLoggedIn()) {
+    setFlash('error', 'Please login to save items to your wishlist.');
+    redirect(BASE_URL . 'pages/login.php');
+}
+
+$user_id = currentUserId();
+$product_id = $_POST['product_id'] ?? null;
+
+if (!$product_id) {
+    // Redirect immediately to the wishlist page
+    redirect(BASE_URL . 'pages/wishlist.php');
+}
+
+try {
+    // Check if already in wishlist
+    $stmt = $pdo->prepare("SELECT 1 FROM wishlists WHERE user_id = ? AND product_id = ?");
+    $stmt->execute([$user_id, $product_id]);
+    $existing = $stmt->fetch();
+
+    if ($existing) {
+        // Remove it
+        $stmt = $pdo->prepare("DELETE FROM wishlists WHERE user_id = ? AND product_id = ?");
+        $stmt->execute([$user_id, $product_id]);
+        setFlash('success', 'Product removed from your wishlist.');
+    } else {
+        // Add it
+        $stmt = $pdo->prepare("INSERT INTO wishlists (user_id, product_id) VALUES (?, ?)");
+        $stmt->execute([$user_id, $product_id]);
+        setFlash('success', 'Product saved to your wishlist!');
+    }
+
+    // Redirect immediately to wishlist page as requested
+    redirect(BASE_URL . 'pages/wishlist.php');
+
+} catch (PDOException $e) {
+    // Log error if needed and show message
+    setFlash('error', 'An error occurred while updating your wishlist.');
+    redirect($_SERVER['HTTP_REFERER'] ?? BASE_URL);
+}
+

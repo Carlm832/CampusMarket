@@ -3,160 +3,121 @@
 require_once __DIR__ . '/../config/constants.php';
 require_once __DIR__ . '/../includes/header.php';
 
-// Auth Check
-if (!isLoggedIn()) {
-    setFlash('error', 'Please login to list an item.');
-    redirect('login.php');
-}
+$pageTitle = "Create New Listing";
 
-$success = false;
-$error = '';
-
-// Handle Form Submission
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $title       = sanitize($_POST['title']);
-    $categoryId  = (int)$_POST['category_id'];
-    $price       = (float)$_POST['price'];
-    $condition   = sanitize($_POST['condition']);
-    $description = sanitize($_POST['description']);
-    $userId      = currentUserId();
-
-    try {
-        $pdo->beginTransaction();
-
-        // 1. Insert Product
-        $stmt = $pdo->prepare("INSERT INTO products (user_id, category_id, title, description, price, `condition`, status) VALUES (?, ?, ?, ?, ?, ?, 'active')");
-        $stmt->execute([$userId, $categoryId, $title, $description, $price, $condition]);
-        $productId = $pdo->lastInsertId();
-
-        // 2. Handle Image Uploads
-        if (!empty($_FILES['images']['name'][0])) {
-            $files = $_FILES['images'];
-            for ($i = 0; $i < count($files['name']); $i++) {
-                if ($i >= MAX_IMAGES) break; // Limit per listing
-
-                $fileData = [
-                    'name'     => $files['name'][$i],
-                    'type'     => $files['type'][$i],
-                    'tmp_name' => $files['tmp_name'][$i],
-                    'error'    => $files['error'][$i],
-                    'size'     => $files['size'][$i]
-                ];
-
-                $upload = handleUpload($fileData, 'products/');
-                if ($upload['success']) {
-                    $isPrimary = ($i === 0) ? 1 : 0;
-                    $stmtImg = $pdo->prepare("INSERT INTO product_images (product_id, image_path, is_primary) VALUES (?, ?, ?)");
-                    $stmtImg->execute([$productId, $upload['path'], $isPrimary]);
-                }
-            }
-        }
-
-        $pdo->commit();
-        $success = true;
-        setFlash('success', 'Your listing is live!');
-        redirect('browse.php');
-
-    } catch (Exception $e) {
-        $pdo->rollBack();
-        $error = "Failed to create listing: " . $e->getMessage();
-    }
-}
-
-// Fetch Categories
-$categories = $pdo->query("SELECT * FROM categories ORDER BY name ASC")->fetchAll();
+// Fetch categories for the dropdown
+$stmt = $pdo->query("SELECT id, name FROM categories ORDER BY name ASC");
+$categories = $stmt->fetchAll();
 ?>
 
-<div class="container mt-12 mb-20">
-    <div class="max-w-2xl mx-auto">
-        <h1 class="mb-2">List an Item</h1>
-        <p class="text-muted mb-8">Reach thousands of students instantly.</p>
+<div class="container" style="margin-top: 4rem; margin-bottom: 8rem; max-width: 1000px; padding: 0 2rem;">
+    <!-- Horizontal Stepper -->
+    <div style="display: flex; justify-content: center; align-items: center; gap: 2rem; margin-bottom: 4rem;">
+        <!-- Step 1: Active -->
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <div style="width: 40px; height: 40px; background: #2563eb; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1rem; box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3);">1</div>
+            <span style="font-weight: 700; color: #1e293b; font-size: 1.1rem;">Details</span>
+        </div>
+        
+        <!-- Connector -->
+        <div style="width: 60px; height: 2px; background: #e2e8f0;"></div>
+        
+        <!-- Step 2: Inactive -->
+        <div style="display: flex; align-items: center; gap: 1rem; opacity: 0.5;">
+            <div style="width: 40px; height: 40px; background: #f1f5f9; color: #64748b; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1rem;">2</div>
+            <span style="font-weight: 600; color: #64748b; font-size: 1.1rem;">Photos</span>
+        </div>
+        
+        <!-- Connector -->
+        <div style="width: 60px; height: 2px; background: #e2e8f0;"></div>
+        
+        <!-- Step 3: Inactive -->
+        <div style="display: flex; align-items: center; gap: 1rem; opacity: 0.5;">
+            <div style="width: 40px; height: 40px; background: #f1f5f9; color: #64748b; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1rem;">3</div>
+            <span style="font-weight: 600; color: #64748b; font-size: 1.1rem;">Preview</span>
+        </div>
+    </div>
 
-        <?php if ($error): ?>
-            <div class="flash flash-error mb-6"><?php echo $error; ?></div>
-        <?php endif; ?>
-
-        <div class="card p-8">
-            <form action="create_listing.php" method="POST" enctype="multipart/form-data" class="grid gap-6">
+    <!-- Form Content -->
+    <main style="width: 100%;">
+        <div style="background: white; border-radius: 1.5rem; border: 1px solid #f1f5f9; padding: 4rem; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.08);">
+                <h1 style="font-size: 2.25rem; font-weight: 800; color: #1e293b; margin-bottom: 3.5rem;">Create a New Listing</h1>
                 
-                <div class="form-group">
-                    <label class="font-bold mb-2 block">What are you selling? *</label>
-                    <input type="text" name="title" placeholder="e.g. Macbeth Textbook, 10th Edition" class="w-full" required>
-                </div>
+                <form action="process_listing.php" method="POST" style="display: flex; flex-direction: column; gap: 2.5rem;">
+                    
+                    <!-- Title -->
+                    <div>
+                        <label style="display: block; font-weight: 700; font-size: 1.1rem; color: #1e293b; margin-bottom: 0.75rem;">Title *</label>
+                        <input type="text" name="title" placeholder="e.g., iPhone 12 Pro 128GB" required 
+                               style="width: 100%; padding: 1.15rem 1.5rem; border-radius: 1rem; border: 1px solid #e2e8f0; font-size: 1.1rem; color: #1e293b; transition: border-color 0.2s; outline: none;"
+                               onfocus="this.style.borderColor='#2563eb'">
+                    </div>
 
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="form-group">
-                        <label class="font-bold mb-2 block">Category *</label>
-                        <select name="category_id" class="w-full" required>
-                            <option value="">Select Category</option>
+                    <!-- Category -->
+                    <div>
+                        <label style="display: block; font-weight: 700; font-size: 1.1rem; color: #1e293b; margin-bottom: 0.75rem;">Category *</label>
+                        <select name="category_id" required 
+                                style="width: 100%; padding: 1.15rem 1.5rem; border-radius: 1rem; border: 1px solid #e2e8f0; font-size: 1.1rem; color: #1e293b; appearance: none; background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2364748b%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E'); background-repeat: no-repeat; background-position: right 1.5rem center; background-size: 1.5rem; outline: none;"
+                                onfocus="this.style.borderColor='#2563eb'">
+                            <option value="">Select category</option>
                             <?php foreach ($categories as $cat): ?>
                                 <option value="<?php echo $cat['id']; ?>"><?php echo sanitize($cat['name']); ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
-                    <div class="form-group">
-                        <label class="font-bold mb-2 block">Price (<?php echo APP_CURRENCY; ?>) *</label>
-                        <input type="number" name="price" step="0.01" placeholder="0.00" class="w-full" required>
+
+                    <!-- Condition -->
+                    <div>
+                        <label style="display: block; font-weight: 700; font-size: 1.1rem; color: #1e293b; margin-bottom: 0.75rem;">Condition *</label>
+                        <select name="condition" required 
+                                style="width: 100%; padding: 1.15rem 1.5rem; border-radius: 1rem; border: 1px solid #e2e8f0; font-size: 1.1rem; color: #1e293b; appearance: none; background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2364748b%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E'); background-repeat: no-repeat; background-position: right 1.5rem center; background-size: 1.5rem; outline: none;"
+                                onfocus="this.style.borderColor='#2563eb'">
+                            <option value="">Select condition</option>
+                            <option value="new">New</option>
+                            <option value="like_new">Like New</option>
+                            <option value="used">Used</option>
+                            <option value="poor">Poor</option>
+                        </select>
                     </div>
-                </div>
 
-                <div class="form-group">
-                    <label class="font-bold mb-2 block">Condition *</label>
-                    <div class="flex gap-4">
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="radio" name="condition" value="new" required> <span>New</span>
-                        </label>
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="radio" name="condition" value="like_new"> <span>Like New</span>
-                        </label>
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="radio" name="condition" value="used" checked> <span>Used</span>
-                        </label>
+                    <!-- Price -->
+                    <div>
+                        <label style="display: block; font-weight: 700; font-size: 1.1rem; color: #1e293b; margin-bottom: 0.75rem;">Price (₺) *</label>
+                        <div style="position: relative;">
+                            <input type="number" step="0.01" name="price" placeholder="0.00" required 
+                                   style="width: 100%; padding: 1.15rem 1.5rem; border-radius: 1rem; border: 1px solid #e2e8f0; font-size: 1.1rem; color: #1e293b; outline: none;"
+                                   onfocus="this.style.borderColor='#2563eb'">
+                        </div>
                     </div>
-                </div>
 
-                <div class="form-group">
-                    <label class="font-bold mb-2 block">Description *</label>
-                    <textarea name="description" rows="5" placeholder="Mention age, defects, or why you're selling..." class="w-full" required></textarea>
-                </div>
-
-                <div class="form-group">
-                    <label class="font-bold mb-2 block">Photos (Max 5)</label>
-                    <div class="border-2 border-dashed border-gray-200 rounded-lg p-8 text-center bg-gray-50 hover-scale cursor-pointer" onclick="document.getElementById('imgInput').click()">
-                        <div class="text-3xl mb-2">📸</div>
-                        <p class="text-muted small">Click to upload images</p>
-                        <input type="file" id="imgInput" name="images[]" multiple accept="image/*" class="hidden">
+                    <!-- Description -->
+                    <div>
+                        <label style="display: block; font-weight: 700; font-size: 1.1rem; color: #1e293b; margin-bottom: 0.75rem;">Description *</label>
+                        <textarea name="description" placeholder="Describe your item in detail..." required rows="6"
+                                  style="width: 100%; padding: 1.15rem 1.5rem; border-radius: 1rem; border: 1px solid #e2e8f0; font-size: 1.1rem; color: #1e293b; resize: vertical; outline: none; transition: border-color 0.2s;"
+                                  onfocus="this.style.borderColor='#2563eb'"></textarea>
+                        <div style="text-align: right; margin-top: 0.5rem; color: #94a3b8; font-size: 0.875rem;">0 / 1000</div>
                     </div>
-                    <div id="preview" class="flex gap-2 mt-4 overflow-x-auto"></div>
-                </div>
 
-                <hr class="my-4">
+                    <!-- Tags -->
+                    <div>
+                        <label style="display: block; font-weight: 700; font-size: 1.1rem; color: #1e293b; margin-bottom: 0.75rem;">Tags</label>
+                        <input type="text" name="tags" placeholder="Add tags (e.g. apple, iphone, gadget)" 
+                               style="width: 100%; padding: 1.15rem 1.5rem; border-radius: 1rem; border: 1px solid #e2e8f0; font-size: 1.1rem; color: #1e293b; outline: none;"
+                               onfocus="this.style.borderColor='#2563eb'">
+                        <p style="color: #94a3b8; font-size: 0.875rem; margin-top: 0.5rem; margin-bottom: 0;">Max 5 tags</p>
+                    </div>
 
-                <div class="flex justify-between items-center">
-                    <a href="browse.php" class="text-muted">Cancel</a>
-                    <button type="submit" class="btn btn-primary px-8 py-3">Publish Listing</button>
-                </div>
+                    <!-- Action Buttons -->
+                    <div style="display: flex; justify-content: flex-end; gap: 1.5rem; margin-top: 2rem;">
+                        <button type="button" style="background: white; border: 1px solid #e2e8f0; color: #64748b; padding: 1rem 2.5rem; border-radius: 1rem; font-weight: 700; font-size: 1.1rem; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.backgroundColor='#f8fafc'" onmouseout="this.style.backgroundColor='white'">Cancel</button>
+                        <button type="submit" style="background: #2563eb; border: none; color: white; padding: 1rem 2.5rem; border-radius: 1rem; font-weight: 700; font-size: 1.1rem; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);" onmouseover="this.style.backgroundColor='#1d4ed8'" onmouseout="this.style.backgroundColor='#2563eb'">Next: Photos</button>
+                    </div>
 
-            </form>
-        </div>
+                </form>
+            </div>
+        </main>
     </div>
 </div>
-
-<script>
-document.getElementById('imgInput').addEventListener('change', function(e) {
-    const preview = document.getElementById('preview');
-    preview.innerHTML = '';
-    [...e.target.files].forEach(file => {
-        const reader = new FileReader();
-        reader.onload = (re) => {
-            const div = document.createElement('div');
-            div.style = "width:60px; height:60px; border-radius:8px; overflow:hidden;";
-            div.innerHTML = `<img src="${re.target.result}" style="width:100%; height:100%; object-fit:cover;">`;
-            preview.appendChild(div);
-        }
-        reader.readAsDataURL(file);
-    });
-});
-</script>
 
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>

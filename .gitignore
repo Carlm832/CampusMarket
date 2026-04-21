@@ -13,3 +13,4 @@ Thumbs.db
 # Temporary / Uploads
 public/uploads/*
 !public/uploads/.gitkeep
+scratch/
