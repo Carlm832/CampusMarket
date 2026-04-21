@@ -18,7 +18,6 @@ $options = [
 try {
      $pdo = new PDO($dsn, $user, $pass, $options);
 } catch (\PDOException $e) {
-     // If the database doesn't exist, we might want to catch and handle or just fail
      die("Database connection failed: " . $e->getMessage());
 }
 
