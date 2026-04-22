@@ -28,4 +28,4 @@ session_name(SESSION_NAME);
 session_start();
 setFlash('success', 'You have been logged out.');
 
-redirect(BASE_URL . '/pages/login.php');
+redirect(BASE_URL . 'pages/login.php');

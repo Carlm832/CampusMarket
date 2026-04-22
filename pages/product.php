@@ -50,7 +50,7 @@ $rating = getSellerRating($pdo, $product['seller_id']);
             <div class="card overflow-hidden" style="background: white; border-radius: 2rem; border: 1px solid var(--border-light); position: relative;">
                 <div style="height: 500px; display: flex; align-items: center; justify-content: center; background: #fdfdfd;">
                     <?php if (!empty($images)): ?>
-                        <img id="main-image" src="<?php echo BASE_URL; ?>/public/<?php echo $images[0]['image_path']; ?>" alt="<?php echo sanitize($product['title']); ?>" style="max-width: 100%; max-height: 100%; object-fit: contain; padding: 1rem;">
+                        <img id="main-image" src="<?php echo BASE_URL; ?>public/<?php echo $images[0]['image_path']; ?>" alt="<?php echo sanitize($product['title']); ?>" style="max-width: 100%; max-height: 100%; object-fit: contain; padding: 1rem;">
                     <?php else: ?>
                         <div class="text-muted text-center">
                             <div style="font-size: 5rem; margin-bottom: 1rem;">📦</div>
@@ -70,8 +70,8 @@ $rating = getSellerRating($pdo, $product['seller_id']);
                     <?php foreach ($images as $index => $img): ?>
                         <div class="card p-1 cursor-pointer transition-all hover:border-primary <?php echo $index === 0 ? 'border-primary' : ''; ?>" 
                              style="width: 100px; height: 100px; flex-shrink: 0; border-radius: 1rem;" 
-                             onclick="document.getElementById('main-image').src='<?php echo BASE_URL; ?>/public/<?php echo $img['image_path']; ?>'; document.querySelectorAll('.gallery-thumb').forEach(el => el.classList.remove('border-primary')); this.classList.add('border-primary');">
-                            <img src="<?php echo BASE_URL; ?>/public/<?php echo $img['image_path']; ?>" alt="Thumb" class="gallery-thumb" style="width: 100%; height: 100%; object-fit: cover; border-radius: 0.75rem;">
+                             onclick="document.getElementById('main-image').src='<?php echo BASE_URL; ?>public/<?php echo $img['image_path']; ?>'; document.querySelectorAll('.gallery-thumb').forEach(el => el.classList.remove('border-primary')); this.classList.add('border-primary');">
+                            <img src="<?php echo BASE_URL; ?>public/<?php echo $img['image_path']; ?>" alt="Thumb" class="gallery-thumb" style="width: 100%; height: 100%; object-fit: cover; border-radius: 0.75rem;">
                         </div>
                     <?php endforeach; ?>
                 </div>
