@@ -2,6 +2,7 @@
 // pages/create_listing.php
 require_once __DIR__ . '/../config/constants.php';
 require_once __DIR__ . '/../includes/header.php';
+requireLogin();
 
 $pageTitle = "Create New Listing";
 

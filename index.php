@@ -19,6 +19,7 @@ $topCategories = getTopCategories($pdo);
         </p>
         <div class="flex justify-center gap-4">
             <a href="pages/browse.php" class="btn" style="background: white; color: var(--primary);">Start Browsing</a>
+            <?php if (isLoggedIn()): ?>
             <div class="flex gap-2">
                 <a href="pages/create_listing.php" class="btn btn-secondary" style="background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.3); color: white;">Sell an Item</a>
                 <a href="pages/wishlist.php" class="btn btn-secondary" style="background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.3); color: white; display: flex; align-items: center; gap: 0.5rem;">
@@ -26,6 +27,9 @@ $topCategories = getTopCategories($pdo);
                     My Wishlist
                 </a>
             </div>
+            <?php else: ?>
+                <a href="pages/register.php" class="btn btn-secondary" style="background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.3); color: white;">Join to Sell</a>
+            <?php endif; ?>
         </div>
     </div>
 </section>
@@ -68,7 +72,11 @@ $topCategories = getTopCategories($pdo);
             <?php if (empty($recentProducts)): ?>
                 <div class="col-span-full text-center py-12 bg-white rounded-lg border">
                     <p class="text-muted">No products listed yet. Be the first to sell something!</p>
-                    <a href="pages/create_listing.php" class="btn btn-primary">Create Listing</a>
+                    <?php if (isLoggedIn()): ?>
+                        <a href="pages/create_listing.php" class="btn btn-primary">Create Listing</a>
+                    <?php else: ?>
+                        <a href="pages/register.php" class="btn btn-primary">Join & Sell</a>
+                    <?php endif; ?>
                 </div>
             <?php else: ?>
                 <?php foreach ($recentProducts as $prod): ?>

@@ -29,8 +29,8 @@ require_once __DIR__ . '/bootstrap.php';
         <!-- Navigation Links -->
         <div class="nav-links">
             <a href="<?php echo BASE_URL; ?>pages/browse.php">Browse</a>
-            <a href="<?php echo BASE_URL; ?>pages/create_listing.php" style="font-weight: 500; color: var(--text-muted); font-size: 0.95rem;">Create Listing</a>
             <?php if (isLoggedIn()): ?>
+                <a href="<?php echo BASE_URL; ?>pages/create_listing.php" style="font-weight: 500; color: var(--text-muted); font-size: 0.95rem;">Create Listing</a>
                 <?php 
                     $unreadNotifications = countUnreadNotifications($pdo, currentUserId());
                 ?>

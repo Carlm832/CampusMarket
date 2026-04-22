@@ -2,12 +2,7 @@
 // pages/wishlist.php
 require_once __DIR__ . '/../config/constants.php';
 require_once __DIR__ . '/../includes/header.php';
-
-// Check if user is logged in
-if (!isset($_SESSION['user_id'])) {
-    header('Location: ' . BASE_URL . 'pages/login.php');
-    exit;
-}
+requireLogin();
 
 $user_id = $_SESSION['user_id'];
 
