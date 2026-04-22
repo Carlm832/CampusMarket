@@ -10,7 +10,7 @@ require_once __DIR__ . '/bootstrap.php';
     <title><?php echo isset($pageTitle) ? htmlspecialchars($pageTitle) . ' - CampusMarket' : 'CampusMarket'; ?></title>
     
     <!-- Member 5: Design System -->
-    <link rel="stylesheet" href="<?php echo BASE_URL; ?>/public/css/style.css">
+    <link rel="stylesheet" href="<?php echo BASE_URL; ?>public/css/style.css">
     
 </head>
 <body>
