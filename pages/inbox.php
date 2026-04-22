@@ -11,20 +11,26 @@ $stmt = $pdo->prepare("
     SELECT 
         m.id, m.sender_id, m.receiver_id, m.product_id, m.body, m.is_read, m.created_at,
         p.title as product_title,
-        IF(m.sender_id = :uid, m.receiver_id, m.sender_id) as other_user_id,
+        IF(m.sender_id = :uid1, m.receiver_id, m.sender_id) as other_user_id,
         u.username as other_username
     FROM messages m
     JOIN products p ON m.product_id = p.id
-    JOIN users u ON u.id = IF(m.sender_id = :uid, m.receiver_id, m.sender_id)
+    JOIN users u ON u.id = IF(m.sender_id = :uid2, m.receiver_id, m.sender_id)
     WHERE m.id IN (
         SELECT MAX(id)
         FROM messages 
-        WHERE sender_id = :uid OR receiver_id = :uid
-        GROUP BY product_id, IF(sender_id = :uid, receiver_id, sender_id)
+        WHERE sender_id = :uid3 OR receiver_id = :uid4
+        GROUP BY product_id, IF(sender_id = :uid5, receiver_id, sender_id)
     )
     ORDER BY m.created_at DESC
 ");
-$stmt->execute([':uid' => $currentUserId]);
+$stmt->execute([
+    ':uid1' => $currentUserId,
+    ':uid2' => $currentUserId,
+    ':uid3' => $currentUserId,
+    ':uid4' => $currentUserId,
+    ':uid5' => $currentUserId
+]);
 $conversations = $stmt->fetchAll();
 
 require_once __DIR__ . '/../includes/header.php';

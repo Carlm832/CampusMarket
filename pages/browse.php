@@ -62,66 +62,75 @@ $stmt->execute($params);
 $products = $stmt->fetchAll();
 ?>
 
-<div class="container mt-8 mb-16">
-    <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+<div class="container" style="margin-top: 3rem; margin-bottom: 8rem; max-width: 1400px; padding: 0 2rem;">
+    <div style="display: flex; align-items: flex-start; gap: 80px;">
         
         <!-- Sidebar Filters -->
-        <aside class="lg:col-span-1">
-            <div class="card p-6 sticky top-24">
-                <div class="flex justify-between items-center mb-6">
-                    <h3 class="mb-0">Filters</h3>
-                    <a href="browse.php" class="text-muted small">Clear all</a>
+        <aside style="width: 300px; flex-shrink: 0;">
+            <div class="card" style="padding: 2.5rem; position: sticky; top: 6rem; border-radius: 1.5rem; border: 1px solid #f1f5f9; box-shadow: 0 4px 12px -2px rgba(0,0,0,0.05); background: white;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2.5rem;">
+                    <h3 style="margin-bottom: 0; font-size: 1.4rem; font-weight: 800; color: #1e293b;">Filters</h3>
+                    <a href="browse.php" style="font-weight: 600; text-decoration: none; color: #3b82f6; font-size: 0.875rem;">Clear all</a>
                 </div>
-
-                <form method="GET" action="browse.php">
+                
+                <form method="GET" action="browse.php" style="display: flex; flex-direction: column; gap: 2.5rem;">
                     <!-- Category -->
-                    <div class="mb-6">
-                        <label class="block mb-3 font-bold">Category</label>
-                        <select name="category" class="w-full" onchange="this.form.submit()">
+                    <div>
+                        <label style="font-weight: 700; font-size: 1rem; color: #1e293b; margin-bottom: 0.75rem; display: block;">Category</label>
+                        <select name="category" class="form-control" style="border-radius: 0.8rem; border: 1px solid #e2e8f0; padding: 0.8rem; width: 100%; height: auto;" onchange="this.form.submit()">
                             <option value="">All Categories</option>
                             <?php foreach ($categories as $cat): ?>
                                 <option value="<?php echo $cat['id']; ?>" <?php echo $catFilter == $cat['id'] ? 'selected' : ''; ?>>
-                                    <?php echo sanitize($cat['name']); ?> (<?php echo $cat['product_count']; ?>)
+                                    <?php echo sanitize($cat['name']); ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>
                     </div>
 
-                    <!-- Price -->
-                    <div class="mb-6">
-                        <label class="block mb-3 font-bold">Price Range</label>
-                        <div class="flex gap-2 items-center">
-                            <input type="number" name="min_price" placeholder="Min" value="<?php echo sanitize($minPrice); ?>" class="w-full">
-                            <span class="text-muted">-</span>
-                            <input type="number" name="max_price" placeholder="Max" value="<?php echo sanitize($maxPrice); ?>" class="w-full">
+                    <!-- Price Range -->
+                    <div>
+                        <label style="font-weight: 700; font-size: 1rem; color: #1e293b; margin-bottom: 0.75rem; display: block;">Price Range</label>
+                        <div style="display: flex; gap: 1rem; align-items: center;">
+                            <input type="number" name="min_price" placeholder="Min" value="<?php echo sanitize($minPrice); ?>" class="form-control" style="border-radius: 0.8rem; border: 1px solid #e2e8f0; padding: 0.8rem; flex: 1; height: auto;">
+                            <span style="color: #cbd5e1;">—</span>
+                            <input type="number" name="max_price" placeholder="Max" value="<?php echo sanitize($maxPrice); ?>" class="form-control" style="border-radius: 0.8rem; border: 1px solid #e2e8f0; padding: 0.8rem; flex: 1; height: auto;">
                         </div>
                     </div>
 
                     <!-- Condition -->
-                    <div class="mb-8">
-                        <label class="block mb-3 font-bold">Condition</label>
-                        <select name="condition" class="w-full" onchange="this.form.submit()">
+                    <div>
+                        <label style="font-weight: 700; font-size: 1rem; color: #1e293b; margin-bottom: 0.75rem; display: block;">Condition</label>
+                        <select name="condition" class="form-control" style="border-radius: 0.8rem; border: 1px solid #e2e8f0; padding: 0.8rem; width: 100%; height: auto;" onchange="this.form.submit()">
                             <option value="">Any Condition</option>
                             <option value="new" <?php echo $condFilter == 'new' ? 'selected' : ''; ?>>New</option>
                             <option value="like_new" <?php echo $condFilter == 'like_new' ? 'selected' : ''; ?>>Like New</option>
                             <option value="used" <?php echo $condFilter == 'used' ? 'selected' : ''; ?>>Used</option>
-                            <option value="fair" <?php echo $condFilter == 'fair' ? 'selected' : ''; ?>>Fair</option>
+                            <option value="poor" <?php echo $condFilter == 'poor' ? 'selected' : ''; ?>>Poor / Fair</option>
                         </select>
                     </div>
 
-                    <button type="submit" class="btn btn-primary w-full">Apply Filters</button>
+                    <button type="submit" class="btn btn-primary" style="border-radius: 0.8rem; background: #2563eb; border: none; font-weight: 700; font-size: 1rem; padding: 1.15rem; color: white; cursor: pointer; transition: background 0.2s;">Apply Filters</button>
                 </form>
             </div>
         </aside>
 
         <!-- Results -->
-        <main class="lg:col-span-3">
-            <div class="flex justify-between items-center mb-8">
-                <h2 class="mb-0"><?php echo count($products); ?> Items Found</h2>
-                <form method="GET" class="flex items-center gap-2">
-                    <?php if($catFilter) echo '<input type="hidden" name="category" value="'.$catFilter.'">'; ?>
-                    <?php if($condFilter) echo '<input type="hidden" name="condition" value="'.$condFilter.'">'; ?>
-                    <select name="sort" class="sort-select" onchange="this.form.submit()">
+        <main style="flex: 1; min-width: 0;">
+            <!-- Results Header -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4rem; width: 100%; gap: 2rem;">
+                <h2 style="margin-bottom: 0; font-size: 1.8rem; font-weight: 800; color: #1e293b; white-space: nowrap;">
+                    <span style="color: #2563eb;"><?php echo count($products); ?></span> Items Found
+                    <?php if ($catFilter): ?>
+                        <span style="color: #64748b; font-size: 1.1rem; font-weight: 500; margin-left: 0.75rem;">in <?php echo is_numeric($catFilter) ? 'Selected Category' : sanitize($catFilter); ?></span>
+                    <?php endif; ?>
+                </h2>
+                <form method="GET" style="display: flex; align-items: center; gap: 1.5rem; flex-shrink: 0;">
+                    <?php if($catFilter) echo '<input type="hidden" name="category" value="'.sanitize($catFilter).'">'; ?>
+                    <?php if($condFilter) echo '<input type="hidden" name="condition" value="'.sanitize($condFilter).'">'; ?>
+                    <?php if($minPrice) echo '<input type="hidden" name="min_price" value="'.sanitize($minPrice).'">'; ?>
+                    <?php if($maxPrice) echo '<input type="hidden" name="max_price" value="'.sanitize($maxPrice).'">'; ?>
+                    <label style="font-weight: 600; font-size: 1rem; color: #64748b; white-space: nowrap;">Sort by:</label>
+                    <select name="sort" class="form-control" style="padding: 0.75rem 2.5rem 0.75rem 1.25rem; width: 220px; font-size: 1rem; border-radius: 0.8rem; border: 1px solid #e2e8f0; background-color: white; color: #1e293b; font-weight: 500; cursor: pointer;" onchange="this.form.submit()">
                         <option value="latest" <?php echo $sort == 'latest' ? 'selected' : ''; ?>>Latest First</option>
                         <option value="price_asc" <?php echo $sort == 'price_asc' ? 'selected' : ''; ?>>Price: Low to High</option>
                         <option value="price_desc" <?php echo $sort == 'price_desc' ? 'selected' : ''; ?>>Price: High to Low</option>
@@ -130,40 +139,24 @@ $products = $stmt->fetchAll();
             </div>
 
             <?php if (empty($products)): ?>
-                <div class="card p-12 text-center">
-                    <div class="mb-4" style="font-size: 3rem;">🔍</div>
-                    <h3>No items found</h3>
-                    <p class="text-muted">Try adjusting your filters or search keywords.</p>
-                    <a href="browse.php" class="btn btn-secondary mt-4">Reset Browse</a>
+                <div class="card" style="padding: 5rem; text-align: center; border-radius: 1.5rem; background: white; border: 1px solid #f1f5f9; box-shadow: 0 4px 12px -2px rgba(0,0,0,0.05);">
+                    <div style="margin-bottom: 1.5rem; font-size: 4rem;">🔍</div>
+                    <h3 style="font-weight: 800; font-size: 1.75rem;">No items found</h3>
+                    <p style="color: #64748b; font-size: 1.1rem; margin-bottom: 2rem;">Try adjusting your filters or search keywords.</p>
+                    <a href="browse.php" class="btn btn-secondary" style="border-radius: 0.8rem; padding: 0.8rem 2rem; font-weight: 600; text-decoration: none;">Reset Browse</a>
                 </div>
             <?php else: ?>
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 3.5rem;">
                     <?php foreach ($products as $prod): ?>
-                        <a href="product.php?id=<?php echo $prod['id']; ?>" class="card card-hover">
-                            <div style="height: 180px; background: var(--bg-main); overflow: hidden; position: relative;">
-                                <?php if ($prod['image_path']): ?>
-                                    <img src="<?php echo BASE_URL; ?>/public/<?php echo $prod['image_path']; ?>" alt="<?php echo sanitize($prod['title']); ?>" style="width: 100%; height: 100%; object-fit: cover;">
-                                <?php else: ?>
-                                    <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-center; color: #999;">No Image</div>
-                                <?php endif; ?>
-                                <div style="position: absolute; top: 0.5rem; right: 0.5rem;">
-                                    <?php $badge = conditionBadge($prod['condition']); ?>
-                                    <span class="badge <?php echo $badge['class']; ?> shadow-sm"><?php echo $badge['label']; ?></span>
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                <p class="text-muted small mb-1"><?php echo sanitize($prod['category_name']); ?></p>
-                                <h4 class="mb-2" style="font-size: 1rem; line-height: 1.4;"><?php echo sanitize($prod['title']); ?></h4>
-                                <div class="flex justify-between items-end mt-4">
-                                    <span style="font-weight: 800; color: var(--text-main); font-size: 1.15rem;"><?php echo formatPrice($prod['price']); ?></span>
-                                    <span class="text-muted small">@<?php echo sanitize($prod['seller_name']); ?></span>
-                                </div>
-                            </div>
-                        </a>
+                        <?php include __DIR__ . '/../includes/product_card_template.php'; ?>
                     <?php endforeach; ?>
                 </div>
             <?php endif; ?>
         </main>
+    </div>
+</div>
+    </div>
+</div>
     </div>
 </div>
 
