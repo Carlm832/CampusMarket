@@ -120,7 +120,7 @@ $rating = getSellerRating($pdo, $product['seller_id']);
                 </div>
 
                 <div class="flex flex-col gap-4">
-                    <a href="messages.php?to=<?php echo $product['seller_id']; ?>&product=<?php echo $product['id']; ?>" class="btn btn-primary w-full py-5 text-xl" style="border-radius: var(--radius-full); box-shadow: 0 10px 20px -5px rgba(99, 102, 241, 0.4);">
+                    <a href="messages.php?other_user_id=<?php echo $product['seller_id']; ?>&product_id=<?php echo $product['id']; ?>" class="btn btn-primary w-full py-5 text-xl" style="border-radius: var(--radius-full); box-shadow: 0 10px 20px -5px rgba(99, 102, 241, 0.4);">
                         Message Seller
                     </a>
                     

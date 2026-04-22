@@ -29,7 +29,7 @@ $stmt->execute([
     ':uid2' => $currentUserId,
     ':uid3' => $currentUserId,
     ':uid4' => $currentUserId,
-    ':uid5' => $currentUserId
+    ':uid5' => $currentUserId,
 ]);
 $conversations = $stmt->fetchAll();
 

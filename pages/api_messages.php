@@ -11,12 +11,30 @@ if (!isLoggedIn()) {
 $currentUserId = currentUserId();
 $action = $_POST['action'] ?? $_GET['action'] ?? '';
 
+function isValidProductConversation(PDO $pdo, int $productId, int $currentUserId, int $otherUserId): bool {
+    if ($productId <= 0 || $currentUserId <= 0 || $otherUserId <= 0 || $currentUserId === $otherUserId) {
+        return false;
+    }
+
+    $stmt = $pdo->prepare("SELECT user_id FROM products WHERE id = :pid");
+    $stmt->execute([':pid' => $productId]);
+    $sellerId = (int) $stmt->fetchColumn();
+
+    return $sellerId > 0
+        && ($currentUserId === $sellerId || $otherUserId === $sellerId);
+}
+
 if ($action === 'fetch') {
     $productId = (int)($_GET['product_id'] ?? 0);
     $otherUserId = (int)($_GET['other_user_id'] ?? 0);
     
     if (!$productId || !$otherUserId) {
         echo json_encode(['error' => 'Missing parameters']);
+        exit;
+    }
+
+    if (!isValidProductConversation($pdo, $productId, $currentUserId, $otherUserId)) {
+        echo json_encode(['error' => 'Invalid conversation context']);
         exit;
     }
     
@@ -32,18 +50,20 @@ if ($action === 'fetch') {
     $stmt = $pdo->prepare("
         SELECT m.*, u.username as sender_name 
         FROM messages m 
-        JOIN users u ON m.sender_id = u.id 
-        WHERE m.product_id = :pid 
+        JOIN users u ON m.sender_id = u.id
+        WHERE m.product_id = :pid
           AND (
-              (m.sender_id = :uid AND m.receiver_id = :other) OR 
-              (m.sender_id = :other AND m.receiver_id = :uid)
+              (m.sender_id = :uid1 AND m.receiver_id = :other1) OR
+              (m.sender_id = :other2 AND m.receiver_id = :uid2)
           )
         ORDER BY m.created_at ASC
     ");
     $stmt->execute([
         ':pid' => $productId,
-        ':uid' => $currentUserId,
-        ':other' => $otherUserId
+        ':uid1' => $currentUserId,
+        ':other1' => $otherUserId,
+        ':other2' => $otherUserId,
+        ':uid2' => $currentUserId
     ]);
     $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
@@ -70,6 +90,11 @@ if ($action === 'send') {
     
     if (!$productId || !$receiverId || empty($body)) {
         echo json_encode(['error' => 'Missing or empty parameters']);
+        exit;
+    }
+
+    if (!isValidProductConversation($pdo, $productId, $currentUserId, $receiverId)) {
+        echo json_encode(['error' => 'Invalid conversation context']);
         exit;
     }
     
