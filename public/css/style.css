@@ -452,3 +452,60 @@ p {
    border-top: 1px solid rgba(255, 255, 255, 0.1);
   color: var(--text-muted);
 }
+
+/* Premium UI Utility Extensions */
+.hover-scale { transition: var(--transition); }
+.hover-scale:hover { transform: translateY(-4px) scale(1.02); box-shadow: var(--shadow-lg); border-color: var(--primary-light); }
+
+.glass-panel {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
+}
+
+.glass-panel-dark {
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+  color: white;
+}
+
+.glass-panel-dark .text-muted {
+    color: rgba(255,255,255,0.7);
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .5; }
+}
+
+.bg-accent-light { background-color: #fff1f2; }
+.border-accent { border-color: var(--accent); }
+.text-accent { color: var(--accent); }
+
+/* Beautiful modern inputs and boxes */
+.premium-input {
+    background: rgba(255,255,255,0.9);
+    border: 1px solid rgba(0,0,0,0.05);
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+    border-radius: var(--radius-md);
+    transition: all 0.3s ease;
+}
+.premium-input:focus {
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15), inset 0 2px 4px rgba(0,0,0,0.02);
+    border-color: var(--primary);
+}
+
+.gradient-text {
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}

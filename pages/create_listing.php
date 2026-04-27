@@ -2,123 +2,178 @@
 // pages/create_listing.php
 require_once __DIR__ . '/../config/constants.php';
 require_once __DIR__ . '/../includes/header.php';
-requireLogin();
 
-$pageTitle = "Create New Listing";
+// Auth Check
+if (!isLoggedIn()) {
+    setFlash('error', 'Please login to list an item.');
+    redirect('login.php');
+}
 
-// Fetch categories for the dropdown
-$stmt = $pdo->query("SELECT id, name FROM categories ORDER BY name ASC");
-$categories = $stmt->fetchAll();
+$success = false;
+$error = '';
+
+// Handle Form Submission
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $title       = sanitize($_POST['title']);
+    $categoryId  = (int)$_POST['category_id'];
+    $price       = (float)$_POST['price'];
+    $condition   = sanitize($_POST['condition']);
+    $description = sanitize($_POST['description']);
+    $userId      = currentUserId();
+
+    try {
+        $pdo->beginTransaction();
+
+        // 1. Insert Product
+        $stmt = $pdo->prepare("INSERT INTO products (user_id, category_id, title, description, price, `condition`, status) VALUES (?, ?, ?, ?, ?, ?, 'active')");
+        $stmt->execute([$userId, $categoryId, $title, $description, $price, $condition]);
+        $productId = $pdo->lastInsertId();
+
+        // 2. Handle Image Uploads
+        if (!empty($_FILES['images']['name'][0])) {
+            $files = $_FILES['images'];
+            for ($i = 0; $i < count($files['name']); $i++) {
+                if ($i >= MAX_IMAGES) break; // Limit per listing
+
+                $fileData = [
+                    'name'     => $files['name'][$i],
+                    'type'     => $files['type'][$i],
+                    'tmp_name' => $files['tmp_name'][$i],
+                    'error'    => $files['error'][$i],
+                    'size'     => $files['size'][$i]
+                ];
+
+                $upload = handleUpload($fileData, 'products/');
+                if ($upload['success']) {
+                    $isPrimary = ($i === 0) ? 1 : 0;
+                    $stmtImg = $pdo->prepare("INSERT INTO product_images (product_id, image_path, is_primary) VALUES (?, ?, ?)");
+                    $stmtImg->execute([$productId, $upload['path'], $isPrimary]);
+                }
+            }
+        }
+
+        $pdo->commit();
+        $success = true;
+        setFlash('success', 'Your listing is live!');
+        redirect('browse.php');
+
+    } catch (Exception $e) {
+        $pdo->rollBack();
+        $error = "Failed to create listing: " . $e->getMessage();
+    }
+}
+
+// Fetch Categories
+$categories = $pdo->query("SELECT * FROM categories ORDER BY name ASC")->fetchAll();
 ?>
 
-<div class="container" style="margin-top: 4rem; margin-bottom: 8rem; max-width: 1000px; padding: 0 2rem;">
-    <!-- Horizontal Stepper -->
-    <div style="display: flex; justify-content: center; align-items: center; gap: 2rem; margin-bottom: 4rem;">
-        <!-- Step 1: Active -->
-        <div style="display: flex; align-items: center; gap: 1rem;">
-            <div style="width: 40px; height: 40px; background: #2563eb; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1rem; box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3);">1</div>
-            <span style="font-weight: 700; color: #1e293b; font-size: 1.1rem;">Details</span>
-        </div>
-        
-        <!-- Connector -->
-        <div style="width: 60px; height: 2px; background: #e2e8f0;"></div>
-        
-        <!-- Step 2: Inactive -->
-        <div style="display: flex; align-items: center; gap: 1rem; opacity: 0.5;">
-            <div style="width: 40px; height: 40px; background: #f1f5f9; color: #64748b; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1rem;">2</div>
-            <span style="font-weight: 600; color: #64748b; font-size: 1.1rem;">Photos</span>
-        </div>
-        
-        <!-- Connector -->
-        <div style="width: 60px; height: 2px; background: #e2e8f0;"></div>
-        
-        <!-- Step 3: Inactive -->
-        <div style="display: flex; align-items: center; gap: 1rem; opacity: 0.5;">
-            <div style="width: 40px; height: 40px; background: #f1f5f9; color: #64748b; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1rem;">3</div>
-            <span style="font-weight: 600; color: #64748b; font-size: 1.1rem;">Preview</span>
-        </div>
-    </div>
+<div class="container relative mt-16 mb-20 flex justify-center">
+    <!-- Decorative elements -->
+    <div style="position: absolute; top: -50px; left: 10%; width: 300px; height: 300px; border-radius: 50%; background: linear-gradient(135deg, var(--primaryLight), var(--secondaryLight)); opacity: 0.15; filter: blur(40px); z-index: -1;"></div>
+    <div style="position: absolute; bottom: -50px; right: 10%; width: 250px; height: 250px; border-radius: 50%; background: linear-gradient(135deg, #10b981, #3b82f6); opacity: 0.1; filter: blur(40px); z-index: -1;"></div>
 
-    <!-- Form Content -->
-    <main style="width: 100%;">
-        <div style="background: white; border-radius: 1.5rem; border: 1px solid #f1f5f9; padding: 4rem; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.08);">
-                <h1 style="font-size: 2.25rem; font-weight: 800; color: #1e293b; margin-bottom: 3.5rem;">Create a New Listing</h1>
+    <div class="w-full max-w-3xl">
+        <div class="text-center mb-8">
+            <h1 class="gradient-text mb-2" style="font-size: 2.75rem;">List an Item</h1>
+            <p class="text-muted text-lg">Reach thousands of students instantly</p>
+        </div>
+
+        <?php if ($error): ?>
+            <div style="background: rgba(239, 68, 68, 0.1); border-left: 4px solid #ef4444; color: #b91c1c; padding: 1rem; border-radius: var(--radius-sm); margin-bottom: 2rem; font-weight: 500;">
+                <?php echo sanitize($error); ?>
+            </div>
+        <?php endif; ?>
+
+        <div class="glass-panel" style="padding: 2.5rem; border-radius: var(--radius-xl); box-shadow: var(--shadow-xl); z-index: 10;">
+            <form action="create_listing.php" method="POST" enctype="multipart/form-data" class="grid gap-6">
                 
-                <form action="process_listing.php" method="POST" style="display: flex; flex-direction: column; gap: 2.5rem;">
-                    
-                    <!-- Title -->
-                    <div>
-                        <label style="display: block; font-weight: 700; font-size: 1.1rem; color: #1e293b; margin-bottom: 0.75rem;">Title *</label>
-                        <input type="text" name="title" placeholder="e.g., iPhone 12 Pro 128GB" required 
-                               style="width: 100%; padding: 1.15rem 1.5rem; border-radius: 1rem; border: 1px solid #e2e8f0; font-size: 1.1rem; color: #1e293b; transition: border-color 0.2s; outline: none;"
-                               onfocus="this.style.borderColor='#2563eb'">
-                    </div>
+                <div class="form-group">
+                    <label class="font-bold mb-2 block" style="color: var(--text-main);">What are you selling? *</label>
+                    <input type="text" name="title" placeholder="e.g. Macbeth Textbook, 10th Edition" class="w-full premium-input" style="padding: 0.8rem 1rem;" required>
+                </div>
 
-                    <!-- Category -->
-                    <div>
-                        <label style="display: block; font-weight: 700; font-size: 1.1rem; color: #1e293b; margin-bottom: 0.75rem;">Category *</label>
-                        <select name="category_id" required 
-                                style="width: 100%; padding: 1.15rem 1.5rem; border-radius: 1rem; border: 1px solid #e2e8f0; font-size: 1.1rem; color: #1e293b; appearance: none; background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2364748b%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E'); background-repeat: no-repeat; background-position: right 1.5rem center; background-size: 1.5rem; outline: none;"
-                                onfocus="this.style.borderColor='#2563eb'">
-                            <option value="">Select category</option>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="form-group">
+                        <label class="font-bold mb-2 block" style="color: var(--text-main);">Category *</label>
+                        <select name="category_id" class="w-full premium-input" style="padding: 0.8rem 1rem;" required>
+                            <option value="">Select Category</option>
                             <?php foreach ($categories as $cat): ?>
                                 <option value="<?php echo $cat['id']; ?>"><?php echo sanitize($cat['name']); ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
-
-                    <!-- Condition -->
-                    <div>
-                        <label style="display: block; font-weight: 700; font-size: 1.1rem; color: #1e293b; margin-bottom: 0.75rem;">Condition *</label>
-                        <select name="condition" required 
-                                style="width: 100%; padding: 1.15rem 1.5rem; border-radius: 1rem; border: 1px solid #e2e8f0; font-size: 1.1rem; color: #1e293b; appearance: none; background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2364748b%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E'); background-repeat: no-repeat; background-position: right 1.5rem center; background-size: 1.5rem; outline: none;"
-                                onfocus="this.style.borderColor='#2563eb'">
-                            <option value="">Select condition</option>
-                            <option value="new">New</option>
-                            <option value="like_new">Like New</option>
-                            <option value="used">Used</option>
-                            <option value="poor">Poor</option>
-                        </select>
-                    </div>
-
-                    <!-- Price -->
-                    <div>
-                        <label style="display: block; font-weight: 700; font-size: 1.1rem; color: #1e293b; margin-bottom: 0.75rem;">Price (₺) *</label>
-                        <div style="position: relative;">
-                            <input type="number" step="0.01" name="price" placeholder="0.00" required 
-                                   style="width: 100%; padding: 1.15rem 1.5rem; border-radius: 1rem; border: 1px solid #e2e8f0; font-size: 1.1rem; color: #1e293b; outline: none;"
-                                   onfocus="this.style.borderColor='#2563eb'">
+                    <div class="form-group">
+                        <label class="font-bold mb-2 block" style="color: var(--text-main);">Price (<?php echo APP_CURRENCY; ?>) *</label>
+                        <div class="relative">
+                            <span style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); font-weight: bold; color: var(--text-muted);">$</span>
+                            <input type="number" name="price" step="0.01" placeholder="0.00" class="w-full premium-input" style="padding: 0.8rem 1rem 0.8rem 2rem;" required>
                         </div>
                     </div>
+                </div>
 
-                    <!-- Description -->
-                    <div>
-                        <label style="display: block; font-weight: 700; font-size: 1.1rem; color: #1e293b; margin-bottom: 0.75rem;">Description *</label>
-                        <textarea name="description" placeholder="Describe your item in detail..." required rows="6"
-                                  style="width: 100%; padding: 1.15rem 1.5rem; border-radius: 1rem; border: 1px solid #e2e8f0; font-size: 1.1rem; color: #1e293b; resize: vertical; outline: none; transition: border-color 0.2s;"
-                                  onfocus="this.style.borderColor='#2563eb'"></textarea>
-                        <div style="text-align: right; margin-top: 0.5rem; color: #94a3b8; font-size: 0.875rem;">0 / 1000</div>
+                <div class="form-group">
+                    <label class="font-bold mb-2 block" style="color: var(--text-main);">Condition *</label>
+                    <div class="flex flex-wrap gap-4">
+                        <label class="flex items-center gap-2 cursor-pointer glass-panel py-2 px-4 hover-scale" style="border-radius: var(--radius-full); border: 2px solid transparent; transition: all 0.2s;" onclick="this.parentElement.querySelectorAll('label').forEach(l => l.style.borderColor='transparent'); this.style.borderColor='var(--primary)';">
+                            <input type="radio" name="condition" value="new" required class="m-0 accent-primary" style="accent-color: var(--primary);"> <span class="font-medium">New</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer glass-panel py-2 px-4 hover-scale" style="border-radius: var(--radius-full); border: 2px solid transparent; transition: all 0.2s;" onclick="this.parentElement.querySelectorAll('label').forEach(l => l.style.borderColor='transparent'); this.style.borderColor='var(--primary)';">
+                            <input type="radio" name="condition" value="like_new" class="m-0" style="accent-color: var(--primary);"> <span class="font-medium">Like New</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer glass-panel py-2 px-4 hover-scale" style="border-radius: var(--radius-full); border: 2px solid var(--primary); transition: all 0.2s;" onclick="this.parentElement.querySelectorAll('label').forEach(l => l.style.borderColor='transparent'); this.style.borderColor='var(--primary)';">
+                            <input type="radio" name="condition" value="used" checked class="m-0" style="accent-color: var(--primary);"> <span class="font-medium">Used</span>
+                        </label>
                     </div>
+                </div>
 
-                    <!-- Tags -->
-                    <div>
-                        <label style="display: block; font-weight: 700; font-size: 1.1rem; color: #1e293b; margin-bottom: 0.75rem;">Tags</label>
-                        <input type="text" name="tags" placeholder="Add tags (e.g. apple, iphone, gadget)" 
-                               style="width: 100%; padding: 1.15rem 1.5rem; border-radius: 1rem; border: 1px solid #e2e8f0; font-size: 1.1rem; color: #1e293b; outline: none;"
-                               onfocus="this.style.borderColor='#2563eb'">
-                        <p style="color: #94a3b8; font-size: 0.875rem; margin-top: 0.5rem; margin-bottom: 0;">Max 5 tags</p>
+                <div class="form-group">
+                    <label class="font-bold mb-2 block" style="color: var(--text-main);">Description *</label>
+                    <textarea name="description" rows="5" placeholder="Mention age, defects, or why you're selling..." class="w-full premium-input" style="padding: 1rem; border-radius: var(--radius-lg);" required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="font-bold mb-2 block" style="color: var(--text-main);">Photos (Max 5)</label>
+                    <div class="border-2 border-dashed rounded-lg p-8 text-center hover-scale cursor-pointer transition-colors" style="border-color: rgba(99,102,241,0.3); background: rgba(99,102,241,0.03);" onclick="document.getElementById('imgInput').click()" onmouseover="this.style.background='rgba(99,102,241,0.06)'" onmouseout="this.style.background='rgba(99,102,241,0.03)'">
+                        <div class="text-4xl mb-3">📸</div>
+                        <p class="font-bold mb-1" style="color: var(--primary);">Upload Images</p>
+                        <p class="text-muted small">PNG, JPG up to 5MB</p>
+                        <input type="file" id="imgInput" name="images[]" multiple accept="image/*" class="hidden">
                     </div>
+                    <div id="preview" class="flex gap-3 mt-4 overflow-x-auto pb-2"></div>
+                </div>
 
-                    <!-- Action Buttons -->
-                    <div style="display: flex; justify-content: flex-end; gap: 1.5rem; margin-top: 2rem;">
-                        <button type="button" style="background: white; border: 1px solid #e2e8f0; color: #64748b; padding: 1rem 2.5rem; border-radius: 1rem; font-weight: 700; font-size: 1.1rem; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.backgroundColor='#f8fafc'" onmouseout="this.style.backgroundColor='white'">Cancel</button>
-                        <button type="submit" style="background: #2563eb; border: none; color: white; padding: 1rem 2.5rem; border-radius: 1rem; font-weight: 700; font-size: 1.1rem; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);" onmouseover="this.style.backgroundColor='#1d4ed8'" onmouseout="this.style.backgroundColor='#2563eb'">Next: Photos</button>
-                    </div>
+                <hr style="border-color: rgba(0,0,0,0.05); margin: 1rem 0;">
 
-                </form>
-            </div>
-        </main>
+                <div class="flex justify-between items-center">
+                    <a href="browse.php" class="text-muted font-medium hover:text-main transition-colors">Cancel</a>
+                    <button type="submit" class="btn btn-primary px-8 py-3 hover-scale shadow-lg" style="border-radius: var(--radius-full); font-weight: bold; font-size: 1.1rem;">Publish Listing ✨</button>
+                </div>
+
+            </form>
+        </div>
     </div>
 </div>
+
+<style>
+    input[type="radio"] { width: 1.25rem; height: 1.25rem; }
+    textarea { resize: vertical; }
+</style>
+
+<script>
+document.getElementById('imgInput').addEventListener('change', function(e) {
+    const preview = document.getElementById('preview');
+    preview.innerHTML = '';
+    [...e.target.files].forEach(file => {
+        const reader = new FileReader();
+        reader.onload = (re) => {
+            const div = document.createElement('div');
+            div.style = "width:80px; height:80px; border-radius: var(--radius-md); overflow:hidden; border: 2px solid var(--primaryLight); box-shadow: var(--shadow-sm); flex-shrink: 0;";
+            div.innerHTML = `<img src="${re.target.result}" style="width:100%; height:100%; object-fit:cover;">`;
+            preview.appendChild(div);
+        }
+        reader.readAsDataURL(file);
+    });
+});
+</script>
 
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>
