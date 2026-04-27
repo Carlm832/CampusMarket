@@ -82,7 +82,7 @@ function currentUserId(): ?int {
 function requireLogin(): void {
     if (!isLoggedIn()) {
         setFlash('error', 'You must be logged in to access that page.');
-        redirect(BASE_URL . '/pages/login.php');
+        redirect(BASE_URL . 'pages/login.php');
     }
 }
 
@@ -93,7 +93,7 @@ function requireAdmin(): void {
     requireLogin();
     if (!isAdmin()) {
         setFlash('error', 'You do not have permission to access that page.');
-        redirect(BASE_URL . '/index.php');
+        redirect(BASE_URL . 'index.php');
     }
 }
 
@@ -103,7 +103,7 @@ function requireAdmin(): void {
  * Format a price in Turkish Lira (Local work)
  */
 function formatPrice($amount): string {
-    return number_format((float)$amount) . ' TL';
+    return number_format((float)$amount) . ' ' . APP_CURRENCY;
 }
 
 /**
@@ -291,7 +291,7 @@ function getSellerRating(PDO $pdo, int $sellerId): array {
  */
 function avatarUrl(?string $avatarPath): string {
     if (!empty($avatarPath)) {
-        return BASE_URL . '/public/' . ltrim($avatarPath, '/');
+        return BASE_URL . 'public/' . ltrim($avatarPath, '/');
     }
     return 'https://www.gravatar.com/avatar/?d=mp&s=200';
 }

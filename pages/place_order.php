@@ -1,7 +1,6 @@
 <?php
 // pages/place_order.php
-require_once __DIR__ . '/../config/constants.php';
-require_once __DIR__ . '/../includes/header.php';
+require_once __DIR__ . '/../includes/bootstrap.php';
 requireLogin();
 
 $currentUserId = currentUserId();
@@ -50,11 +49,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             createNotification($pdo, $product['user_id'], 'order', "New Order Placed!", "Someone wants to buy '{$product['title']}'. Check your sales!", $orderId);
             $pdo->commit();
             setFlash('success', 'Order placed! The seller has been notified.');
-            redirect('my_orders.php');
+            redirect(BASE_URL . '/pages/my_orders.php');
         } catch (PDOException $e) { $pdo->rollBack(); $error = "Something went wrong. Please try again."; }
     }
 }
 $pageTitle = "Complete Your Order";
+require_once __DIR__ . '/../includes/header.php';
 ?>
 
 <div class="container mt-12 mb-20">

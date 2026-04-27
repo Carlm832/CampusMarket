@@ -26,6 +26,19 @@ if (!$product || !$otherUser) {
     redirect(BASE_URL . '/pages/inbox.php');
 }
 
+// Keep product chat context valid: conversations should involve the seller for this product.
+$stmt = $pdo->prepare("SELECT user_id FROM products WHERE id = :pid");
+$stmt->execute([':pid' => $productId]);
+$sellerId = (int) $stmt->fetchColumn();
+$isValidConversation = $sellerId > 0
+    && ($currentUserId === $sellerId || $otherUserId === $sellerId)
+    && ($currentUserId !== $otherUserId);
+
+if (!$isValidConversation) {
+    setFlash('error', 'Invalid chat context for this product.');
+    redirect(BASE_URL . '/pages/inbox.php');
+}
+
 require_once __DIR__ . '/../includes/header.php';
 ?>
 

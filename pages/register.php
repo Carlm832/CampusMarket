@@ -8,7 +8,7 @@ require_once '../includes/bootstrap.php';
 
 // If already logged in, send them home.
 if (isLoggedIn()) {
-    redirect(BASE_URL . '/pages/profile.php');
+    redirect(BASE_URL . 'pages/profile.php');
 }
 
 $errors = [];
@@ -99,7 +99,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['username'] = $username;
 
         setFlash('success', 'Welcome to CampusMarket, ' . sanitize($username) . '!');
-        redirect(BASE_URL . '/pages/profile.php');
+        redirect(BASE_URL . 'pages/profile.php');
     }
 }
 
