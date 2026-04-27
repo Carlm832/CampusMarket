@@ -168,3 +168,7 @@ INSERT INTO product_images (product_id, image_path, is_primary) VALUES
 (71, 'images/a4 paper.jpeg', 1), (72, 'images/calculator.jpeg', 1), (73, 'images/color pencil.jpeg', 1), (75, 'images/notebook.jpeg', 1), (76, 'images/pencil.jpeg', 1), (77, 'images/pens.jpeg', 1), (78, 'images/ruler.jpeg', 1), (79, 'images/set box.jpeg', 1), (80, 'images/sharpener and eraser.jpeg', 1),
 (81, 'images/clothes hanger.jpeg', 1), (82, 'images/floor lamp.jpeg', 1), (83, 'images/laundry detergent.jpeg', 1), (84, 'images/mirror.jpeg', 1), (85, 'images/toilet paper.jpeg', 1), (86, 'images/webcam.jpeg', 1), (87, 'images/monitor pc.jpeg', 1), (88, 'images/laptop charger.jpeg', 1), (89, 'images/laptop stand.jpeg', 1), (90, 'images/keyboard.jpeg', 1),
 (91, 'images/2 in 1 scooter.jpeg', 1), (92, 'images/black bycycle.jpeg', 1), (93, 'images/blue bike.jpeg', 1), (94, 'images/blue scooter.jpeg', 1), (95, 'images/light bike.jpeg', 1), (96, 'images/light scooter.jpeg', 1), (97, 'images/mini scooter.jpeg', 1), (98, 'images/scooter.jpeg', 1), (99, 'images/black scooter.jpeg', 1), (100, 'images/speed bike.jpeg', 1);
+
+-- ─── Email Verification (Member 2) ───────────────────────────────────────────
+-- Mark all seeded users as already verified so dev logins keep working
+UPDATE users SET is_verified = 1;
