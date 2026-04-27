@@ -66,3 +66,7 @@ INSERT INTO product_images (product_id, image_path, is_primary) VALUES
 INSERT INTO product_tags (product_id, tag_id) VALUES
 (1, 1), (2, 2), (3, 4), (4, 3), (5, 5), (6, 5),
 (7, 6), (8, 7), (9, 8), (10, 10);
+
+-- ─── Email Verification (Member 2) ───────────────────────────────────────────
+-- Mark all seeded users as already verified so dev logins keep working
+UPDATE users SET is_verified = 1;

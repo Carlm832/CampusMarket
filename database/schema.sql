@@ -185,3 +185,19 @@ CREATE TABLE notifications (
     created_at   TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
+
+-- ─────────────────────────────────────────
+-- 14. email_verifications (Member 2)
+-- ─────────────────────────────────────────
+ALTER TABLE users
+    ADD COLUMN is_verified TINYINT(1) NOT NULL DEFAULT 0;
+
+CREATE TABLE email_verifications (
+    id          INT AUTO_INCREMENT PRIMARY KEY,
+    user_id     INT NOT NULL,
+    token       VARCHAR(128) NOT NULL UNIQUE,
+    created_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    expires_at  DATETIME NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_user (user_id)
+) ENGINE=InnoDB;
