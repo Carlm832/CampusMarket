@@ -86,14 +86,14 @@ require_once '../includes/header.php';
         </div>
 
         <?php if (!empty($errors['form'])): ?>
-            <div style="background: rgba(239, 68, 68, 0.1); border-left: 4px solid #ef4444; color: #b91c1c; padding: 1rem; border-radius: var(--radius-sm); margin-bottom: 2rem; font-weight: 500;">
+            <div class="form-alert" style="margin-bottom: 2rem;">
                 <?php echo sanitize($errors['form']); ?>
             </div>
         <?php endif; ?>
 
-        <form method="post" novalidate class="flex flex-col gap-5">
-            <div>
-                <label for="identity" style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-main);">Email or username</label>
+        <form method="post" novalidate class="auth-form">
+            <div class="form-row">
+                <label for="identity" class="form-label">Email or username</label>
                 <input type="text" id="identity" name="identity"
                        value="<?php echo sanitize($identity); ?>"
                        required autofocus autocomplete="username"
@@ -102,19 +102,18 @@ require_once '../includes/header.php';
                        style="padding: 0.8rem 1rem;">
             </div>
 
-            <div>
+            <div class="form-row">
                 <div class="flex justify-between items-center mb-2">
-                    <label for="password" style="display: block; font-weight: 600; margin-bottom: 0; color: var(--text-main);">Password</label>
+                <label for="password" class="form-label" style="margin-bottom: 0;">Password</label>
                 </div>
-                <div style="position: relative;">
+                <div class="input-with-toggle">
                     <input type="password" id="password" name="password"
                            required autocomplete="current-password"
                            class="form-control premium-input w-full"
                            placeholder="••••••••"
                            style="padding: 0.8rem 3rem 0.8rem 1rem;">
                     
-                    <button type="button" class="password-toggle" data-target="password" aria-label="Show password" 
-                            style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #94a3b8; cursor: pointer; padding: 0.2rem; display: flex; align-items: center; justify-content: center; transition: color 0.2s;">
+                    <button type="button" class="password-toggle" data-target="password" aria-label="Show password">
                         <svg class="icon-show" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 1.2rem; height: 1.2rem;"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
                         <svg class="icon-hide" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 1.2rem; height: 1.2rem; display: none;"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-6.5 0-10-7-10-7a19.8 19.8 0 0 1 5.06-5.94"/><path d="M9.9 4.24A10.94 10.94 0 0 1 12 4c6.5 0 10 7 10 7a19.9 19.9 0 0 1-3.17 4.19"/><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M1 1l22 22"/></svg>
                     </button>
@@ -155,3 +154,7 @@ require_once '../includes/header.php';
 </script>
 
 <?php require_once '../includes/footer.php'; ?>
+
+
+
+

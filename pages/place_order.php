@@ -73,7 +73,7 @@ require_once __DIR__ . '/../includes/header.php';
         <div>
             <h1 class="mb-8 font-bold text-main" style="font-size: 2.5rem; letter-spacing: -0.5px;">Review Request</h1>
             
-            <div class="glass-panel p-6 flex flex-col sm:flex-row gap-6 items-start shadow-md relative overflow-hidden" style="border-radius: var(--radius-xl); background: white;">
+            <div class="glass-panel p-6 flex flex-col sm:flex-row gap-6 items-start shadow-md relative overflow-hidden" style="border-radius: var(--radius-xl); background: var(--bg-surface);">
                 <div style="position: absolute; top: 0; right: 0; bottom: 0; width: 6px; background: linear-gradient(to bottom, var(--primary), var(--secondary));"></div>
                 <div style="width: 140px; height: 140px; flex-shrink: 0; border-radius: var(--radius-lg); overflow: hidden; background: #e2e8f0; border: 1px solid rgba(0,0,0,0.05);">
                     <?php if ($product['image_path']): ?>
@@ -93,23 +93,23 @@ require_once __DIR__ . '/../includes/header.php';
                 </div>
             </div>
             
-            <div class="mt-8 glass-panel p-6 shadow-sm border" style="border-radius: var(--radius-xl); background: rgba(16, 185, 129, 0.05); border-color: rgba(16, 185, 129, 0.1);">
-                <h4 class="mb-4 font-bold flex items-center gap-2" style="color: #059669;">
+            <div class="mt-8 glass-panel p-6 shadow-sm border" style="border-radius: var(--radius-xl); background: rgba(16, 185, 129, 0.08); border-color: rgba(16, 185, 129, 0.2);">
+                <h4 class="mb-4 font-bold flex items-center gap-2" style="color: var(--success);">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
                     Safe Trading Tips
                 </h4>
                 <div class="flex flex-col gap-3">
                     <div class="flex gap-3">
                         <div style="color: #10b981;">•</div>
-                        <p class="mb-0 text-sm font-medium" style="color: #065f46;">Meet in public, well-lit campus locations.</p>
+                        <p class="mb-0 text-sm font-medium" style="color: var(--text-main);">Meet in public, well-lit campus locations.</p>
                     </div>
                     <div class="flex gap-3">
                         <div style="color: #10b981;">•</div>
-                        <p class="mb-0 text-sm font-medium" style="color: #065f46;">Inspect the item thoroughly before paying.</p>
+                        <p class="mb-0 text-sm font-medium" style="color: var(--text-main);">Inspect the item thoroughly before paying.</p>
                     </div>
                     <div class="flex gap-3">
                         <div style="color: #10b981;">•</div>
-                        <p class="mb-0 text-sm font-medium" style="color: #065f46;">Agree on payment method (cash/mobile) beforehand.</p>
+                        <p class="mb-0 text-sm font-medium" style="color: var(--text-main);">Agree on payment method (cash/mobile) beforehand.</p>
                     </div>
                 </div>
             </div>
@@ -117,7 +117,7 @@ require_once __DIR__ . '/../includes/header.php';
 
         <!-- Order Form -->
         <div>
-            <div class="glass-panel p-8 shadow-xl relative" style="border-radius: var(--radius-xl); background: white;">
+            <div class="glass-panel p-8 shadow-xl relative" style="border-radius: var(--radius-xl); background: var(--bg-surface);">
                 <!-- Card Badge -->
                 <div style="position: absolute; top: -15px; left: 2rem; background: linear-gradient(135deg, var(--primary), var(--secondary)); border-radius: var(--radius-full); color: white; padding: 0.4rem 1.2rem; font-weight: bold; font-size: 0.85rem; box-shadow: var(--shadow-sm); letter-spacing: 0.5px; text-transform: uppercase;">
                     Final Step
@@ -126,23 +126,23 @@ require_once __DIR__ . '/../includes/header.php';
                 <h2 class="mb-6 mt-3 font-bold text-main">Transaction Details</h2>
                 
                 <?php if ($error): ?>
-                    <div style="background: rgba(239, 68, 68, 0.1); border-left: 4px solid #ef4444; color: #b91c1c; padding: 1rem; border-radius: var(--radius-sm); margin-bottom: 2rem; font-weight: 500;">
+                    <div class="form-alert" style="margin-bottom: 2rem;">
                         <?php echo $error; ?>
                     </div>
                 <?php endif; ?>
 
-                <form method="POST">
-                    <div class="form-group mb-6">
-                        <label class="font-bold mb-2 block" for="meeting_point" style="color: var(--text-main);">Proposed Meeting Point *</label>
+                <form method="POST" class="auth-form">
+                    <div class="form-row mb-6">
+                <label class="form-label" for="meeting_point">Proposed Meeting Point *</label>
                         <input type="text" name="meeting_point" id="meeting_point" class="w-full premium-input bg-gray-50 text-lg" style="padding: 1rem; border-radius: var(--radius-lg);" placeholder="e.g. Student Union Level 1, Main Library" required>
-                        <p class="text-muted small mt-2 italic flex items-center gap-1">
+                        <p class="form-note italic flex items-center gap-1">
                             <svg class="w-4 h-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                             Suggest a neutral spot on campus.
                         </p>
                     </div>
 
-                    <div class="form-group mb-10">
-                        <label class="font-bold mb-2 block" for="notes" style="color: var(--text-main);">Additional Notes (Optional)</label>
+                    <div class="form-row mb-10">
+                <label class="form-label" for="notes">Additional Notes (Optional)</label>
                         <textarea name="notes" id="notes" class="w-full premium-input bg-gray-50" rows="4" style="padding: 1rem; border-radius: var(--radius-lg); resize: vertical;" placeholder="Mention your availability or preferred payment method..."></textarea>
                     </div>
 
@@ -169,3 +169,7 @@ require_once __DIR__ . '/../includes/header.php';
 </style>
 
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>
+
+
+
+

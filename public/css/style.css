@@ -38,6 +38,9 @@
   /* Glassmorphism */
   --glass-bg: rgba(255, 255, 255, 0.85);
   --glass-border: rgba(255, 255, 255, 0.18);
+  --footer-bg: #0b1220;
+  --footer-heading: #f8fafc;
+  --footer-text: #94a3b8;
   
   /* Layout */
   --container-max: 1600px;
@@ -67,6 +70,10 @@ body.dark-mode {
   
   --border-light: #334155; /* Slate 700 */
   --glass-bg: rgba(15, 23, 42, 0.85);
+  --glass-border: rgba(148, 163, 184, 0.2);
+  --footer-bg: #020617;
+  --footer-heading: #e2e8f0;
+  --footer-text: #94a3b8;
   
   --success-bg: #064e3b;
   --warning-bg: #78350f;
@@ -567,6 +574,14 @@ body.dark-mode .moon-icon { display: none; }
   border-left: 4px solid var(--error);
 }
 
+body.dark-mode .flash-success {
+  color: #d1fae5;
+}
+
+body.dark-mode .flash-error {
+  color: #fecaca;
+}
+
 /* Badges */
 .badge {
   display: inline-block;
@@ -622,8 +637,8 @@ body.dark-mode .moon-icon { display: none; }
 
 /* Footer */
 .site-footer {
-  background: var(--text-main);
-  color: var(--text-light);
+  background: var(--footer-bg);
+  color: var(--footer-text);
   padding: 4rem 0 2rem;
   margin-top: 5rem;
   font-size: 0.95rem;
@@ -643,7 +658,7 @@ body.dark-mode .moon-icon { display: none; }
 }
 
 .footer-col h4 {
-  color: #fff;
+  color: var(--footer-heading);
   font-size: 1.125rem;
   margin-bottom: 1.5rem;
   font-weight: 600;
@@ -658,12 +673,12 @@ body.dark-mode .moon-icon { display: none; }
 }
 
 .footer-col a {
-  color: var(--text-muted);
+  color: var(--footer-text);
   transition: var(--transition);
 }
 
 .footer-col a:hover {
-  color: #fff;
+  color: var(--footer-heading);
   padding-left: 0.25rem;
 }
 
@@ -671,7 +686,7 @@ body.dark-mode .moon-icon { display: none; }
   text-align: center;
   padding-top: 2rem;
    border-top: 1px solid rgba(255, 255, 255, 0.1);
-  color: var(--text-muted);
+  color: var(--footer-text);
 }
 
 /* Hero Carousel */
@@ -744,6 +759,12 @@ body.dark-mode .moon-icon { display: none; }
   box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05), var(--shadow-sm);
 }
 
+body.dark-mode .glass-panel {
+  background: rgba(30, 41, 59, 0.72);
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  box-shadow: 0 8px 24px rgba(2, 6, 23, 0.32);
+}
+
 .glass-panel-dark {
   background: rgba(15, 23, 42, 0.7);
   backdrop-filter: blur(16px);
@@ -792,6 +813,102 @@ fieldset {
     background: var(--bg-surface);
     box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
     border-color: var(--primary);
+}
+
+/* Form System */
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.form-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.form-label {
+  display: block;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.form-label--muted {
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+.form-note {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.form-error {
+  font-size: 0.85rem;
+  color: #b91c1c;
+  font-weight: 600;
+}
+
+.form-alert {
+  background: rgba(239, 68, 68, 0.1);
+  border-left: 4px solid #ef4444;
+  color: #b91c1c;
+  padding: 1rem;
+  border-radius: var(--radius-sm);
+  font-weight: 500;
+}
+
+.input-lg {
+  padding: 0.8rem 1rem;
+}
+
+.input-with-toggle {
+  position: relative;
+}
+
+.input-with-toggle .premium-input {
+  padding-right: 3rem;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 0.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s ease;
+  border-radius: 0.375rem;
+}
+
+.password-toggle:hover {
+  color: var(--primary);
+}
+
+.password-toggle:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.input-invalid {
+  border-color: #ef4444 !important;
+  background-color: #fef2f2 !important;
+}
+
+body.dark-mode .form-alert {
+  background: rgba(239, 68, 68, 0.18);
+  color: #fecaca;
+}
+
+body.dark-mode .input-invalid {
+  background-color: rgba(127, 29, 29, 0.32) !important;
 }
 
 /* Condition Pills */
@@ -870,3 +987,5 @@ fieldset {
     max-height: 100%;
     object-fit: contain;
 }
+
+
