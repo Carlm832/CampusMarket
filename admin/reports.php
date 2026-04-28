@@ -44,46 +44,55 @@ $stmt = $pdo->query("
 $reports = $stmt->fetchAll();
 ?>
 
-<div class="container mt-8">
+<div class="container mt-8 mb-16">
     <div class="flex justify-between items-center mb-8">
-        <h1>Safety Reports</h1>
-        <div class="badge badge-warning"><?php echo count($reports); ?> Pending Reviews</div>
+        <h1 class="mb-0 gradient-text" style="background: linear-gradient(135deg, #ef4444, #f43f5e); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Safety & Moderation Queue</h1>
+        <div class="badge" style="background: rgba(239,68,68,0.1); color: #b91c1c; font-size: 0.9rem; padding: 0.5rem 1rem; border-radius: var(--radius-full);"><span class="animate-pulse inline-block mr-2" style="color: #ef4444;">●</span><?php echo count($reports); ?> Pending Reviews</div>
     </div>
 
-    <div class="card overflow-hidden">
-        <table class="w-full text-left">
+    <div class="glass-panel table-responsive" style="border-radius: var(--radius-lg); overflow: hidden; border: 1px solid rgba(0,0,0,0.05); box-shadow: var(--shadow-md);">
+        <table class="table w-full text-left" style="border-collapse: collapse; margin: 0;">
             <thead>
-                <tr class="bg-gray-50 border-b">
-                    <th class="p-4">Reported Item</th>
-                    <th class="p-4">Reason</th>
-                    <th class="p-4">By User</th>
-                    <th class="p-4">Time</th>
-                    <th class="p-4 text-right">Actions</th>
+                <tr style="background: rgba(248, 250, 252, 0.8);">
+                    <th class="p-4 uppercase text-xs text-muted font-bold tracking-wider" style="border-bottom: 2px solid var(--border-light);">Reported Item</th>
+                    <th class="p-4 uppercase text-xs text-muted font-bold tracking-wider" style="border-bottom: 2px solid var(--border-light);">Reason Documented</th>
+                    <th class="p-4 uppercase text-xs text-muted font-bold tracking-wider" style="border-bottom: 2px solid var(--border-light);">Reporter Identity</th>
+                    <th class="p-4 uppercase text-xs text-muted font-bold tracking-wider" style="border-bottom: 2px solid var(--border-light);">Time Submitted</th>
+                    <th class="p-4 uppercase text-xs text-muted font-bold tracking-wider text-right" style="border-bottom: 2px solid var(--border-light);">Resolution Actions</th>
                 </tr>
             </thead>
             <tbody>
                 <?php if (empty($reports)): ?>
                     <tr>
-                        <td colspan="5" class="p-12 text-center text-muted">
-                            <div class="text-4xl mb-4">🛡️</div>
-                            <p>All items comply with community standards. No pending reports!</p>
+                        <td colspan="5" class="p-16 text-center text-muted" style="border-bottom: none;">
+                            <div class="text-5xl mb-4 opacity-70">🛡️</div>
+                            <h3 style="color: var(--success); font-weight: 600;">System Clear</h3>
+                            <p>All items comply with community standards.<br>No pending reports in the queue!</p>
                         </td>
                     </tr>
                 <?php else: ?>
                     <?php foreach ($reports as $r): ?>
-                        <tr class="border-b hover:bg-gray-50">
-                            <td class="p-4 font-bold">
-                                <?php echo sanitize($r['product_title']); ?>
-                                <a href="../pages/product.php?id=<?php echo $r['product_id']; ?>" target="_blank" class="block text-primary small">View Item</a>
+                        <tr style="transition: background 0.2s;" onmouseover="this.style.background='rgba(239,68,68,0.02)'" onmouseout="this.style.background='transparent'">
+                            <td class="p-4" style="border-bottom: 1px solid var(--border-light);">
+                                <div class="font-bold text-main"><?php echo sanitize($r['product_title']); ?></div>
+                                <a href="../pages/product.php?id=<?php echo $r['product_id']; ?>" target="_blank" class="small text-primary hover-scale inline-block mt-1" style="text-decoration: none; font-weight: 600;">View Live Item ↗</a>
                             </td>
-                            <td class="p-4 italic text-muted">"<?php echo sanitize($r['reason']); ?>"</td>
-                            <td class="p-4">@<?php echo sanitize($r['reporter_name']); ?></td>
-                            <td class="p-4 text-muted small"><?php echo timeAgo($r['created_at']); ?></td>
-                            <td class="p-4 text-right">
-                                <form method="POST" class="flex justify-end gap-2">
+                            <td class="p-4" style="border-bottom: 1px solid var(--border-light);">
+                                <div style="background: rgba(239,68,68,0.05); border-left: 3px solid #ef4444; padding: 0.5rem 0.75rem; border-radius: 4px; font-style: italic; color: #7f1d1d; font-size: 0.9rem;">
+                                    "<?php echo sanitize($r['reason']); ?>"
+                                </div>
+                            </td>
+                            <td class="p-4 font-medium" style="border-bottom: 1px solid var(--border-light);">
+                                @<?php echo sanitize($r['reporter_name']); ?>
+                            </td>
+                            <td class="p-4 text-muted small" style="border-bottom: 1px solid var(--border-light);">
+                                <span style="background: var(--bg-main); padding: 0.2rem 0.5rem; border-radius: 4px; border: 1px solid var(--border-light); font-size: 0.75rem;"><?php echo timeAgo($r['created_at']); ?></span>
+                            </td>
+                            <td class="p-4 text-right" style="border-bottom: 1px solid var(--border-light);">
+                                <form method="POST" class="flex justify-end gap-2 m-0">
                                     <input type="hidden" name="report_id" value="<?php echo $r['id']; ?>">
-                                    <button type="submit" name="action" value="dismiss" class="btn btn-secondary btn-sm">Allow</button>
-                                    <button type="submit" name="action" value="flag" class="btn btn-danger btn-sm">Flag & Hide</button>
+                                    <button type="submit" name="action" value="dismiss" class="btn btn-secondary btn-sm hover-scale shadow-sm" style="border-radius: var(--radius-full);">Keep & Dismiss</button>
+                                    <button type="submit" name="action" value="flag" class="btn btn-danger btn-sm hover-scale shadow-sm" style="border-radius: var(--radius-full);">Flag & Remove</button>
                                 </form>
                             </td>
                         </tr>

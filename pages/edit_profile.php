@@ -95,7 +95,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Keep session in sync with the new username.
         $_SESSION['username'] = $username;
 
-        setFlash('success', 'Profile updated.');
+        setFlash('success', 'Profile updated successfully!');
         redirect(BASE_URL . '/pages/profile.php');
     }
 
@@ -108,76 +108,65 @@ $pageTitle = 'Edit profile';
 require_once '../includes/header.php';
 ?>
 
-<style>
-  .edit-card   { max-width:640px; margin:1rem auto; background:#fff; border:1px solid #e2e8f0; border-radius:0.75rem; padding:2rem; }
-  .edit-head   { display:flex; align-items:center; justify-content:space-between; margin-bottom:1.5rem; }
-  .avatar-row  { display:flex; gap:1rem; align-items:center; margin-bottom:1.5rem; }
-  .avatar-lg   { width:96px; height:96px; object-fit:cover; border-radius:50%; border:2px solid #fff; box-shadow:0 2px 6px rgba(0,0,0,.06); background:#f1f5f9; }
-  .form-row    { margin-bottom:1rem; }
-  .form-row label { display:block; font-weight:500; margin-bottom:0.35rem; }
-  .form-row input { width:100%; padding:0.55rem 0.75rem; border:1px solid #cbd5e1; border-radius:0.375rem; font-size:1rem; box-sizing:border-box; }
-  .form-row input:focus { outline:2px solid var(--primary); border-color:transparent; }
-  .form-row input:disabled { background:#f1f5f9; color:#64748b; }
-  .form-row input.is-invalid { border-color:#dc2626; }
-  .form-row .hint  { color:#64748b; font-size:0.85rem; margin-top:0.25rem; }
-  .form-row .error { color:#b91c1c; font-size:0.85rem; margin-top:0.25rem; }
-  .btn-link    { color:#64748b; text-decoration:none; }
-</style>
-
-<div class="edit-card">
-  <div class="edit-head">
-    <h1 style="margin:0;">Edit profile</h1>
-    <a class="btn-link" href="<?php echo BASE_URL; ?>/pages/profile.php">Cancel</a>
-  </div>
-
-  <form method="post" enctype="multipart/form-data" novalidate>
-    <div class="avatar-row">
-      <img class="avatar-lg"
-           src="<?php echo sanitize(avatarUrl($user['avatar'])); ?>"
-           alt="Current avatar">
-      <div style="flex:1;">
-        <label for="avatar">Change avatar</label>
-        <input type="file" id="avatar" name="avatar"
-               accept="image/jpeg,image/png,image/webp,image/gif"
-               class="<?php echo isset($errors['avatar']) ? 'is-invalid' : ''; ?>">
-        <?php if (isset($errors['avatar'])): ?>
-          <div class="error"><?php echo sanitize($errors['avatar']); ?></div>
-        <?php else: ?>
-          <div class="hint">JPEG, PNG, WebP, or GIF · max 5 MB.</div>
-        <?php endif; ?>
+<div class="container mt-12 mb-20 flex justify-center">
+  <div class="glass-panel" style="width: 100%; max-width: 650px; border-radius: var(--radius-lg); overflow: hidden;">
+      <div style="background: linear-gradient(135deg, rgba(99,102,241,0.1), rgba(16,185,129,0.1)); padding: 2rem; border-bottom: 1px solid rgba(0,0,0,0.05);">
+        <div class="flex items-center justify-between">
+            <h1 class="mb-0 text-main font-bold" style="letter-spacing: -0.5px;">Edit Profile</h1>
+            <a href="<?php echo BASE_URL; ?>/pages/profile.php" class="btn btn-secondary btn-sm hover-scale shadow-sm" style="border-radius: var(--radius-full);">Cancel</a>
+        </div>
+        <p class="text-muted mt-2 mb-0">Update your public identity and contact details.</p>
       </div>
-    </div>
 
-    <div class="form-row">
-      <label for="username">Username</label>
-      <input type="text" id="username" name="username"
-             value="<?php echo sanitize($user['username']); ?>"
-             maxlength="50" required
-             class="<?php echo isset($errors['username']) ? 'is-invalid' : ''; ?>">
-      <?php if (isset($errors['username'])): ?>
-        <div class="error"><?php echo sanitize($errors['username']); ?></div>
-      <?php endif; ?>
-    </div>
+      <div style="padding: 2.5rem;">
+        <form method="post" enctype="multipart/form-data" novalidate>
+            <!-- Avatar Section -->
+            <div class="flex items-center gap-6 mb-8 p-4" style="background: rgba(255,255,255,0.5); border-radius: var(--radius-md); border: 1px dashed var(--border-focus);">
+                <img src="<?php echo sanitize(avatarUrl($user['avatar'])); ?>" alt="Avatar" class="shadow-sm" style="width: 90px; height: 90px; border-radius: 50%; object-fit: cover; border: 3px solid white;">
+                <div class="flex-grow">
+                    <label class="form-label font-bold mb-2">Profile Picture</label>
+                    <input type="file" id="avatar" name="avatar" accept="image/jpeg,image/png,image/webp,image/gif" class="form-control premium-input p-2 <?php echo isset($errors['avatar']) ? 'border-accent' : ''; ?>" style="font-size: 0.9rem;">
+                    <?php if (isset($errors['avatar'])): ?>
+                        <div class="text-sm mt-2 font-medium" style="color: #dc2626;"><?php echo sanitize($errors['avatar']); ?></div>
+                    <?php else: ?>
+                        <div class="text-muted small mt-2">JPEG, PNG, WebP, or GIF · Max 5MB</div>
+                    <?php endif; ?>
+                </div>
+            </div>
 
-    <div class="form-row">
-      <label for="phone">Phone</label>
-      <input type="tel" id="phone" name="phone"
-             value="<?php echo sanitize($user['phone'] ?? ''); ?>"
-             maxlength="20"
-             class="<?php echo isset($errors['phone']) ? 'is-invalid' : ''; ?>">
-      <?php if (isset($errors['phone'])): ?>
-        <div class="error"><?php echo sanitize($errors['phone']); ?></div>
-      <?php endif; ?>
-    </div>
+            <!-- Fields -->
+            <div class="grid gap-6">
+                <div>
+                    <label for="username" class="form-label font-bold">Username</label>
+                    <input type="text" id="username" name="username" value="<?php echo sanitize($user['username']); ?>" maxlength="50" required class="form-control premium-input <?php echo isset($errors['username']) ? 'border-accent' : ''; ?>">
+                    <?php if (isset($errors['username'])): ?>
+                        <div class="text-sm mt-2 font-medium" style="color: #dc2626;"><?php echo sanitize($errors['username']); ?></div>
+                    <?php endif; ?>
+                </div>
 
-    <div class="form-row">
-      <label>Email</label>
-      <input type="email" value="<?php echo sanitize($user['email']); ?>" disabled>
-      <div class="hint">Email changes not supported yet.</div>
-    </div>
+                <div>
+                    <label for="phone" class="form-label font-bold">Contact Number (Optional)</label>
+                    <input type="tel" id="phone" name="phone" value="<?php echo sanitize($user['phone'] ?? ''); ?>" maxlength="20" class="form-control premium-input <?php echo isset($errors['phone']) ? 'border-accent' : ''; ?>">
+                    <?php if (isset($errors['phone'])): ?>
+                        <div class="text-sm mt-2 font-medium" style="color: #dc2626;"><?php echo sanitize($errors['phone']); ?></div>
+                    <?php endif; ?>
+                </div>
 
-    <button type="submit" class="btn">Save changes</button>
-  </form>
+                <div>
+                    <label class="form-label font-bold">University Email</label>
+                    <input type="email" value="<?php echo sanitize($user['email']); ?>" disabled class="form-control" style="background: rgba(241, 245, 249, 0.6); color: var(--text-muted); cursor: not-allowed; border: 1px border-light;">
+                    <div class="text-muted small mt-2">Verified university emails cannot be changed. Contact support if you lost access.</div>
+                </div>
+            </div>
+
+            <hr style="border: none; border-top: 1px solid var(--border-light); margin: 2rem 0;">
+
+            <div class="flex justify-end">
+                <button type="submit" class="btn btn-primary px-8 py-3 hover-scale shadow-lg font-bold" style="border-radius: var(--radius-full);">Save Changes</button>
+            </div>
+        </form>
+      </div>
+  </div>
 </div>
 
 <?php require_once '../includes/footer.php'; ?>
