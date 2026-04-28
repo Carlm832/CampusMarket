@@ -67,7 +67,7 @@ $products = $stmt->fetchAll();
     <div style="position: absolute; top: -5%; left: -5%; width: 400px; height: 400px; border-radius: 50%; background: radial-gradient(circle, rgba(99,102,241,0.08) 0%, rgba(255,255,255,0) 70%); z-index: -1;"></div>
     <div style="position: absolute; top: 15%; right: -5%; width: 500px; height: 500px; border-radius: 50%; background: radial-gradient(circle, rgba(236,72,153,0.06) 0%, rgba(255,255,255,0) 70%); z-index: -1;"></div>
 
-    <div class="container">
+    <div class="px-8 lg:px-12 w-full">
         <!-- Browse Header -->
         <div class="mb-10 text-center lg:text-left flex flex-col lg:flex-row justify-between items-center gap-6">
             <div>
@@ -84,7 +84,7 @@ $products = $stmt->fetchAll();
             </form>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
             
             <!-- Sidebar Filters -->
             <aside class="lg:col-span-1">
@@ -98,11 +98,10 @@ $products = $stmt->fetchAll();
                     </div>
 
                     <form method="GET" action="browse.php">
-                        <!-- Category -->
                         <fieldset class="mb-6">
                             <legend class="block mb-3 font-bold text-main" style="font-size: 0.95rem;">Category</legend>
                             <div class="relative">
-                                <select name="category" class="w-full premium-input bg-white" style="appearance: none; padding: 0.6rem 2rem 0.6rem 1rem;" onchange="this.form.submit()">
+                                <select name="category" class="w-full premium-input bg-white" style="appearance: none; padding: 0.6rem 2.5rem 0.6rem 1rem;" onchange="this.form.submit()">
                                     <option value="">All Categories</option>
                                     <?php foreach ($categories as $cat): ?>
                                         <option value="<?php echo $cat['id']; ?>" <?php echo $catFilter == $cat['id'] ? 'selected' : ''; ?>>
@@ -110,7 +109,9 @@ $products = $stmt->fetchAll();
                                         </option>
                                     <?php endforeach; ?>
                                 </select>
-                                <svg class="w-4 h-4 absolute right-3 pointer-events-none text-muted" style="top: 50%; transform: translateY(-50%);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                <div style="position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); pointer-events: none; display: flex; align-items: center;">
+                                    <svg style="width: 16px; height: 16px; color: var(--text-muted);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                </div>
                             </div>
                         </fieldset>
 
@@ -152,22 +153,24 @@ $products = $stmt->fetchAll();
             </aside>
 
             <!-- Results -->
-            <main class="lg:col-span-3">
-                <div class="glass-panel px-6 py-4 mb-8 flex flex-col sm:flex-row justify-between items-center gap-4" style="border-radius: var(--radius-lg); box-shadow: var(--shadow-sm);">
+            <main class="lg:col-span-4">
+                <div class="glass-panel px-6 py-4 mb-8 flex flex-col sm:flex-row justify-between items-center gap-4" style="border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); background: var(--bg-surface);">
                     <div class="font-medium text-main"><strong class="text-primary"><?php echo count($products); ?></strong> items matching your criteria</div>
                     <form method="GET" class="flex items-center gap-3">
                         <?php if($catFilter) echo '<input type="hidden" name="category" value="'.$catFilter.'">'; ?>
                         <?php if($minPrice) echo '<input type="hidden" name="min_price" value="'.$minPrice.'">'; ?>
                         <?php if($maxPrice) echo '<input type="hidden" name="max_price" value="'.$maxPrice.'">'; ?>
                         <?php if($condFilter) echo '<input type="hidden" name="condition" value="'.$condFilter.'">'; ?>
-                        <span class="text-muted font-bold small uppercase tracking-wider">Sort by:</span>
+                        <span class="text-muted font-bold small uppercase tracking-wider" style="font-size: 0.75rem;">Sort by:</span>
                         <div class="relative">
-                            <select name="sort" class="premium-input bg-white font-medium" style="appearance: none; padding: 0.4rem 2rem 0.4rem 1rem; border-radius: var(--radius-md);" onchange="this.form.submit()">
+                            <select name="sort" class="premium-input bg-white font-medium" style="appearance: none; padding: 0.4rem 2.5rem 0.4rem 1rem; border-radius: var(--radius-md); font-size: 0.9rem;" onchange="this.form.submit()">
                                 <option value="latest" <?php echo $sort == 'latest' ? 'selected' : ''; ?>>Latest First</option>
                                 <option value="price_asc" <?php echo $sort == 'price_asc' ? 'selected' : ''; ?>>Price: Low to High</option>
                                 <option value="price_desc" <?php echo $sort == 'price_desc' ? 'selected' : ''; ?>>Price: High to Low</option>
                             </select>
-                            <svg class="w-4 h-4 absolute right-3 pointer-events-none text-muted" style="top: 50%; transform: translateY(-50%);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            <div style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); pointer-events: none; display: flex; align-items: center;">
+                                <svg style="width: 14px; height: 14px; color: var(--text-muted);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            </div>
                         </div>
                     </form>
                 </div>
@@ -180,32 +183,32 @@ $products = $stmt->fetchAll();
                         <a href="browse.php" class="btn btn-primary mt-6 hover-scale shadow-sm" style="border-radius: var(--radius-full);">Clear All Filters</a>
                     </div>
                 <?php else: ?>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6 gap-6">
                         <?php foreach ($products as $prod): ?>
-                            <a href="product.php?id=<?php echo $prod['id']; ?>" class="glass-panel hover-scale relative" style="display: flex; flex-direction: column; overflow: hidden; border-radius: var(--radius-lg); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border: 1px solid rgba(255,255,255,0.5); text-decoration: none;">
-                                <div style="height: 200px; background: #e2e8f0; position: relative; overflow: hidden;">
+                            <a href="product.php?id=<?php echo $prod['id']; ?>" class="card card-hover flex flex-col h-full" style="text-decoration: none; border-radius: var(--radius-lg); overflow: hidden; background: var(--bg-surface); border: 1px solid var(--border-light);">
+                                <div style="height: 220px; background: #e2e8f0; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center;">
                                     <?php if ($prod['image_path']): ?>
-                                        <img src="<?php echo BASE_URL; ?>/public/<?php echo $prod['image_path']; ?>" alt="<?php echo sanitize($prod['title']); ?>" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                                        <img src="<?php echo BASE_URL; ?>/public/<?php echo $prod['image_path']; ?>" alt="<?php echo sanitize($prod['title']); ?>" style="max-width: 100%; max-height: 100%; object-fit: contain; transition: transform 0.5s ease;">
                                     <?php else: ?>
-                                        <div style="width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; background: linear-gradient(135deg, #f1f5f9, #e2e8f0); color: #94a3b8;">
+                                        <div style="width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; background: linear-gradient(135deg, var(--bg-main), var(--border-light)); color: var(--text-muted);">
                                             <svg class="w-12 h-12 mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                                            <span class="text-sm font-medium">No Image Provided</span>
+                                            <span class="text-xs font-medium">No Image</span>
                                         </div>
                                     <?php endif; ?>
                                     
                                     <div style="position: absolute; top: 0.75rem; right: 0.75rem;">
                                         <?php $badge = conditionBadge($prod['condition']); ?>
-                                        <span class="badge <?php echo $badge['class']; ?> shadow-sm" style="font-size: 0.75rem; padding: 0.25rem 0.6rem; backdrop-filter: blur(4px);"><?php echo $badge['label']; ?></span>
+                                        <span class="badge <?php echo $badge['class']; ?> shadow-sm" style="font-size: 0.7rem; padding: 0.25rem 0.6rem; backdrop-filter: blur(4px);"><?php echo $badge['label']; ?></span>
                                     </div>
                                 </div>
-                                <div class="p-5 flex flex-col flex-grow bg-white">
+                                <div class="p-5 flex flex-col flex-grow">
                                     <p class="text-primary font-bold small tracking-wider uppercase mb-1" style="font-size: 0.7rem;"><?php echo sanitize($prod['category_name']); ?></p>
                                     <h4 class="mb-3 text-main font-bold" style="font-size: 1.1rem; line-height: 1.4; flex-grow: 1; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;"><?php echo sanitize($prod['title']); ?></h4>
                                     
-                                    <div class="flex justify-between items-center mt-auto pt-4 border-t border-gray-100">
-                                        <span style="font-weight: 800; color: var(--text-main); font-size: 1.25rem; font-family: 'Inter', sans-serif;"><?php echo formatPrice($prod['price']); ?></span>
+                                    <div class="flex justify-between items-center mt-auto pt-4 border-t border-light" style="border-color: var(--border-light);">
+                                        <span style="font-weight: 800; color: var(--text-main); font-size: 1.25rem; font-family: 'Inter', sans-serif;">₺ <?php echo number_format($prod['price']); ?></span>
                                         <div class="flex items-center gap-2">
-                                            <div style="min-width: 24px; min-height: 24px; border-radius: 50%; background: var(--primaryLight); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 0.6rem; font-weight: bold; padding:0.2rem;"><?php echo strtoupper(substr($prod['seller_name'],0,2)); ?></div>
+                                            <div style="min-width: 24px; min-height: 24px; border-radius: 50%; background: var(--primary-light); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 0.6rem; font-weight: bold; padding:0.2rem;"><?php echo strtoupper(substr($prod['seller_name'],0,2)); ?></div>
                                             <span class="text-muted font-medium text-sm truncate" style="max-width: 80px;">@<?php echo sanitize($prod['seller_name']); ?></span>
                                         </div>
                                     </div>
