@@ -84,7 +84,7 @@ $products = $stmt->fetchAll();
             </form>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
             
             <!-- Sidebar Filters -->
             <aside class="lg:col-span-1">
@@ -153,7 +153,7 @@ $products = $stmt->fetchAll();
             </aside>
 
             <!-- Results -->
-            <main class="lg:col-span-3">
+            <main class="lg:col-span-4">
                 <div class="glass-panel px-6 py-4 mb-8 flex flex-col sm:flex-row justify-between items-center gap-4" style="border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); background: var(--bg-surface);">
                     <div class="font-medium text-main"><strong class="text-primary"><?php echo count($products); ?></strong> items matching your criteria</div>
                     <form method="GET" class="flex items-center gap-3">
@@ -183,7 +183,7 @@ $products = $stmt->fetchAll();
                         <a href="browse.php" class="btn btn-primary mt-6 hover-scale shadow-sm" style="border-radius: var(--radius-full);">Clear All Filters</a>
                     </div>
                 <?php else: ?>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 xl:grid-cols-4 3xl:grid-cols-5 gap-6">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6 gap-6">
                         <?php foreach ($products as $prod): ?>
                             <a href="product.php?id=<?php echo $prod['id']; ?>" class="card card-hover flex flex-col h-full" style="text-decoration: none; border-radius: var(--radius-lg); overflow: hidden; background: var(--bg-surface); border: 1px solid var(--border-light);">
                                 <div style="height: 220px; background: #e2e8f0; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center;">
