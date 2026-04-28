@@ -98,11 +98,10 @@ $products = $stmt->fetchAll();
                     </div>
 
                     <form method="GET" action="browse.php">
-                        <!-- Category -->
                         <fieldset class="mb-6">
                             <legend class="block mb-3 font-bold text-main" style="font-size: 0.95rem;">Category</legend>
                             <div class="relative">
-                                <select name="category" class="w-full premium-input bg-white" style="appearance: none; padding: 0.6rem 2rem 0.6rem 1rem;" onchange="this.form.submit()">
+                                <select name="category" class="w-full premium-input bg-white" style="appearance: none; padding: 0.6rem 2.5rem 0.6rem 1rem;" onchange="this.form.submit()">
                                     <option value="">All Categories</option>
                                     <?php foreach ($categories as $cat): ?>
                                         <option value="<?php echo $cat['id']; ?>" <?php echo $catFilter == $cat['id'] ? 'selected' : ''; ?>>
@@ -110,7 +109,9 @@ $products = $stmt->fetchAll();
                                         </option>
                                     <?php endforeach; ?>
                                 </select>
-                                <svg class="w-4 h-4 absolute right-3 pointer-events-none text-muted" style="top: 50%; transform: translateY(-50%);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                <div style="position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); pointer-events: none; display: flex; align-items: center;">
+                                    <svg style="width: 16px; height: 16px; color: var(--text-muted);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                </div>
                             </div>
                         </fieldset>
 
@@ -153,21 +154,23 @@ $products = $stmt->fetchAll();
 
             <!-- Results -->
             <main class="lg:col-span-3">
-                <div class="glass-panel px-6 py-4 mb-8 flex flex-col sm:flex-row justify-between items-center gap-4" style="border-radius: var(--radius-lg); box-shadow: var(--shadow-sm);">
+                <div class="glass-panel px-6 py-4 mb-8 flex flex-col sm:flex-row justify-between items-center gap-4" style="border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); background: var(--bg-surface);">
                     <div class="font-medium text-main"><strong class="text-primary"><?php echo count($products); ?></strong> items matching your criteria</div>
                     <form method="GET" class="flex items-center gap-3">
                         <?php if($catFilter) echo '<input type="hidden" name="category" value="'.$catFilter.'">'; ?>
                         <?php if($minPrice) echo '<input type="hidden" name="min_price" value="'.$minPrice.'">'; ?>
                         <?php if($maxPrice) echo '<input type="hidden" name="max_price" value="'.$maxPrice.'">'; ?>
                         <?php if($condFilter) echo '<input type="hidden" name="condition" value="'.$condFilter.'">'; ?>
-                        <span class="text-muted font-bold small uppercase tracking-wider">Sort by:</span>
+                        <span class="text-muted font-bold small uppercase tracking-wider" style="font-size: 0.75rem;">Sort by:</span>
                         <div class="relative">
-                            <select name="sort" class="premium-input bg-white font-medium" style="appearance: none; padding: 0.4rem 2rem 0.4rem 1rem; border-radius: var(--radius-md);" onchange="this.form.submit()">
+                            <select name="sort" class="premium-input bg-white font-medium" style="appearance: none; padding: 0.4rem 2.5rem 0.4rem 1rem; border-radius: var(--radius-md); font-size: 0.9rem;" onchange="this.form.submit()">
                                 <option value="latest" <?php echo $sort == 'latest' ? 'selected' : ''; ?>>Latest First</option>
                                 <option value="price_asc" <?php echo $sort == 'price_asc' ? 'selected' : ''; ?>>Price: Low to High</option>
                                 <option value="price_desc" <?php echo $sort == 'price_desc' ? 'selected' : ''; ?>>Price: High to Low</option>
                             </select>
-                            <svg class="w-4 h-4 absolute right-3 pointer-events-none text-muted" style="top: 50%; transform: translateY(-50%);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            <div style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); pointer-events: none; display: flex; align-items: center;">
+                                <svg style="width: 14px; height: 14px; color: var(--text-muted);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            </div>
                         </div>
                     </form>
                 </div>
