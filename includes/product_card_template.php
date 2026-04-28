@@ -8,7 +8,6 @@
  */
 global $pdo; // Ensure PDO is available if included inside a function scope
 ?>
-
 <div class="card card-hover flex flex-col h-full" style="position: relative; border-radius: var(--radius-lg); border: 1px solid var(--border-light); background: var(--bg-surface); overflow: hidden; padding: 1.5rem; transition: var(--transition);">
     <!-- Main Product Link -->
     <a href="<?php echo BASE_URL; ?>pages/product.php?id=<?php echo $prod['id']; ?>" style="text-decoration: none; display: flex; flex-direction: column; height: 100%;">
@@ -33,7 +32,7 @@ global $pdo; // Ensure PDO is available if included inside a function scope
         <!-- Product Info -->
         <div class="flex flex-col flex-grow px-1">
             <p class="mb-2" style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600; margin-bottom: 0.25rem;">(<?php echo sanitize($prod['category_name'] ?? ($prod['category'] ?? 'General')); ?>)</p>
-            <h4 class="mb-3" style="font-size: 1.15rem; font-weight: 700; color: var(--text-main); line-height: 1.3; margin-bottom: 1rem; flex-grow: 1;"><?php echo sanitize($prod['title']); ?></h4>
+            <h4 class="mb-3 text-main" style="font-size: 1.15rem; font-weight: 700; line-height: 1.3; margin-bottom: 1rem; flex-grow: 1;"><?php echo sanitize($prod['title']); ?></h4>
             
             <div class="mt-auto flex items-center gap-4">
                 <span style="font-weight: 800; color: var(--text-main); font-size: 1.4rem; white-space: nowrap;"><?php echo formatPrice($prod['price']); ?></span>

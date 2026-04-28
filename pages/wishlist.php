@@ -1,7 +1,6 @@
 <?php
 // pages/wishlist.php
-require_once __DIR__ . '/../config/constants.php';
-require_once __DIR__ . '/../includes/header.php';
+require_once '../includes/bootstrap.php';
 requireLogin();
 
 // Admins are moderators only — no personal wishlist
@@ -10,65 +9,123 @@ if (isAdmin()) {
     redirect(BASE_URL . 'admin/index.php');
 }
 
-$user_id = $_SESSION['user_id'];
-
-// Fetch wishlist items
-$stmt = $pdo->prepare("
-    SELECT p.*, c.name as category_name, i.image_path
-    FROM wishlists w
-    JOIN products p ON w.product_id = p.id
-    JOIN categories c ON p.category_id = c.id
-    LEFT JOIN product_images i ON p.id = i.product_id AND i.is_primary = 1
-    WHERE w.user_id = ?
-    ORDER BY w.created_at DESC
-");
-$stmt->execute([$user_id]);
-$wishlistItems = $stmt->fetchAll();
-
 $pageTitle = "My Wishlist";
+include '../includes/header.php';
 ?>
 
-<div class="container" style="margin-top: 4rem; margin-bottom: 8rem; max-width: 1400px; padding: 0 2rem;">
-    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 5rem; border-bottom: 2px solid #f1f5f9; padding-bottom: 2rem;">
+<div class="container min-h-screen pt-12 pb-20 relative">
+    <!-- Background Accents -->
+    <div style="position: absolute; top: -5%; left: 5%; width: 400px; height: 400px; border-radius: 50%; background: radial-gradient(circle, rgba(236,72,153,0.06) 0%, rgba(255,255,255,0) 70%); z-index: -1;"></div>
+
+    <div class="mb-10 text-center lg:text-left flex flex-col md:flex-row justify-between items-center gap-6">
         <div>
-            <h1 style="margin-bottom: 0.5rem; font-size: 2.5rem; font-weight: 800; color: #1e293b;">My Wishlist</h1>
-            <p style="color: #64748b; font-size: 1.2rem; margin-bottom: 0;">Items you've saved to look at later.</p>
-        </div>
-        <div style="background: #eff6ff; color: #2563eb; padding: 0.75rem 1.5rem; border-radius: 1rem; font-weight: 700; font-size: 1.1rem; border: 1px solid #dbeafe;">
-            <span id="wishlist-count"><?php echo count($wishlistItems); ?></span> items saved
+            <h1 class="font-bold text-4xl mb-2 gradient-text" style="background: linear-gradient(135deg, var(--text-main), var(--primary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">My Wishlist</h1>
+            <p class="text-muted text-lg font-medium">Items you've saved to look at later.</p>
         </div>
     </div>
 
-    <?php if (empty($wishlistItems)): ?>
-        <div class="card" style="padding: 6rem; text-align: center; border-radius: 2rem; background: white; border: 2px dashed #e2e8f0; box-shadow: none;">
-            <div style="font-size: 5rem; margin-bottom: 2rem;">✨</div>
-            <h2 style="font-weight: 800; color: #1e293b; margin-bottom: 1rem;">Your wishlist is empty</h2>
-            <p style="color: #64748b; font-size: 1.2rem; margin-bottom: 3rem; max-width: 500px; margin-left: auto; margin-right: auto;">Explore our campus collection and save items you love here to find them easily later.</p>
-            <a href="browse.php" class="btn btn-primary" style="padding: 1rem 2.5rem; font-size: 1.1rem; border-radius: 1rem; font-weight: 700; background: #2563eb; color: white; border: none; text-decoration: none;">Discover Items</a>
+    <!-- This container is populated by public/js/wishlist.js -->
+    <div id="wishlist-container">
+        <div class="glass-panel text-center py-20 px-4 shadow-sm relative overflow-hidden" style="border-radius: var(--radius-xl); border: 2px dashed rgba(0,0,0,0.05);">
+            <div class="text-4xl mb-6 opacity-30 animate-pulse">⏳</div>
+            <p class="text-muted font-bold text-lg">Loading your collection...</p>
         </div>
-    <?php else: ?>
-        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 4rem;">
-            <?php foreach ($wishlistItems as $prod): ?>
-                <?php 
-                // We use a custom version of the card for wishlist to include the remove button prominently
-                ?>
-                <div style="position: relative;">
-                    <?php include __DIR__ . '/../includes/product_card_template.php'; ?>
-                    
-                    <!-- Remove Button (Absolute Overlay for Wishlist) -->
-                    <form action="<?php echo BASE_URL; ?>actions/toggle_wishlist.php" method="POST" style="position: absolute; top: 1.5rem; right: 1.5rem; z-index: 10;">
-                        <input type="hidden" name="product_id" value="<?php echo $prod['id']; ?>">
-                        <button type="submit" style="width: 40px; height: 40px; background: white; border-radius: 50%; border: 1px solid #fee2e2; color: #ef4444; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); transition: all 0.2s;" onmouseover="this.style.backgroundColor='#ef4444'; this.style.color='white';" onmouseout="this.style.backgroundColor='white'; this.style.color='#ef4444';">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                <line x1="18" y1="6" x2="6" y2="18"></line>
-                                <line x1="6" y1="6" x2="18" y2="18"></line>
-                            </svg>
-                        </button>
-                    </form>
-                </div>
-            <?php endforeach; ?>
-        </div>
-    <?php endif; ?>
+    </div>
 </div>
+
+<!-- Custom styles for the wishlist items dynamic injection -->
+<style>
+.wishlist-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+}
+.wishlist-card {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(12px);
+    border-radius: var(--radius-lg);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    padding: 1.25rem;
+    display: flex;
+    gap: 1.25rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: var(--shadow-sm);
+    position: relative;
+    overflow: hidden;
+}
+.wishlist-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; width: 4px; height: 100%;
+    background: linear-gradient(to bottom, var(--primary), var(--secondary));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+.wishlist-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+    background: white;
+}
+.wishlist-card:hover::before {
+    opacity: 1;
+}
+.wishlist-card img {
+    width: 110px;
+    height: 110px;
+    object-fit: cover;
+    border-radius: var(--radius-md);
+    background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+}
+</style>
+
+<script src="../public/js/wishlist.js"></script>
+<script>
+// Overriding the default updateWishlistUI to use our new Design System classes
+function updateWishlistUI() {
+    const container = document.getElementById('wishlist-container');
+    const items = getWishlist();
+    
+    if (items.length === 0) {
+        container.innerHTML = `
+            <div class="glass-panel p-20 text-center shadow-sm relative overflow-hidden" style="border-radius: var(--radius-xl); border: 2px dashed rgba(0,0,0,0.05);">
+                <div class="text-8xl mb-6 opacity-20" style="transform: rotate(10deg);">💖</div>
+                <h3 class="font-bold text-main text-3xl mb-3">Your wishlist is empty</h3>
+                <p class="text-muted text-lg max-w-lg mx-auto mb-8">Start browsing and click the heart icon to save items you love.</p>
+                <a href="browse.php" class="btn btn-primary shadow-lg hover-scale" style="border-radius: var(--radius-full); padding: 0.8rem 2.5rem; font-weight: bold; font-size: 1.1rem;">Discover Items</a>
+            </div>
+        `;
+        return;
+    }
+
+    let html = '<div class="wishlist-grid">';
+    items.forEach(item => {
+        html += `
+            <div class="wishlist-card group">
+                <div style="position: relative;">
+                    <img src="${item.img}" alt="${item.title}">
+                </div>
+                <div class="flex-grow flex flex-col justify-between py-1">
+                    <div>
+                        <p class="text-primary font-bold tracking-wider uppercase mb-1" style="font-size: 0.65rem;">${item.category}</p>
+                        <h4 class="mb-1 text-main font-bold truncate leading-tight" style="font-size: 1.15rem; max-width: 150px;">${item.title}</h4>
+                        <p class="font-bold font-inter tracking-tight" style="font-size: 1.25rem; color: var(--text-main);">${item.price}</p>
+                    </div>
+                    <div class="flex gap-2 mt-3">
+                        <a href="product.php?id=${item.id}" class="btn btn-primary btn-sm flex-1 text-center" style="border-radius: var(--radius-full); font-weight: bold; font-size: 0.85rem;">View</a>
+                        <button onclick="toggleWishlistFromStorage(${item.id})" class="btn btn-sm hover-scale" style="color: #ef4444; background: #fee2e2; border: none; border-radius: var(--radius-full); font-weight: bold; width: 40px; padding: 0; display:flex; align-items:center; justify-content:center;" title="Remove">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+document.addEventListener('DOMContentLoaded', updateWishlistUI);
+</script>
 
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>

@@ -41,63 +41,70 @@ $stmt = $pdo->query("
 $listings = $stmt->fetchAll();
 ?>
 
-<div class="admin-page">
-    <div class="admin-page-header">
+<div class="container mt-8 mb-16">
+    <div class="flex justify-between items-end mb-8">
         <div>
-            <div class="admin-breadcrumb"><a href="index.php">Dashboard</a> › Listings</div>
-            <h1>Listing Management</h1>
+            <div class="admin-breadcrumb mb-2"><a href="index.php">Dashboard</a> › Listings</div>
+            <h1 class="mb-0 gradient-text">Listing Management</h1>
         </div>
-        <span class="badge badge-info" style="font-size: 0.85rem; padding: 0.4rem 1rem;"><?php echo count($listings); ?> Total Listings</span>
+        <div class="badge" style="background: var(--primary-light); color: var(--primary-hover); font-size: 0.9rem; padding: 0.5rem 1rem;"><?php echo count($listings); ?> Total Listings</div>
     </div>
 
-    <div class="card">
-        <div class="admin-table-wrap">
-            <table class="admin-table">
-                <thead>
-                    <tr>
-                        <th>Item</th>
-                        <th>Seller</th>
-                        <th>Category</th>
-                        <th>Price</th>
-                        <th>Condition</th>
-                        <th style="text-align: right;">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($listings as $item): ?>
-                    <tr>
-                        <td>
-                            <div style="font-weight: 700; display: flex; align-items: center; gap: 0.5rem;">
-                                <?php echo sanitize($item['title']); ?>
+    <div class="glass-panel table-responsive" style="border-radius: var(--radius-lg); overflow: hidden; border: 1px solid rgba(0,0,0,0.05); box-shadow: var(--shadow-md);">
+        <table class="table w-full text-left" style="border-collapse: collapse; margin: 0;">
+            <thead>
+                <tr style="background: rgba(248, 250, 252, 0.8);">
+                    <th class="p-4 uppercase text-xs text-muted font-bold tracking-wider" style="border-bottom: 2px solid var(--border-light);">Item Name</th>
+                    <th class="p-4 uppercase text-xs text-muted font-bold tracking-wider" style="border-bottom: 2px solid var(--border-light);">Seller</th>
+                    <th class="p-4 uppercase text-xs text-muted font-bold tracking-wider" style="border-bottom: 2px solid var(--border-light);">Category</th>
+                    <th class="p-4 uppercase text-xs text-muted font-bold tracking-wider" style="border-bottom: 2px solid var(--border-light);">Price</th>
+                    <th class="p-4 uppercase text-xs text-muted font-bold tracking-wider" style="border-bottom: 2px solid var(--border-light);">Condition</th>
+                    <th class="p-4 uppercase text-xs text-muted font-bold tracking-wider text-right" style="border-bottom: 2px solid var(--border-light);">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($listings as $item): ?>
+                    <tr style="transition: background 0.2s;" onmouseover="this.style.background='rgba(99,102,241,0.02)'" onmouseout="this.style.background='transparent'">
+                        <td class="p-4" style="border-bottom: 1px solid var(--border-light);">
+                            <div class="flex items-center gap-3">
+                                <div class="font-bold flex items-center gap-2">
+                                    <?php echo sanitize($item['title']); ?>
+                                </div>
                                 <?php if ($item['is_featured']): ?>
-                                    <span class="badge badge-warning" style="font-size: 0.7rem;">⭐ Featured</span>
+                                    <span class="badge" style="background: #fef3c7; color: #b45309; font-size: 0.7rem; padding: 0.2rem 0.5rem;"><span class="animate-pulse inline-block mr-1">⭐</span>Featured</span>
                                 <?php endif; ?>
                             </div>
                             <div style="font-size: 0.78rem; color: var(--text-muted);">ID #<?php echo $item['id']; ?></div>
                         </td>
-                        <td>@<?php echo sanitize($item['seller_name']); ?></td>
-                        <td><span class="badge badge-secondary"><?php echo sanitize($item['category_name']); ?></span></td>
-                        <td style="font-weight: 700; color: var(--primary);"><?php echo formatPrice($item['price']); ?></td>
-                        <td>
+                        <td class="p-4 font-medium" style="border-bottom: 1px solid var(--border-light); color: var(--primary);">@<?php echo sanitize($item['seller_name']); ?></td>
+                        <td class="p-4" style="border-bottom: 1px solid var(--border-light);"><span class="badge" style="background: var(--bg-main); color: var(--text-muted); border: 1px solid var(--border-light);"><?php echo sanitize($item['category_name']); ?></span></td>
+                        <td class="p-4 font-bold text-main" style="border-bottom: 1px solid var(--border-light); font-size: 1.1rem;"><?php echo formatPrice($item['price']); ?></td>
+                        <td class="p-4" style="border-bottom: 1px solid var(--border-light);">
                             <?php $badge = conditionBadge($item['condition']); ?>
-                            <span class="badge <?php echo $badge['class']; ?>"><?php echo $badge['label']; ?></span>
+                            <span class="badge <?php echo $badge['class']; ?> shadow-sm"><?php echo $badge['label']; ?></span>
                         </td>
-                        <td>
-                            <div class="admin-actions">
+                        <td class="p-4 text-right" style="border-bottom: 1px solid var(--border-light);">
+                            <div class="flex justify-end gap-2">
                                 <?php if ($item['is_featured']): ?>
-                                    <a href="?action=unfeature&id=<?php echo $item['id']; ?>" class="btn btn-secondary btn-sm" title="Unfeature">★</a>
+                                    <a href="?action=unfeature&id=<?php echo $item['id']; ?>" class="btn btn-secondary btn-sm hover-scale shadow-sm" style="border-radius: var(--radius-full);" title="Unfeature">⭐ UNFEAT</a>
                                 <?php else: ?>
-                                    <a href="?action=feature&id=<?php echo $item['id']; ?>" class="btn btn-secondary btn-sm" title="Feature">☆</a>
+                                    <a href="?action=feature&id=<?php echo $item['id']; ?>" class="btn btn-secondary btn-sm hover-scale shadow-sm" style="border-radius: var(--radius-full);" title="Feature">☆ FEAT</a>
                                 <?php endif; ?>
-                                <a href="../pages/product.php?id=<?php echo $item['id']; ?>" target="_blank" class="btn btn-secondary btn-sm">View</a>
-                                <a href="?action=delete&id=<?php echo $item['id']; ?>" class="btn btn-danger btn-sm" onclick="return confirm('Delete this listing permanently?')">Delete</a>
+                                <a href="../pages/product.php?id=<?php echo $item['id']; ?>" target="_blank" class="btn btn-primary btn-sm hover-scale shadow-sm" style="border-radius: var(--radius-full);">View</a>
+                                <a href="?action=delete&id=<?php echo $item['id']; ?>" class="btn btn-danger btn-sm hover-scale shadow-sm" style="border-radius: var(--radius-full);" onclick="return confirm('Delete this listing permanently?')">Delete</a>
                             </div>
                         </td>
                     </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
-        </div>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+        
+        <?php if (empty($listings)): ?>
+            <div class="text-center p-8 text-muted">
+                <span class="text-4xl mb-4 block">📭</span>
+                No listings available on the platform.
+            </div>
+        <?php endif; ?>
     </div>
 </div>
 

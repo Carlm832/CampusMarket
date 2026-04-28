@@ -1,7 +1,6 @@
 <?php
 // pages/profile.php
-require_once __DIR__ . '/../config/constants.php';
-require_once __DIR__ . '/../includes/header.php';
+require_once '../includes/bootstrap.php';
 
 // Decide which profile to show
 $viewId = isset($_GET['id']) ? (int)$_GET['id'] : (int)(currentUserId() ?? 0);
@@ -23,8 +22,9 @@ $stmt->execute([':id' => $viewId]);
 $user = $stmt->fetch();
 
 if (!$user) {
-    echo '<div class="container" style="margin-top:4rem;text-align:center"><h2>User not found</h2><a href="browse.php" class="btn btn-primary" style="margin-top:1rem">Back to Browse</a></div>';
-    include __DIR__ . '/../includes/footer.php';
+    include '../includes/header.php';
+    echo '<div class="container mt-12 text-center text-muted"><div class="text-6xl mb-4">👻</div><h2>User not found</h2><p>This user does not exist or has been deleted.</p><a href="index.php" class="btn btn-primary mt-4 hover-scale shadow-sm" style="border-radius: var(--radius-full);">Back Home</a></div>';
+    include '../includes/footer.php';
     exit;
 }
 
@@ -48,6 +48,8 @@ $stmt = $pdo->prepare("
 ");
 $stmt->execute([':uid' => $viewId]);
 $userProducts = $stmt->fetchAll();
+
+include '../includes/header.php';
 ?>
 
 <style>
@@ -417,6 +419,14 @@ $userProducts = $stmt->fetchAll();
     color: #fff !important;
     border: 1px solid rgba(255,255,255,0.3);
     backdrop-filter: blur(4px);
+    display: inline-flex;
+    align-items: center;
+    padding: 0.5rem 1.25rem;
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: var(--transition);
 }
 
 .btn-white:hover {
@@ -429,6 +439,13 @@ $userProducts = $stmt->fetchAll();
     background: #fff;
     color: var(--primary) !important;
     font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    padding: 0.5rem 1.25rem;
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: var(--transition);
 }
 
 .btn-white-solid:hover {
@@ -469,6 +486,7 @@ $userProducts = $stmt->fetchAll();
             <div class="profile-hero-actions">
                 <?php if ($isSelf): ?>
                     <a href="edit_profile.php" class="btn btn-white">✏️ Edit Profile</a>
+                    <a href="logout.php" class="btn btn-white" style="margin-left: 0.5rem; background: rgba(239,68,68,0.2); border-color: rgba(239,68,68,0.3);">Logout</a>
                 <?php elseif (isLoggedIn()): ?>
                     <a href="messages.php?to=<?php echo $user['id']; ?>" class="btn btn-white-solid">💬 Message</a>
                 <?php endif; ?>
