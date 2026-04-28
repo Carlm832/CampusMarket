@@ -10,29 +10,48 @@ $recentProducts = getRecentProducts($pdo, 8);
 $topCategories = getTopCategories($pdo);
 ?>
 
-<!-- Hero Section -->
-<section class="hero" style="background: linear-gradient(135deg, var(--primary), var(--secondary)); padding: 6rem 0; margin-top: -2rem; color: white; text-align: center; border-radius: 0 0 var(--radius-lg) var(--radius-lg);">
+<!-- Hero Section with Background Carousel -->
+<section class="hero">
+    <div class="hero-carousel">
+        <div class="hero-slide active" style="background-image: url('public/images/hero/hero1.png');"></div>
+        <div class="hero-slide" style="background-image: url('public/images/hero/hero2.png');"></div>
+        <div class="hero-slide" style="background-image: url('public/images/hero/hero3.png');"></div>
+        <div class="hero-slide" style="background-image: url('public/images/hero/hero4.png');"></div>
+    </div>
+    <div class="hero-overlay"></div>
+    
     <div class="container">
-        <h1 style="color: white; font-size: 3.5rem; margin-bottom: 1.5rem;">The Campus Marketplace</h1>
-        <p style="color: rgba(255,255,255,0.9); font-size: 1.25rem; max-width: 600px; margin: 0 auto 2.5rem;">
-            Buy and sell textbooks, electronics, furniture, and more within your university community.
+        <h1 style="font-size: 4rem; font-weight: 800; margin-bottom: 1.5rem; text-shadow: 0 4px 12px rgba(0,0,0,0.3);">The Campus Marketplace</h1>
+        <p style="font-size: 1.5rem; max-width: 700px; margin: 0 auto 3rem; font-weight: 500; text-shadow: 0 2px 8px rgba(0,0,0,0.3);">
+            The safest way to buy and sell within your university community.
         </p>
-        <div class="flex justify-center gap-4">
-            <a href="pages/browse.php" class="btn" style="background: white; color: var(--primary);">Start Browsing</a>
+        <div class="flex justify-center gap-6">
+            <a href="pages/browse.php" class="btn" style="background: white; color: var(--primary); padding: 1rem 2.5rem; font-size: 1.1rem; font-weight: 700; border-radius: 1rem; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.2);">Start Browsing</a>
             <?php if (isLoggedIn()): ?>
-            <div class="flex gap-2">
-                <a href="pages/create_listing.php" class="btn btn-secondary" style="background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.3); color: white;">Sell an Item</a>
-                <a href="pages/wishlist.php" class="btn btn-secondary" style="background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.3); color: white; display: flex; align-items: center; gap: 0.5rem;">
-                    <svg style="width: 16px; height: 16px;" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-                    My Wishlist
-                </a>
-            </div>
+                <a href="pages/create_listing.php" class="btn btn-secondary" style="background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.4); color: white; padding: 1rem 2.5rem; font-size: 1.1rem; font-weight: 700; border-radius: 1rem; backdrop-filter: blur(8px);">Sell an Item</a>
             <?php else: ?>
-                <a href="pages/register.php" class="btn btn-secondary" style="background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.3); color: white;">Join to Sell</a>
+                <a href="pages/register.php" class="btn btn-secondary" style="background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.4); color: white; padding: 1rem 2.5rem; font-size: 1.1rem; font-weight: 700; border-radius: 1rem; backdrop-filter: blur(8px);">Join to Sell</a>
             <?php endif; ?>
         </div>
     </div>
 </section>
+
+<script>
+// Hero Carousel Logic
+document.addEventListener('DOMContentLoaded', function() {
+    const slides = document.querySelectorAll('.hero-slide');
+    let currentSlide = 0;
+    
+    function nextSlide() {
+        slides[currentSlide].classList.remove('active');
+        currentSlide = (currentSlide + 1) % slides.length;
+        slides[currentSlide].classList.add('active');
+    }
+    
+    // Change slide every 5 seconds
+    setInterval(nextSlide, 5000);
+});
+</script>
 
 <!-- Category Quick Access -->
 <section class="mt-12">
