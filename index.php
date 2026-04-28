@@ -13,8 +13,8 @@ $topCategories = getTopCategories($pdo);
 <!-- Hero Section -->
 <section class="hero" style="background: linear-gradient(135deg, var(--primary), var(--secondary)); padding: 6rem 0; margin-top: -2rem; color: white; text-align: center; border-radius: 0 0 var(--radius-lg) var(--radius-lg);">
     <div class="container">
-        <h1 style="color: white; font-size: 3.5rem; margin-bottom: 1.5rem;">The Campus Marketplace</h1>
-        <p style="color: rgba(255,255,255,0.9); font-size: 1.25rem; max-width: 600px; margin: 0 auto 2.5rem;">
+        <h1 style="color: white; font-size: 2.5rem; margin-bottom: 1.25rem;">The Campus Marketplace</h1>
+        <p style="color: rgba(255,255,255,0.9); font-size: 1.1rem; max-width: 600px; margin: 0 auto 2.5rem;">
             Buy and sell textbooks, electronics, furniture, and more within your university community.
         </p>
         <div class="flex justify-center gap-4">
