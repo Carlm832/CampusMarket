@@ -176,6 +176,16 @@ function handleUpload(array $file, string $subfolder = 'products/'): array {
     return ['success' => false, 'error' => 'Failed to move file'];
 }
 
+/**
+ * Backward-compatible upload helper used by older pages.
+ * Returns relative path string on success, false on failure.
+ */
+function uploadImage(array $file, string $subfolder = 'products') {
+    $normalizedSubfolder = rtrim($subfolder, '/') . '/';
+    $result = handleUpload($file, $normalizedSubfolder);
+    return $result['success'] ? $result['path'] : false;
+}
+
 // ─── Pagination ──────────────────────────────────────────
 
 /**

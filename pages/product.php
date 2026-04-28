@@ -37,21 +37,21 @@ $rating = getSellerRating($pdo, $product['seller_id']);
     <div style="position: absolute; top: -100px; right: -50px; width: 400px; height: 400px; border-radius: 50%; background: radial-gradient(circle, rgba(99,102,241,0.1) 0%, rgba(255,255,255,0) 70%); z-index: -1;"></div>
 
     <!-- Breadcrumb -->
-    <div class="flex items-center gap-2 text-muted small mb-6 font-medium bg-white/50 inline-flex px-4 py-2 rounded-full border border-gray-100 backdrop-blur-md">
-        <a href="index.php" class="hover:text-primary transition-colors">Home</a>
+    <div class="flex items-center gap-2 text-muted small mb-6 font-medium inline-flex px-4 py-2 rounded-full backdrop-blur-md" style="background: color-mix(in srgb, var(--bg-surface) 70%, transparent); border: 1px solid var(--border-light);">
+        <a href="<?php echo BASE_URL; ?>/" class="hover:text-primary transition-colors">Home</a>
         <span class="opacity-50">/</span>
-        <a href="browse.php" class="hover:text-primary transition-colors">Browse</a>
+        <a href="<?php echo BASE_URL; ?>/pages/browse.php" class="hover:text-primary transition-colors">Browse</a>
         <span class="opacity-50">/</span>
-        <a href="browse.php?category=<?php echo $product['category_id']; ?>" class="hover:text-primary transition-colors"><?php echo sanitize($product['category_name']); ?></a>
+        <a href="<?php echo BASE_URL; ?>/pages/browse.php?category=<?php echo $product['category_id']; ?>" class="hover:text-primary transition-colors"><?php echo sanitize($product['category_name']); ?></a>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16">
         
         <!-- Gallery -->
         <div class="gallery-container sticky top-24" style="align-self: start;">
-            <div class="glass-panel overflow-hidden relative group" style="border-radius: var(--radius-xl); min-height: 450px; display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow-xl); background: #f8fafc; border: 1px solid rgba(0,0,0,0.05);">
+            <div class="product-gallery-main relative group">
                 <?php if (!empty($images)): ?>
-                    <img src="<?php echo BASE_URL; ?>/public/<?php echo $images[0]['image_path']; ?>" id="main-image" alt="<?php echo sanitize($product['title']); ?>" style="max-width: 100%; max-height: 550px; object-fit: contain; transition: transform 0.3s ease;">
+                    <img src="<?php echo BASE_URL; ?>/public/<?php echo $images[0]['image_path']; ?>" id="main-image" alt="<?php echo sanitize($product['title']); ?>">
                 <?php else: ?>
                     <div class="flex flex-col items-center justify-center text-muted">
                         <svg class="w-24 h-24 mb-4 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
@@ -85,12 +85,12 @@ $rating = getSellerRating($pdo, $product['seller_id']);
                 <h1 class="mb-4 text-main font-bold" style="font-size: 2.75rem; line-height: 1.2; letter-spacing: -0.5px;"><?php echo sanitize($product['title']); ?></h1>
                 <div class="flex items-center gap-4">
                     <span style="font-size: 2.5rem; font-weight: 800; color: var(--primary); font-family: 'Inter', sans-serif; letter-spacing: -1px;"><?php echo formatPrice($product['price']); ?></span>
-                    <span class="text-muted small bg-gray-100 px-3 py-1 rounded-full font-medium">Listed <?php echo timeAgo($product['created_at']); ?></span>
+                    <span class="text-muted small px-3 py-1 rounded-full font-medium" style="background: var(--bg-main); border: 1px solid var(--border-light);">Listed <?php echo timeAgo($product['created_at']); ?></span>
                 </div>
             </div>
 
             <!-- Seller Card -->
-            <div class="glass-panel p-6 mb-8 flex items-center justify-between" style="border-radius: var(--radius-lg); border-left: 4px solid var(--primary); background: linear-gradient(to right, rgba(99,102,241,0.05), white);">
+            <div class="glass-panel p-6 mb-8 flex items-center justify-between" style="border-radius: var(--radius-lg); border-left: 4px solid var(--primary); background: linear-gradient(to right, rgba(99,102,241,0.08), var(--bg-surface));">
                 <div class="flex items-center gap-4">
                     <div style="width: 60px; height: 60px; background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.5rem; box-shadow: var(--shadow-md);">
                         <?php echo strtoupper(substr($product['seller_name'], 0, 1)); ?>
@@ -107,18 +107,18 @@ $rating = getSellerRating($pdo, $product['seller_id']);
                 <a href="profile.php?id=<?php echo $product['seller_id']; ?>" class="btn btn-secondary btn-sm hover-scale shadow-sm" style="border-radius: var(--radius-full);">View Profile</a>
             </div>
 
-            <div class="glass-panel p-8 mb-8 flex-grow" style="border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); background: white;">
-                <h3 class="mb-4 font-bold flex items-center gap-2 border-b border-gray-100 pb-3 text-xl">
-                    <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path></svg>
+            <div class="glass-panel p-8 mb-8 flex-grow" style="border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); background: var(--bg-surface); border: 1px solid var(--border-light);">
+                <h3 class="mb-6 font-bold flex items-center gap-3 border-b border-gray-100 pb-4 text-xl text-main">
+                    <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 24px; height: 24px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path></svg>
                     Description
                 </h3>
-                <div style="line-height: 1.8; color: var(--text-main); font-size: 1.1rem; text-wrap: pretty;">
+                <div style="line-height: 1.8; color: var(--text-main); font-size: 1.1rem; text-wrap: pretty; min-height: 150px;">
                     <?php echo nl2br(sanitize($product['description'])); ?>
                 </div>
             </div>
 
             <!-- Action Buttons -->
-            <div class="flex gap-4 sticky bottom-4 z-10 glass-panel p-4" style="border-radius: var(--radius-xl); box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1); background: rgba(255,255,255,0.95); backdrop-filter: blur(10px);">
+            <div class="flex gap-4 sticky bottom-4 z-10 glass-panel p-4" style="border-radius: var(--radius-xl); box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1); background: color-mix(in srgb, var(--bg-surface) 95%, transparent); backdrop-filter: blur(10px);">
                 <a href="messages.php?other_user_id=<?php echo $product['seller_id']; ?>&product_id=<?php echo $product['id']; ?>" class="btn btn-primary flex-grow justify-center py-4 text-lg shadow-lg hover-scale" style="border-radius: var(--radius-full); font-weight: bold;">
                     Message Seller
                 </a>

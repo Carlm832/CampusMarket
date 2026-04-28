@@ -12,10 +12,9 @@ global $pdo; // Ensure PDO is available if included inside a function scope
     <!-- Main Product Link -->
     <a href="<?php echo BASE_URL; ?>pages/product.php?id=<?php echo $prod['id']; ?>" style="text-decoration: none; display: flex; flex-direction: column; height: 100%;">
         <!-- Product Image Container -->
-        <div style="height: 280px; width: 100%; overflow: hidden; background-color: #f1f5f9; display: flex; align-items: center; justify-content: center; position: relative; border-radius: var(--radius-md); margin-bottom: 1.5rem;">
+        <div class="product-card-image-wrap" style="border-radius: var(--radius-md); margin-bottom: 1.5rem;">
             <img src="<?php echo !empty($prod['image_path']) ? sanitize(BASE_URL . 'public/' . $prod['image_path']) : sanitize(BASE_URL . 'public/images/default-product.png'); ?>" 
-                 alt="<?php echo sanitize($prod['title']); ?>" 
-                 style="max-width: 100%; max-height: 100%; object-fit: contain; transition: transform 0.5s ease;">
+                 alt="<?php echo sanitize($prod['title']); ?>">
             
             <!-- Condition Badge -->
             <div style="position: absolute; top: 1rem; left: 1rem; z-index: 5;">

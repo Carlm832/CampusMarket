@@ -39,7 +39,7 @@
         </div>
         
         <div class="footer-bottom">
-            <p>&copy; <?php echo date('Y'); ?> CampusMarket Group Project. Developed by Member 5 (UI/UX) & Team.</p>
+            <p>&copy; <?php echo date('Y'); ?> CampusMarket. All rights reserved.</p>
         </div>
     </div>
 </footer>

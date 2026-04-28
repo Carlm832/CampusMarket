@@ -23,7 +23,7 @@ $user = $stmt->fetch();
 
 if (!$user) {
     include '../includes/header.php';
-    echo '<div class="container mt-12 text-center text-muted"><div class="text-6xl mb-4">👻</div><h2>User not found</h2><p>This user does not exist or has been deleted.</p><a href="index.php" class="btn btn-primary mt-4 hover-scale shadow-sm" style="border-radius: var(--radius-full);">Back Home</a></div>';
+    echo '<div class="container mt-12 text-center text-muted"><div class="text-6xl mb-4">👻</div><h2>User not found</h2><p>This user does not exist or has been deleted.</p><a href="' . BASE_URL . '/" class="btn btn-primary mt-4 hover-scale shadow-sm" style="border-radius: var(--radius-full);">Back Home</a></div>';
     include '../includes/footer.php';
     exit;
 }
@@ -31,6 +31,7 @@ if (!$user) {
 $isSelf  = isLoggedIn() && (int)currentUserId() === (int)$user['id'];
 $rating  = getSellerRating($pdo, (int)$user['id']);
 $pageTitle = sanitize($user['username']) . "'s Profile";
+$activeTab = ($_GET['tab'] ?? 'listings') === 'about' ? 'about' : 'listings';
 
 // Fetch listings count for the stat pill
 $listingCountStmt = $pdo->prepare("SELECT COUNT(*) FROM products WHERE user_id = :uid AND status = 'active'");
@@ -453,6 +454,27 @@ include '../includes/header.php';
     transform: translateY(-1px);
     box-shadow: 0 6px 14px rgba(99,102,241,0.2);
 }
+
+body.dark-mode .profile-stat-row {
+    background: var(--bg-surface);
+}
+
+body.dark-mode .profile-stat {
+    border-right-color: var(--border-light);
+}
+
+body.dark-mode .listing-card-img {
+    background: var(--bg-main);
+}
+
+body.dark-mode .btn-white-solid {
+    background: #334155;
+    color: #e2e8f0 !important;
+}
+
+body.dark-mode .btn-white-solid:hover {
+    background: #475569;
+}
 </style>
 
 <!-- ═══ Profile Hero Banner ═══════════════════════════════════════ -->
@@ -485,7 +507,7 @@ include '../includes/header.php';
             <!-- Action buttons -->
             <div class="profile-hero-actions">
                 <?php if ($isSelf): ?>
-                    <a href="edit_profile.php" class="btn btn-white">✏️ Edit Profile</a>
+                    <a href="<?php echo BASE_URL; ?>pages/edit_profile.php" class="btn btn-white">✏️ Edit Profile</a>
                     <a href="logout.php" class="btn btn-white" style="margin-left: 0.5rem; background: rgba(239,68,68,0.2); border-color: rgba(239,68,68,0.3);">Logout</a>
                 <?php elseif (isLoggedIn()): ?>
                     <a href="messages.php?to=<?php echo $user['id']; ?>" class="btn btn-white-solid">💬 Message</a>
@@ -496,11 +518,11 @@ include '../includes/header.php';
 
         <!-- Tab bar -->
         <nav class="profile-tabs">
-            <a href="#listings" class="profile-tab active">
+            <a href="#listings" class="profile-tab <?php echo $activeTab === 'listings' ? 'active' : ''; ?>" data-tab="listings">
                 Listings
                 <span class="tab-count"><?php echo $listingCount; ?></span>
             </a>
-            <a href="#about" class="profile-tab">About</a>
+            <a href="#about" class="profile-tab <?php echo $activeTab === 'about' ? 'active' : ''; ?>" data-tab="about">About</a>
         </nav>
     </div>
 </div>
@@ -626,4 +648,44 @@ include '../includes/header.php';
 
 </div>
 
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const tabs = Array.from(document.querySelectorAll('.profile-tab'));
+    const aboutSection = document.getElementById('about');
+    const listingsSection = document.getElementById('listings');
+
+    function setActive(tabName) {
+        tabs.forEach(function (tab) {
+            tab.classList.toggle('active', tab.dataset.tab === tabName);
+        });
+    }
+
+    function scrollToSection(tabName) {
+        const target = tabName === 'about' ? aboutSection : listingsSection;
+        if (!target) return;
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    tabs.forEach(function (tab) {
+        tab.addEventListener('click', function (e) {
+            e.preventDefault();
+            const tabName = tab.dataset.tab;
+            setActive(tabName);
+            scrollToSection(tabName);
+            if (history.replaceState) {
+                history.replaceState(null, '', '#' + tabName);
+            }
+        });
+    });
+
+    const hash = (window.location.hash || '').replace('#', '');
+    if (hash === 'about' || hash === 'listings') {
+        setActive(hash);
+    } else {
+        setActive('<?php echo $activeTab; ?>');
+    }
+});
+</script>
+
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>
+

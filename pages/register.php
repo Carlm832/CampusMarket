@@ -118,85 +118,83 @@ require_once '../includes/header.php';
             <p class="text-muted text-md">Begin trading safely with your campus community</p>
         </div>
 
-        <form method="post" novalidate class="flex flex-col gap-4">
-            <div>
-                <label for="username" style="display: block; font-weight: 600; margin-bottom: 0.4rem; color: var(--text-main);">Username</label>
+        <form method="post" novalidate class="auth-form">
+            <div class="form-row">
+                <label for="username" class="form-label">Username</label>
                 <input type="text" id="username" name="username"
                        value="<?php echo sanitize($old['username']); ?>"
                        maxlength="50" required autofocus autocomplete="username"
-                       class="form-control premium-input w-full <?php echo isset($errors['username']) ? 'is-invalid' : ''; ?>"
+                       class="form-control premium-input w-full <?php echo isset($errors['username']) ? 'input-invalid' : ''; ?>"
                        placeholder="e.g. campus_trader"
                        style="padding: 0.7rem 1rem; <?php echo isset($errors['username']) ? 'border-color: #ef4444; background-color: #fef2f2;' : ''; ?>">
                 <?php if (isset($errors['username'])): ?>
-                    <div style="color: #ef4444; font-size: 0.85rem; margin-top: 0.3rem; font-weight: 500;"><?php echo sanitize($errors['username']); ?></div>
+                    <div class="form-error"><?php echo sanitize($errors['username']); ?></div>
                 <?php else: ?>
-                    <div class="text-muted" style="font-size: 0.8rem; margin-top: 0.3rem;">3–50 chars (letters, numbers, underscores).</div>
+                    <div class="form-note">3-50 chars (letters, numbers, underscores).</div>
                 <?php endif; ?>
             </div>
 
-            <div>
-                <label for="email" style="display: block; font-weight: 600; margin-bottom: 0.4rem; color: var(--text-main);">Email Address</label>
+            <div class="form-row">
+                <label for="email" class="form-label">Email Address</label>
                 <input type="email" id="email" name="email"
                        value="<?php echo sanitize($old['email']); ?>"
                        maxlength="100" required autocomplete="email"
-                       class="form-control premium-input w-full <?php echo isset($errors['email']) ? 'is-invalid' : ''; ?>"
+                       class="form-control premium-input w-full <?php echo isset($errors['email']) ? 'input-invalid' : ''; ?>"
                        placeholder="e.g. you@university.edu"
                        style="padding: 0.7rem 1rem; <?php echo isset($errors['email']) ? 'border-color: #ef4444; background-color: #fef2f2;' : ''; ?>">
                 <?php if (isset($errors['email'])): ?>
-                    <div style="color: #ef4444; font-size: 0.85rem; margin-top: 0.3rem; font-weight: 500;"><?php echo sanitize($errors['email']); ?></div>
+                    <div class="form-error"><?php echo sanitize($errors['email']); ?></div>
                 <?php endif; ?>
             </div>
 
-            <div>
-                <label for="phone" style="display: block; font-weight: 600; margin-bottom: 0.4rem; color: var(--text-main);">Phone <span class="text-muted" style="font-weight:400;">(optional)</span></label>
+            <div class="form-row">
+                <label for="phone" class="form-label">Phone <span class="form-label--muted">(optional)</span></label>
                 <input type="tel" id="phone" name="phone"
                        value="<?php echo sanitize($old['phone']); ?>"
                        maxlength="20" autocomplete="tel"
-                       class="form-control premium-input w-full <?php echo isset($errors['phone']) ? 'is-invalid' : ''; ?>"
+                       class="form-control premium-input w-full <?php echo isset($errors['phone']) ? 'input-invalid' : ''; ?>"
                        placeholder="+1 (555) 000-0000"
                        style="padding: 0.7rem 1rem; <?php echo isset($errors['phone']) ? 'border-color: #ef4444; background-color: #fef2f2;' : ''; ?>">
                 <?php if (isset($errors['phone'])): ?>
-                    <div style="color: #ef4444; font-size: 0.85rem; margin-top: 0.3rem; font-weight: 500;"><?php echo sanitize($errors['phone']); ?></div>
+                    <div class="form-error"><?php echo sanitize($errors['phone']); ?></div>
                 <?php endif; ?>
             </div>
 
-            <div>
-                <label for="password" style="display: block; font-weight: 600; margin-bottom: 0.4rem; color: var(--text-main);">Password</label>
-                <div style="position: relative;">
+            <div class="form-row">
+                <label for="password" class="form-label">Password</label>
+                <div class="input-with-toggle">
                     <input type="password" id="password" name="password"
                            minlength="8" required autocomplete="new-password"
-                           class="form-control premium-input w-full <?php echo isset($errors['password']) ? 'is-invalid' : ''; ?>"
+                           class="form-control premium-input w-full <?php echo isset($errors['password']) ? 'input-invalid' : ''; ?>"
                            placeholder="••••••••"
                            style="padding: 0.7rem 3rem 0.7rem 1rem; <?php echo isset($errors['password']) ? 'border-color: #ef4444; background-color: #fef2f2;' : ''; ?>">
-                    <button type="button" class="password-toggle" data-target="password" aria-label="Show password" 
-                            style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #94a3b8; cursor: pointer; padding: 0.2rem; display: flex; align-items: center; justify-content: center; transition: color 0.2s;">
+                    <button type="button" class="password-toggle" data-target="password" aria-label="Show password">
                         <svg class="icon-show" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 1.2rem; height: 1.2rem;"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
                         <svg class="icon-hide" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 1.2rem; height: 1.2rem; display: none;"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-6.5 0-10-7-10-7a19.8 19.8 0 0 1 5.06-5.94"/><path d="M9.9 4.24A10.94 10.94 0 0 1 12 4c6.5 0 10 7 10 7a19.9 19.9 0 0 1-3.17 4.19"/><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M1 1l22 22"/></svg>
                     </button>
                 </div>
                 <?php if (isset($errors['password'])): ?>
-                    <div style="color: #ef4444; font-size: 0.85rem; margin-top: 0.3rem; font-weight: 500;"><?php echo sanitize($errors['password']); ?></div>
+                    <div class="form-error"><?php echo sanitize($errors['password']); ?></div>
                 <?php else: ?>
-                    <div class="text-muted" style="font-size: 0.8rem; margin-top: 0.3rem;">Min. 8 characters, mixing letters & numbers.</div>
+                    <div class="form-note">Min. 8 characters, mixing letters and numbers.</div>
                 <?php endif; ?>
             </div>
 
-            <div>
-                <label for="password_confirm" style="display: block; font-weight: 600; margin-bottom: 0.4rem; color: var(--text-main);">Confirm Password</label>
-                <div style="position: relative;">
+            <div class="form-row">
+                <label for="password_confirm" class="form-label">Confirm Password</label>
+                <div class="input-with-toggle">
                     <input type="password" id="password_confirm" name="password_confirm"
                            minlength="8" required autocomplete="new-password"
-                           class="form-control premium-input w-full <?php echo isset($errors['password_confirm']) ? 'is-invalid' : ''; ?>"
+                           class="form-control premium-input w-full <?php echo isset($errors['password_confirm']) ? 'input-invalid' : ''; ?>"
                            placeholder="••••••••"
                            style="padding: 0.7rem 3rem 0.7rem 1rem; <?php echo isset($errors['password_confirm']) ? 'border-color: #ef4444; background-color: #fef2f2;' : ''; ?>">
-                    <button type="button" class="password-toggle" data-target="password_confirm" aria-label="Show password" 
-                            style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #94a3b8; cursor: pointer; padding: 0.2rem; display: flex; align-items: center; justify-content: center; transition: color 0.2s;">
+                    <button type="button" class="password-toggle" data-target="password_confirm" aria-label="Show password">
                         <svg class="icon-show" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 1.2rem; height: 1.2rem;"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
                         <svg class="icon-hide" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 1.2rem; height: 1.2rem; display: none;"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-6.5 0-10-7-10-7a19.8 19.8 0 0 1 5.06-5.94"/><path d="M9.9 4.24A10.94 10.94 0 0 1 12 4c6.5 0 10 7 10 7a19.9 19.9 0 0 1-3.17 4.19"/><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M1 1l22 22"/></svg>
                     </button>
                 </div>
                 <?php if (isset($errors['password_confirm'])): ?>
-                    <div style="color: #ef4444; font-size: 0.85rem; margin-top: 0.3rem; font-weight: 500;"><?php echo sanitize($errors['password_confirm']); ?></div>
+                    <div class="form-error"><?php echo sanitize($errors['password_confirm']); ?></div>
                 <?php endif; ?>
             </div>
 
@@ -234,3 +232,7 @@ require_once '../includes/header.php';
 </script>
 
 <?php require_once '../includes/footer.php'; ?>
+
+
+
+
