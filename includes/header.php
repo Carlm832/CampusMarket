@@ -32,8 +32,8 @@ require_once __DIR__ . '/bootstrap.php';
 <nav class="navbar">
     <div class="container flex justify-between items-center">
         <!-- Logo -->
-        <a href="<?php echo BASE_URL; ?>/index.php" class="logo" style="display: flex; align-items: center; gap: 0.5rem;">
-            <img src="<?php echo BASE_URL; ?>/public/images/logo.png" alt="CampusMarket Logo" style="height: 32px; width: auto; object-fit: contain;">
+        <a href="<?php echo BASE_URL; ?>/index.php" class="logo" style="display: flex; align-items: center; gap: 0.6rem;">
+            <img src="<?php echo BASE_URL; ?>/public/images/logo.png" alt="CampusMarket Logo" style="height: 42px; width: auto; object-fit: contain;">
             <span>CampusMarket</span>
         </a>
         
@@ -56,22 +56,31 @@ require_once __DIR__ . '/bootstrap.php';
                 <a href="<?php echo BASE_URL; ?>admin/index.php" style="color: var(--accent); font-weight: bold;">Admin Panel</a>
                 <a href="<?php echo BASE_URL; ?>pages/logout.php" class="btn btn-secondary btn-sm" style="margin-left: 0.5rem;">Logout</a>
             <?php elseif (isLoggedIn()): ?>
-                <a href="<?php echo BASE_URL; ?>pages/create_listing.php" style="font-weight: 500; color: var(--text-muted); font-size: 0.95rem;">Create Listing</a>
-                <?php 
-                    $unreadNotifications = countUnreadNotifications($pdo, currentUserId());
-                ?>
-                <a href="<?php echo BASE_URL; ?>/pages/inbox.php" class="relative">
-                    Inbox
-                    <?php if ($unreadNotifications > 0): ?>
-                        <span class="badge" style="background: var(--accent); color: white; padding: 0.1rem 0.4rem; font-size: 0.7rem; margin-left: 0.2rem; vertical-align: super;">
-                            <?php echo $unreadNotifications; ?>
-                        </span>
-                    <?php endif; ?>
-                </a>
-                <a href="<?php echo BASE_URL; ?>pages/my_orders.php">Orders</a>
-                <a href="<?php echo BASE_URL; ?>pages/wishlist.php">Wishlist</a>
-                <a href="<?php echo BASE_URL; ?>pages/profile.php">Profile</a>
-                <a href="<?php echo BASE_URL; ?>pages/logout.php" class="btn btn-secondary btn-sm" style="margin-left: 0.5rem;">Logout</a>
+                <a href="<?php echo BASE_URL; ?>pages/create_listing.php" style="font-weight: 600; color: var(--primary);">Sell Item</a>
+                
+                <!-- User Account Dropdown -->
+                <div class="user-dropdown">
+                    <button class="user-dropdown-btn">
+                        <span>Account</span>
+                        <svg viewBox="0 0 20 20" fill="currentColor" style="width: 16px; height: 16px;"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                    </button>
+                    <div class="user-dropdown-content">
+                        <?php 
+                            $unreadNotifications = countUnreadNotifications($pdo, currentUserId());
+                        ?>
+                        <a href="<?php echo BASE_URL; ?>/pages/inbox.php" class="flex justify-between items-center">
+                            Inbox
+                            <?php if ($unreadNotifications > 0): ?>
+                                <span class="badge" style="background: var(--accent); color: white;"><?php echo $unreadNotifications; ?></span>
+                            <?php endif; ?>
+                        </a>
+                        <a href="<?php echo BASE_URL; ?>pages/my_orders.php">My Orders</a>
+                        <a href="<?php echo BASE_URL; ?>pages/wishlist.php">Wishlist</a>
+                        <a href="<?php echo BASE_URL; ?>pages/profile.php">Profile Settings</a>
+                        <div style="border-top: 1px solid var(--border-light); margin: 0.5rem 0;"></div>
+                        <a href="<?php echo BASE_URL; ?>pages/logout.php" style="color: var(--error);">Logout</a>
+                    </div>
+                </div>
             <?php else: ?>
                 <a href="<?php echo BASE_URL; ?>pages/login.php">Login</a>
                 <a href="<?php echo BASE_URL; ?>pages/register.php" class="btn btn-primary btn-sm">Sign Up</a>

@@ -23,7 +23,7 @@ $user = $stmt->fetch();
 
 if (!$user) {
     include '../includes/header.php';
-    echo '<div class="container mt-12 text-center text-muted"><div class="text-6xl mb-4">👻</div><h2>User not found</h2><p>This user does not exist or has been deleted.</p><a href="index.php" class="btn btn-primary mt-4 hover-scale shadow-sm" style="border-radius: var(--radius-full);">Back Home</a></div>';
+    echo '<div class="container mt-12 text-center text-muted"><div class="text-6xl mb-4">👻</div><h2>User not found</h2><p>This user does not exist or has been deleted.</p><a href="' . BASE_URL . '/" class="btn btn-primary mt-4 hover-scale shadow-sm" style="border-radius: var(--radius-full);">Back Home</a></div>';
     include '../includes/footer.php';
     exit;
 }
