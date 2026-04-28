@@ -67,7 +67,7 @@ $products = $stmt->fetchAll();
     <div style="position: absolute; top: -5%; left: -5%; width: 400px; height: 400px; border-radius: 50%; background: radial-gradient(circle, rgba(99,102,241,0.08) 0%, rgba(255,255,255,0) 70%); z-index: -1;"></div>
     <div style="position: absolute; top: 15%; right: -5%; width: 500px; height: 500px; border-radius: 50%; background: radial-gradient(circle, rgba(236,72,153,0.06) 0%, rgba(255,255,255,0) 70%); z-index: -1;"></div>
 
-    <div class="container">
+    <div class="px-8 lg:px-12 w-full">
         <!-- Browse Header -->
         <div class="mb-10 text-center lg:text-left flex flex-col lg:flex-row justify-between items-center gap-6">
             <div>
@@ -183,7 +183,7 @@ $products = $stmt->fetchAll();
                         <a href="browse.php" class="btn btn-primary mt-6 hover-scale shadow-sm" style="border-radius: var(--radius-full);">Clear All Filters</a>
                     </div>
                 <?php else: ?>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 xl:grid-cols-4 3xl:grid-cols-5 gap-6">
                         <?php foreach ($products as $prod): ?>
                             <a href="product.php?id=<?php echo $prod['id']; ?>" class="card card-hover flex flex-col h-full" style="text-decoration: none; border-radius: var(--radius-lg); overflow: hidden; background: var(--bg-surface); border: 1px solid var(--border-light);">
                                 <div style="height: 220px; background: #e2e8f0; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center;">
