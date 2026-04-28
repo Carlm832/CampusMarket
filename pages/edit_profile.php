@@ -9,6 +9,12 @@ require_once '../includes/functions_member2.php';
 
 requireLogin();
 
+// Admins are moderators only — no personal profile to edit
+if (isAdmin()) {
+    setFlash('error', 'Administrators do not have a user profile. Use the Admin Panel.');
+    redirect(BASE_URL . 'admin/index.php');
+}
+
 $uid = (int) currentUserId();
 
 // Load current user.

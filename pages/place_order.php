@@ -3,6 +3,12 @@
 require_once __DIR__ . '/../includes/bootstrap.php';
 requireLogin();
 
+// Admins are moderators only — they cannot place orders
+if (isAdmin()) {
+    setFlash('error', 'Administrators cannot place orders.');
+    redirect(BASE_URL . 'admin/index.php');
+}
+
 $currentUserId = currentUserId();
 $productId = $_GET['id'] ?? null;
 

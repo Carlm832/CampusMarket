@@ -4,6 +4,12 @@ require_once __DIR__ . '/../config/constants.php';
 require_once __DIR__ . '/../includes/header.php';
 requireLogin();
 
+// Admins are moderators only — no personal wishlist
+if (isAdmin()) {
+    setFlash('error', 'Administrators do not have a wishlist. Use the Admin Panel to manage the marketplace.');
+    redirect(BASE_URL . 'admin/index.php');
+}
+
 $user_id = $_SESSION['user_id'];
 
 // Fetch wishlist items

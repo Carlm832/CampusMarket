@@ -4,6 +4,12 @@ require_once __DIR__ . '/../config/constants.php';
 require_once __DIR__ . '/../includes/header.php';
 requireLogin();
 
+// Admins are moderators only — they cannot create listings
+if (isAdmin()) {
+    setFlash('error', 'Administrators cannot create listings. Use the Admin Panel to manage the marketplace.');
+    redirect(BASE_URL . 'admin/index.php');
+}
+
 $pageTitle = "Create New Listing";
 
 // Fetch categories for the dropdown

@@ -11,123 +11,601 @@ if ($viewId <= 0) {
     $viewId = (int)currentUserId();
 }
 
+// Admins viewing their own profile → redirect to admin panel
+// Admins can still view other users' profiles for moderation purposes
+if (isAdmin() && $viewId === (int)currentUserId()) {
+    redirect(BASE_URL . 'admin/index.php');
+}
+
 // Fetch User
 $stmt = $pdo->prepare("SELECT id, username, email, role, phone, avatar, created_at FROM users WHERE id = :id");
 $stmt->execute([':id' => $viewId]);
 $user = $stmt->fetch();
 
 if (!$user) {
-    echo '<div class="container mt-12 text-center"><h2>User not found</h2><a href="index.php" class="btn btn-primary mt-4">Back Home</a></div>';
+    echo '<div class="container" style="margin-top:4rem;text-align:center"><h2>User not found</h2><a href="browse.php" class="btn btn-primary" style="margin-top:1rem">Back to Browse</a></div>';
     include __DIR__ . '/../includes/footer.php';
     exit;
 }
 
-$isSelf = isLoggedIn() && (int)currentUserId() === (int)$user['id'];
-$rating = getSellerRating($pdo, (int)$user['id']);
+$isSelf  = isLoggedIn() && (int)currentUserId() === (int)$user['id'];
+$rating  = getSellerRating($pdo, (int)$user['id']);
 $pageTitle = sanitize($user['username']) . "'s Profile";
+
+// Fetch listings count for the stat pill
+$listingCountStmt = $pdo->prepare("SELECT COUNT(*) FROM products WHERE user_id = :uid AND status = 'active'");
+$listingCountStmt->execute([':uid' => $viewId]);
+$listingCount = (int)$listingCountStmt->fetchColumn();
+
+// Fetch all active listings
+$stmt = $pdo->prepare("
+    SELECT p.*, c.name as category_name, i.image_path
+    FROM products p
+    JOIN categories c ON p.category_id = c.id
+    LEFT JOIN product_images i ON p.id = i.product_id AND i.is_primary = 1
+    WHERE p.user_id = :uid AND p.status = 'active'
+    ORDER BY p.created_at DESC
+");
+$stmt->execute([':uid' => $viewId]);
+$userProducts = $stmt->fetchAll();
 ?>
 
-<div class="container mt-12 mb-20">
-    <!-- Profile Header -->
-    <div class="card p-8 mb-8" style="background: linear-gradient(rgba(255,255,255,0.7), rgba(255,255,255,0.9)); backdrop-filter: blur(20px);">
-        <div class="flex items-center gap-8 flex-wrap">
-            <div class="relative">
-                <img src="<?php echo avatarUrl($user['avatar']); ?>" alt="Avatar" class="shadow-xl" style="width: 140px; height: 140px; border-radius: var(--radius-full); object-fit: cover; border: 4px solid white;">
+<style>
+/* ── Profile Page Styles ─────────────────────────────── */
+
+.profile-hero {
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 50%, #7c3aed 100%);
+    padding: 3rem 0 0;
+    margin-bottom: 0;
+    position: relative;
+    overflow: hidden;
+}
+
+.profile-hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Ccircle cx='30' cy='30' r='4'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    pointer-events: none;
+}
+
+.profile-hero-inner {
+    max-width: var(--container-max);
+    margin: 0 auto;
+    padding: 0 1.5rem;
+    position: relative;
+    z-index: 1;
+}
+
+.profile-hero-body {
+    display: flex;
+    align-items: flex-end;
+    gap: 2rem;
+    flex-wrap: wrap;
+    padding-bottom: 0;
+}
+
+.profile-avatar-wrap {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.profile-avatar {
+    width: 130px;
+    height: 130px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid rgba(255,255,255,0.9);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+    display: block;
+    background: #e2e8f0;
+}
+
+.profile-admin-badge {
+    position: absolute;
+    bottom: 4px;
+    right: 4px;
+    background: #f43f5e;
+    color: #fff;
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    padding: 0.2rem 0.55rem;
+    border-radius: 9999px;
+    border: 2px solid white;
+}
+
+.profile-hero-meta {
+    flex: 1;
+    min-width: 200px;
+    padding-bottom: 1.25rem;
+}
+
+.profile-username {
+    font-family: 'Outfit', sans-serif;
+    font-size: 2rem;
+    font-weight: 800;
+    color: #fff;
+    margin: 0 0 0.25rem;
+    line-height: 1.2;
+}
+
+.profile-since {
+    color: rgba(255,255,255,0.7);
+    font-size: 0.9rem;
+    margin: 0 0 0.75rem;
+}
+
+.profile-stars {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: rgba(255,255,255,0.9);
+    font-size: 0.9rem;
+}
+
+.profile-stars .stars {
+    color: #fbbf24;
+    font-size: 1.05rem;
+    letter-spacing: 0.05em;
+}
+
+.profile-hero-actions {
+    margin-left: auto;
+    display: flex;
+    align-items: flex-end;
+    gap: 0.75rem;
+    padding-bottom: 1.25rem;
+    flex-shrink: 0;
+}
+
+/* Tab bar sits at the bottom of the hero */
+.profile-tabs {
+    display: flex;
+    gap: 0;
+    margin-top: 1.5rem;
+    border-bottom: none;
+}
+
+.profile-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: rgba(255,255,255,0.65);
+    border-bottom: 3px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+}
+
+.profile-tab.active,
+.profile-tab:hover {
+    color: #fff;
+    border-bottom-color: #fff;
+    background: rgba(255,255,255,0.07);
+}
+
+.profile-tab .tab-count {
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+    font-size: 0.75rem;
+    padding: 0.1rem 0.5rem;
+    border-radius: 9999px;
+    font-weight: 700;
+}
+
+/* ── Profile Body ─────────────────────────────────────── */
+
+.profile-body {
+    max-width: var(--container-max);
+    margin: 2.5rem auto;
+    padding: 0 1.5rem;
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 2rem;
+    align-items: start;
+}
+
+@media (max-width: 900px) {
+    .profile-body { grid-template-columns: 1fr; }
+    .profile-hero-body { flex-direction: column; align-items: flex-start; }
+    .profile-hero-actions { margin-left: 0; }
+}
+
+/* ── Sidebar Card ─────────────────────────────────────── */
+
+.profile-sidebar .card {
+    overflow: visible;
+}
+
+.profile-stat-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+    background: var(--bg-surface);
+}
+
+.profile-stat {
+    padding: 1.1rem 0.75rem;
+    text-align: center;
+    border-right: 1px solid var(--border-light);
+}
+
+.profile-stat:last-child { border-right: none; }
+
+.profile-stat-num {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--text-main);
+    line-height: 1;
+    margin-bottom: 0.25rem;
+}
+
+.profile-stat-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+}
+
+.info-row {
+    display: flex;
+    flex-direction: column;
+    gap: 1.1rem;
+}
+
+.info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.info-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+}
+
+.info-value {
+    font-size: 0.95rem;
+    color: var(--text-main);
+    font-weight: 500;
+}
+
+.info-verified {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: var(--success);
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.info-divider {
+    height: 1px;
+    background: var(--border-light);
+    margin: 0.25rem 0;
+}
+
+/* ── Listings Grid ─────────────────────────────────────── */
+
+.listings-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.25rem;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.listing-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1.25rem;
+}
+
+.listing-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    text-decoration: none;
+    color: var(--text-main);
+    transition: var(--transition);
+    display: flex;
+    flex-direction: column;
+}
+
+.listing-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-hover);
+    border-color: var(--primary);
+    color: var(--text-main);
+}
+
+.listing-card-img {
+    width: 100%;
+    height: 160px;
+    object-fit: cover;
+    display: block;
+    background: var(--bg-main);
+}
+
+.listing-card-body {
+    padding: 0.9rem 1rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.listing-card-title {
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-main);
+    line-height: 1.3;
+    margin: 0;
+
+    /* two-line clamp */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.listing-card-price {
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--primary);
+    margin: 0;
+}
+
+.listing-card-cat {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    background: var(--bg-main);
+    border: 1px solid var(--border-light);
+    border-radius: 9999px;
+    padding: 0.15rem 0.6rem;
+    align-self: flex-start;
+}
+
+/* Empty state */
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--text-muted);
+    background: var(--bg-main);
+    border: 2px dashed var(--border-light);
+    border-radius: var(--radius-lg);
+}
+
+.empty-state-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    display: block;
+}
+
+.empty-state h3 {
+    color: var(--text-muted);
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+    font-size: 0.9rem;
+    margin-bottom: 1.25rem;
+}
+
+/* btn-white for the hero */
+.btn-white {
+    background: rgba(255,255,255,0.15);
+    color: #fff !important;
+    border: 1px solid rgba(255,255,255,0.3);
+    backdrop-filter: blur(4px);
+}
+
+.btn-white:hover {
+    background: rgba(255,255,255,0.25);
+    border-color: rgba(255,255,255,0.5);
+    transform: translateY(-1px);
+}
+
+.btn-white-solid {
+    background: #fff;
+    color: var(--primary) !important;
+    font-weight: 700;
+}
+
+.btn-white-solid:hover {
+    background: var(--primary-light);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px rgba(99,102,241,0.2);
+}
+</style>
+
+<!-- ═══ Profile Hero Banner ═══════════════════════════════════════ -->
+<div class="profile-hero">
+    <div class="profile-hero-inner">
+        <div class="profile-hero-body">
+
+            <!-- Avatar -->
+            <div class="profile-avatar-wrap">
+                <img src="<?php echo avatarUrl($user['avatar']); ?>" alt="<?php echo sanitize($user['username']); ?>" class="profile-avatar">
                 <?php if ($user['role'] === 'admin'): ?>
-                    <span class="absolute bottom-0 right-0 badge badge-primary py-1 px-3 shadow-md">ADMIN</span>
+                    <span class="profile-admin-badge">ADMIN</span>
                 <?php endif; ?>
             </div>
-            
-            <div class="flex-grow">
-                <div class="flex justify-between items-start">
-                    <div>
-                        <h1 class="mb-1" style="font-size: 2.5rem;"><?php echo sanitize($user['username']); ?></h1>
-                        <p class="text-muted mb-4">Member since <?php echo formatJoinDate($user['created_at']); ?></p>
-                        
-                        <div class="flex items-center gap-2">
-                            <?php if ($rating['count'] > 0): ?>
-                                <span style="color: #f59e0b; font-size: 1.25rem;">
-                                    <?php echo renderStars($rating['avg']); ?>
-                                </span>
-                                <span class="font-bold"><?php echo $rating['avg']; ?></span>
-                                <span class="text-muted small">(<?php echo $rating['count']; ?> reviews)</span>
-                            <?php else: ?>
-                                <span class="text-muted small">No reviews yet</span>
-                            <?php endif; ?>
-                        </div>
-                    </div>
-                    
-                    <?php if ($isSelf): ?>
-                        <div class="flex gap-2">
-                            <a href="edit_profile.php" class="btn btn-secondary btn-sm">Edit Profile</a>
-                            <a href="logout.php" class="btn btn-danger btn-sm">Logout</a>
-                        </div>
+
+            <!-- Name & meta -->
+            <div class="profile-hero-meta">
+                <h1 class="profile-username"><?php echo sanitize($user['username']); ?></h1>
+                <p class="profile-since">Member since <?php echo formatJoinDate($user['created_at']); ?></p>
+                <div class="profile-stars">
+                    <?php if ($rating['count'] > 0): ?>
+                        <span class="stars"><?php echo renderStars($rating['avg']); ?></span>
+                        <span><strong><?php echo $rating['avg']; ?></strong> &nbsp;(<?php echo $rating['count']; ?> review<?php echo $rating['count'] !== 1 ? 's' : ''; ?>)</span>
                     <?php else: ?>
-                        <a href="messages.php?to=<?php echo $user['id']; ?>" class="btn btn-primary px-6">Message</a>
+                        <span>No reviews yet</span>
                     <?php endif; ?>
                 </div>
             </div>
-        </div>
-    </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <!-- Sidebar Info -->
-        <div class="lg:col-span-1">
-            <div class="card p-6 h-full">
-                <h3 class="mb-6">About Seller</h3>
-                <div class="grid gap-4">
-                    <div>
-                        <p class="text-muted small uppercase font-bold mb-1">Email</p>
-                        <p><?php echo $isSelf || isAdmin() ? sanitize($user['email']) : '••••••••@••••.com'; ?></p>
-                    </div>
-                    <?php if ($user['phone']): ?>
-                    <div>
-                        <p class="text-muted small uppercase font-bold mb-1">Phone</p>
-                        <p><?php echo sanitize($user['phone']); ?></p>
-                    </div>
-                    <?php endif; ?>
-                    <div>
-                        <p class="text-muted small uppercase font-bold mb-1">Verified</p>
-                        <p class="text-success flex items-center gap-1">
-                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
-                            University Email Student
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Active Listings -->
-        <div class="lg:col-span-2">
-            <div class="card p-6 h-full">
-                <h3 class="mb-6">Active Listings</h3>
-                <?php
-                $stmt = $pdo->prepare("SELECT p.*, c.name as category_name, i.image_path FROM products p JOIN categories c ON p.category_id = c.id LEFT JOIN product_images i ON p.id = i.product_id AND i.is_primary = 1 WHERE p.user_id = :uid AND p.status = 'active' ORDER BY p.created_at DESC");
-                $stmt->execute([':uid' => $viewId]);
-                $userProducts = $stmt->fetchAll();
-                ?>
-
-                <?php if (empty($userProducts)): ?>
-                    <div class="text-center py-12">
-                        <p class="text-muted">No active listings at the moment.</p>
-                    </div>
-                <?php else: ?>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <?php foreach ($userProducts as $prod): ?>
-                            <a href="product.php?id=<?php echo $prod['id']; ?>" class="flex gap-4 p-3 border rounded-lg hover:bg-gray-50 transition-colors">
-                                <img src="<?php echo $prod['image_path'] ? BASE_URL.'/public/'.$prod['image_path'] : '../public/images/placeholder.png'; ?>" style="width: 80px; height: 80px; object-fit: cover; border-radius: var(--radius-sm);">
-                                <div class="flex-grow">
-                                    <h4 class="mb-1" style="font-size: 0.95rem;"><?php echo sanitize($prod['title']); ?></h4>
-                                    <p class="text-primary font-bold mb-1"><?php echo formatPrice($prod['price']); ?></p>
-                                    <span class="badge badge-secondary py-0 px-2" style="font-size: 0.75rem;"><?php echo sanitize($prod['category_name']); ?></span>
-                                </div>
-                            </a>
-                        <?php endforeach; ?>
-                    </div>
+            <!-- Action buttons -->
+            <div class="profile-hero-actions">
+                <?php if ($isSelf): ?>
+                    <a href="edit_profile.php" class="btn btn-white">✏️ Edit Profile</a>
+                <?php elseif (isLoggedIn()): ?>
+                    <a href="messages.php?to=<?php echo $user['id']; ?>" class="btn btn-white-solid">💬 Message</a>
                 <?php endif; ?>
             </div>
+
         </div>
+
+        <!-- Tab bar -->
+        <nav class="profile-tabs">
+            <a href="#listings" class="profile-tab active">
+                Listings
+                <span class="tab-count"><?php echo $listingCount; ?></span>
+            </a>
+            <a href="#about" class="profile-tab">About</a>
+        </nav>
     </div>
+</div>
+
+<!-- ═══ Profile Body ═══════════════════════════════════════════════ -->
+<div class="profile-body">
+
+    <!-- ── Sidebar ──────────────────────────────────────────────── -->
+    <aside class="profile-sidebar" id="about">
+
+        <!-- Stats row -->
+        <div class="profile-stat-row">
+            <div class="profile-stat">
+                <div class="profile-stat-num"><?php echo $listingCount; ?></div>
+                <div class="profile-stat-label">Listings</div>
+            </div>
+            <div class="profile-stat">
+                <div class="profile-stat-num"><?php echo $rating['count']; ?></div>
+                <div class="profile-stat-label">Reviews</div>
+            </div>
+            <div class="profile-stat">
+                <div class="profile-stat-num"><?php echo $rating['count'] > 0 ? $rating['avg'] : '—'; ?></div>
+                <div class="profile-stat-label">Rating</div>
+            </div>
+        </div>
+
+        <!-- Info card -->
+        <div class="card" style="padding: 1.5rem;">
+            <h3 style="font-size: 1rem; margin-bottom: 1.25rem; color: var(--text-main);">Account Details</h3>
+            <div class="info-row">
+
+                <div class="info-item">
+                    <span class="info-label">Username</span>
+                    <span class="info-value">@<?php echo sanitize($user['username']); ?></span>
+                </div>
+
+                <div class="info-divider"></div>
+
+                <div class="info-item">
+                    <span class="info-label">Email</span>
+                    <span class="info-value" style="word-break: break-all;">
+                        <?php echo ($isSelf || isAdmin()) ? sanitize($user['email']) : '••••••••@••••.com'; ?>
+                    </span>
+                </div>
+
+                <?php if (!empty($user['phone'])): ?>
+                <div class="info-divider"></div>
+                <div class="info-item">
+                    <span class="info-label">Phone</span>
+                    <span class="info-value"><?php echo sanitize($user['phone']); ?></span>
+                </div>
+                <?php endif; ?>
+
+                <div class="info-divider"></div>
+
+                <div class="info-item">
+                    <span class="info-label">Member Since</span>
+                    <span class="info-value"><?php echo formatJoinDate($user['created_at']); ?></span>
+                </div>
+
+                <div class="info-divider"></div>
+
+                <div class="info-item">
+                    <span class="info-label">Status</span>
+                    <span class="info-verified">
+                        <svg width="15" height="15" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                        Verified Student
+                    </span>
+                </div>
+
+                <?php if ($user['role'] === 'admin'): ?>
+                <div class="info-divider"></div>
+                <div class="info-item">
+                    <span class="info-label">Role</span>
+                    <span class="badge" style="background: #fee2e2; color: #991b1b; font-size: 0.8rem; padding: 0.3rem 0.75rem; width: fit-content;">🛡️ Platform Administrator</span>
+                </div>
+                <?php endif; ?>
+
+            </div>
+        </div>
+
+    </aside>
+
+    <!-- ── Listings ─────────────────────────────────────────────── -->
+    <section id="listings">
+        <div class="listings-header">
+            <h2 style="margin: 0; font-size: 1.25rem;">Active Listings</h2>
+            <?php if ($isSelf): ?>
+                <a href="create_listing.php" class="btn btn-primary btn-sm">+ New Listing</a>
+            <?php endif; ?>
+        </div>
+
+        <?php if (empty($userProducts)): ?>
+            <div class="empty-state">
+                <span class="empty-state-icon">🛍️</span>
+                <h3><?php echo $isSelf ? "You haven't listed anything yet" : sanitize($user['username']) . " has no active listings"; ?></h3>
+                <p><?php echo $isSelf ? "Start selling your unused campus items today." : "Check back later for new items."; ?></p>
+                <?php if ($isSelf): ?>
+                    <a href="create_listing.php" class="btn btn-primary">Create Your First Listing</a>
+                <?php endif; ?>
+            </div>
+
+        <?php else: ?>
+            <div class="listing-grid">
+                <?php foreach ($userProducts as $prod): ?>
+                    <a href="product.php?id=<?php echo $prod['id']; ?>" class="listing-card">
+                        <img
+                            class="listing-card-img"
+                            src="<?php echo $prod['image_path'] ? BASE_URL . 'public/' . ltrim($prod['image_path'], '/') : BASE_URL . 'public/images/placeholder.png'; ?>"
+                            alt="<?php echo sanitize($prod['title']); ?>"
+                            loading="lazy"
+                        >
+                        <div class="listing-card-body">
+                            <p class="listing-card-title"><?php echo sanitize($prod['title']); ?></p>
+                            <p class="listing-card-price"><?php echo formatPrice($prod['price']); ?></p>
+                            <span class="listing-card-cat"><?php echo sanitize($prod['category_name']); ?></span>
+                        </div>
+                    </a>
+                <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
+    </section>
+
 </div>
 
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>

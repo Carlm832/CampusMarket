@@ -1,0 +1,152 @@
+/* ============================================================
+   admin.css — Shared Admin Panel Styles
+   Loaded only for admin users (see header.php)
+   ============================================================ */
+
+/* ── Utility classes used across admin pages ─────────────── */
+.text-muted   { color: var(--text-muted); }
+.text-success { color: var(--success); }
+.small        { font-size: 0.85rem; }
+.font-bold    { font-weight: 700; }
+.text-right   { text-align: right; }
+.text-center  { text-align: center; }
+.uppercase    { text-transform: uppercase; letter-spacing: 0.05em; }
+.w-full       { width: 100%; }
+.mb-0         { margin-bottom: 0; }
+.mb-2         { margin-bottom: 0.5rem; }
+.mb-6         { margin-bottom: 1.5rem; }
+.mt-6         { margin-top: 1.5rem; }
+.overflow-hidden { overflow: hidden; }
+
+/* ── Admin page wrapper ──────────────────────────────────── */
+.admin-page {
+    max-width: var(--container-max);
+    margin: 2.5rem auto 5rem;
+    padding: 0 1.5rem;
+}
+
+/* ── Page header row ─────────────────────────────────────── */
+.admin-page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.admin-page-header h1 { margin: 0; }
+
+/* ── Breadcrumb ──────────────────────────────────────────── */
+.admin-breadcrumb {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    margin-bottom: 0.3rem;
+}
+.admin-breadcrumb a { color: var(--text-muted); }
+.admin-breadcrumb a:hover { color: var(--primary); }
+
+/* ── Badge variants ──────────────────────────────────────── */
+.badge-primary   { background: var(--primary-light);  color: var(--primary-hover); }
+.badge-secondary { background: var(--bg-main); color: var(--text-muted); border: 1px solid var(--border-light); }
+.badge-info      { background: #e0f2fe; color: #075985; }
+.badge-warning   { background: var(--warning-bg); color: #92400e; }
+.badge-success   { background: var(--success-bg); color: #065f46; }
+.badge-danger    { background: var(--error-bg); color: #991b1b; }
+.badge-pending   { background: var(--warning-bg); color: #b45309; }
+.badge-completed { background: var(--success-bg); color: #065f46; }
+.badge-cancelled { background: var(--error-bg);  color: #991b1b; }
+
+/* ── Admin data table ────────────────────────────────────── */
+.admin-table-wrap { overflow-x: auto; }
+
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.admin-table thead tr {
+    background: var(--bg-main);
+    border-bottom: 2px solid var(--border-light);
+}
+
+.admin-table thead th {
+    padding: 0.85rem 1.1rem;
+    text-align: left;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+.admin-table tbody tr {
+    border-bottom: 1px solid var(--border-light);
+    transition: background 0.15s;
+}
+
+.admin-table tbody tr:last-child { border-bottom: none; }
+.admin-table tbody tr:hover      { background: #f8fafc; }
+
+.admin-table td {
+    padding: 0.95rem 1.1rem;
+    color: var(--text-main);
+    vertical-align: middle;
+}
+
+.admin-table td.muted {
+    color: var(--text-muted);
+    font-size: 0.82rem;
+}
+
+/* ── Row helpers ─────────────────────────────────────────── */
+.admin-row-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.admin-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: var(--primary-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 0.9rem;
+    color: var(--primary);
+    flex-shrink: 0;
+}
+
+.admin-actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+/* ── Two-column layout (categories / tags) ───────────────── */
+.admin-two-col {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 1.5rem;
+    align-items: start;
+}
+
+@media (max-width: 800px) {
+    .admin-two-col { grid-template-columns: 1fr; }
+}
+
+/* ── Empty state inside tables ───────────────────────────── */
+.admin-empty {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--text-muted);
+}
+
+.admin-empty-icon { font-size: 2.5rem; display: block; margin-bottom: 0.75rem; }

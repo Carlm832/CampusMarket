@@ -3,6 +3,12 @@
 require_once __DIR__ . '/../includes/bootstrap.php';
 requireLogin();
 
+// Admins are moderators only — use admin/orders.php to manage all orders
+if (isAdmin()) {
+    setFlash('error', 'Administrators do not have personal orders. Use the Admin Panel to view all orders.');
+    redirect(BASE_URL . 'admin/orders.php');
+}
+
 $currentUserId = currentUserId();
 
 // Handle status updates

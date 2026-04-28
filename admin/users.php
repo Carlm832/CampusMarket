@@ -27,6 +27,7 @@ if (isset($_GET['action']) && isset($_GET['id'])) {
         $stmt->execute([$id]);
         setFlash('success', 'User account deleted.');
     }
+    redirect('users.php');
 }
 
 // Fetch Users
@@ -34,48 +35,50 @@ $stmt = $pdo->query("SELECT * FROM users ORDER BY created_at DESC");
 $users = $stmt->fetchAll();
 ?>
 
-<div class="container mt-8">
-    <div class="flex justify-between items-center mb-8">
-        <h1>User Management</h1>
-        <div class="badge badge-info"><?php echo count($users); ?> Registered Users</div>
+<div class="admin-page">
+    <div class="admin-page-header">
+        <div>
+            <div class="admin-breadcrumb"><a href="index.php">Dashboard</a> › Users</div>
+            <h1>User Management</h1>
+        </div>
+        <span class="badge badge-info" style="font-size: 0.85rem; padding: 0.4rem 1rem;"><?php echo count($users); ?> Registered Users</span>
     </div>
 
-    <div class="card overflow-hidden">
-        <table class="w-full text-left">
-            <thead>
-                <tr class="bg-gray-50 border-b">
-                    <th class="p-4">User</th>
-                    <th class="p-4">Email</th>
-                    <th class="p-4">Role</th>
-                    <th class="p-4">Joined</th>
-                    <th class="p-4 text-right">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($users as $u): ?>
-                    <tr class="border-b hover:bg-gray-100 transition-all">
-                        <td class="p-4">
-                            <div class="flex items-center gap-3">
-                                <div style="width: 40px; height: 40px; background: var(--bg-main); border-radius: var(--radius-full); display: flex; align-items: center; justify-center; font-weight: bold;">
-                                    <?php echo strtoupper(substr($u['username'], 0, 1)); ?>
-                                </div>
+    <div class="card">
+        <div class="admin-table-wrap">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>User</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Joined</th>
+                        <th style="text-align: right;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($users as $u): ?>
+                    <tr>
+                        <td>
+                            <div class="admin-row-meta">
+                                <div class="admin-avatar"><?php echo strtoupper(substr($u['username'], 0, 1)); ?></div>
                                 <div>
-                                    <div class="font-bold">@<?php echo sanitize($u['username']); ?></div>
-                                    <div class="text-muted small">UID: #<?php echo $u['id']; ?></div>
+                                    <div style="font-weight: 700;">@<?php echo sanitize($u['username']); ?></div>
+                                    <div style="font-size: 0.78rem; color: var(--text-muted);">UID #<?php echo $u['id']; ?></div>
                                 </div>
                             </div>
                         </td>
-                        <td class="p-4"><?php echo sanitize($u['email']); ?></td>
-                        <td class="p-4">
+                        <td><?php echo sanitize($u['email']); ?></td>
+                        <td>
                             <?php if ($u['role'] === 'admin'): ?>
                                 <span class="badge badge-primary">Admin</span>
                             <?php else: ?>
                                 <span class="badge badge-secondary">Member</span>
                             <?php endif; ?>
                         </td>
-                        <td class="p-4 text-muted small"><?php echo date('M d, Y', strtotime($u['created_at'])); ?></td>
-                        <td class="p-4 text-right">
-                            <div class="flex justify-end gap-2">
+                        <td class="muted"><?php echo date('M d, Y', strtotime($u['created_at'])); ?></td>
+                        <td>
+                            <div class="admin-actions">
                                 <?php if ($u['role'] === 'admin'): ?>
                                     <a href="?action=remove_admin&id=<?php echo $u['id']; ?>" class="btn btn-secondary btn-sm">Demote</a>
                                 <?php else: ?>
@@ -85,9 +88,10 @@ $users = $stmt->fetchAll();
                             </div>
                         </td>
                     </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 
