@@ -183,7 +183,7 @@ $products = $stmt->fetchAll();
                         <a href="browse.php" class="btn btn-primary mt-6 hover-scale shadow-sm" style="border-radius: var(--radius-full);">Clear All Filters</a>
                     </div>
                 <?php else: ?>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
                         <?php foreach ($products as $prod): ?>
                             <a href="product.php?id=<?php echo $prod['id']; ?>" class="card card-hover flex flex-col h-full" style="text-decoration: none; border-radius: var(--radius-lg); overflow: hidden; background: var(--bg-surface); border: 1px solid var(--border-light);">
                                 <div style="height: 220px; background: #e2e8f0; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center;">
