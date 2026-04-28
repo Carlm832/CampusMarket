@@ -1,65 +1,58 @@
 <?php
-// pages/browse.php
-require_once __DIR__ . '/../config/constants.php';
-require_once __DIR__ . '/../includes/header.php';
+require_once '../includes/bootstrap.php';
 
-$pageTitle = "Browse Marketplace";
+$search = $_GET['q'] ?? '';
+$category = $_GET['category'] ?? '';
+$condition = $_GET['condition'] ?? '';
+$minPrice = $_GET['min_price'] ?? '';
+$maxPrice = $_GET['max_price'] ?? '';
+$sort = $_GET['sort'] ?? 'newest';
 
-// Get Filters
-$catFilter   = $_GET['category'] ?? '';
-$minPrice    = $_GET['min_price'] ?? '';
-$maxPrice    = $_GET['max_price'] ?? '';
-$condFilter  = $_GET['condition'] ?? '';
-$sort        = $_GET['sort'] ?? 'latest';
-
-// Fetch Categories for Sidebar
-$categories = getTopCategories($pdo);
-
-// Build SQL Query
-$sql = "SELECT p.*, c.name as category_name, i.image_path, u.username as seller_name 
-        FROM products p
-        JOIN categories c ON p.category_id = c.id
-        JOIN users u ON p.user_id = u.id
+// Filters and sorting logic
+$params = [];
+$sql = "SELECT p.*, c.name as category_name, u.username as seller_name, i.image_path
+        FROM products p 
+        JOIN categories c ON p.category_id = c.id 
+        JOIN users u ON p.user_id = u.id 
         LEFT JOIN product_images i ON p.id = i.product_id AND i.is_primary = 1
         WHERE p.status = 'active'";
 
-$params = [];
-
-if ($catFilter) {
-    if (is_numeric($catFilter)) {
-        $sql .= " AND p.category_id = :cat";
-        $params[':cat'] = $catFilter;
-    } else {
-        $sql .= " AND c.name = :cat";
-        $params[':cat'] = $catFilter;
-    }
+if ($search) {
+    $sql .= " AND (p.title LIKE ? OR p.description LIKE ?)";
+    $params[] = "%$search%";
+    $params[] = "%$search%";
 }
-
+if ($category) {
+    $sql .= " AND p.category_id = ?";
+    $params[] = $category;
+}
+if ($condition) {
+    $sql .= " AND p.condition = ?";
+    $params[] = $condition;
+}
 if ($minPrice) {
-    $sql .= " AND p.price >= :min";
-    $params[':min'] = $minPrice;
+    $sql .= " AND p.price >= ?";
+    $params[] = $minPrice;
 }
-
 if ($maxPrice) {
-    $sql .= " AND p.price <= :max";
-    $params[':max'] = $maxPrice;
+    $sql .= " AND p.price <= ?";
+    $params[] = $maxPrice;
 }
 
-if ($condFilter) {
-    $sql .= " AND p.condition = :cond";
-    $params[':cond'] = $condFilter;
-}
-
-// Sorting
 switch ($sort) {
-    case 'price_asc':  $sql .= " ORDER BY p.price ASC"; break;
+    case 'price_asc': $sql .= " ORDER BY p.price ASC"; break;
     case 'price_desc': $sql .= " ORDER BY p.price DESC"; break;
-    default:           $sql .= " ORDER BY p.created_at DESC"; break;
+    default: $sql .= " ORDER BY p.created_at DESC"; break;
 }
 
 $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
 $products = $stmt->fetchAll();
+
+$categories = $pdo->query("SELECT * FROM categories ORDER BY name ASC")->fetchAll();
+
+$pageTitle = "Browse Marketplace";
+include '../includes/header.php';
 ?>
 
 <div class="min-h-screen pt-8 pb-16 relative">
@@ -78,7 +71,7 @@ $products = $stmt->fetchAll();
             <form method="GET" class="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto">
                 <div class="relative w-full sm:w-auto">
                     <span style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--text-muted);"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg></span>
-                    <input type="text" placeholder="Search items..." class="premium-input w-full md:w-64" style="padding: 0.6rem 1rem 0.6rem 2.5rem; border-radius: var(--radius-full);">
+                    <input type="text" name="q" value="<?php echo sanitize($search); ?>" placeholder="Search items..." class="premium-input w-full md:w-64" style="padding: 0.6rem 1rem 0.6rem 2.5rem; border-radius: var(--radius-full);">
                 </div>
                 <button type="submit" class="btn btn-primary hover-scale shadow-md w-full sm:w-auto" style="border-radius: var(--radius-full); padding: 0.6rem 1.5rem;">Search</button>
             </form>
@@ -98,13 +91,17 @@ $products = $stmt->fetchAll();
                     </div>
 
                     <form method="GET" action="browse.php">
+                        <?php if($search): ?>
+                            <input type="hidden" name="q" value="<?php echo sanitize($search); ?>">
+                        <?php endif; ?>
+                        
                         <fieldset class="mb-6">
                             <legend class="block mb-3 font-bold text-main" style="font-size: 0.95rem;">Category</legend>
                             <div class="relative">
                                 <select name="category" class="w-full premium-input bg-white" style="appearance: none; padding: 0.6rem 2.5rem 0.6rem 1rem;" onchange="this.form.submit()">
                                     <option value="">All Categories</option>
                                     <?php foreach ($categories as $cat): ?>
-                                        <option value="<?php echo $cat['id']; ?>" <?php echo $catFilter == $cat['id'] ? 'selected' : ''; ?>>
+                                        <option value="<?php echo $cat['id']; ?>" <?php echo $category == $cat['id'] ? 'selected' : ''; ?>>
                                             <?php echo sanitize($cat['name']); ?>
                                         </option>
                                     <?php endforeach; ?>
@@ -120,12 +117,12 @@ $products = $stmt->fetchAll();
                             <legend class="block mb-3 font-bold text-main" style="font-size: 0.95rem;">Price Range</legend>
                             <div class="flex gap-3 items-center">
                                 <div class="relative w-full">
-                                    <span class="absolute left-3 text-muted" style="top: 50%; transform: translateY(-50%); text-align: center;">$</span>
+                                    <span class="absolute left-3 text-muted" style="top: 50%; transform: translateY(-50%); text-align: center;">₺</span>
                                     <input type="number" name="min_price" placeholder="Min" value="<?php echo sanitize($minPrice); ?>" class="w-full premium-input text-center" style="padding: 0.5rem 0.5rem 0.5rem 1.2rem;">
                                 </div>
                                 <span class="text-muted font-bold">-</span>
                                 <div class="relative w-full">
-                                    <span class="absolute left-3 text-muted" style="top: 50%; transform: translateY(-50%); text-align: center;">$</span>
+                                    <span class="absolute left-3 text-muted" style="top: 50%; transform: translateY(-50%); text-align: center;">₺</span>
                                     <input type="number" name="max_price" placeholder="Max" value="<?php echo sanitize($maxPrice); ?>" class="w-full premium-input text-center" style="padding: 0.5rem 0.5rem 0.5rem 1.2rem;">
                                 </div>
                             </div>
@@ -136,11 +133,11 @@ $products = $stmt->fetchAll();
                             <legend class="block mb-3 font-bold text-main" style="font-size: 0.95rem;">Condition</legend>
                             <div class="flex flex-col gap-2">
                                 <?php 
-                                $conditions = ['' => 'Any Condition', 'new' => 'New', 'like_new' => 'Like New', 'used' => 'Used', 'fair' => 'Fair'];
+                                $conditions = ['' => 'Any Condition', 'new' => 'New', 'like_new' => 'Like New', 'used' => 'Used', 'poor' => 'Poor'];
                                 foreach ($conditions as $val => $label): 
                                 ?>
                                 <label class="flex items-center gap-3 cursor-pointer group">
-                                    <input type="radio" name="condition" value="<?php echo $val; ?>" <?php echo $condFilter == $val ? 'checked' : ''; ?> class="accent-primary" style="width: 1rem; height: 1rem;" onchange="this.form.submit()">
+                                    <input type="radio" name="condition" value="<?php echo $val; ?>" <?php echo $condition == $val ? 'checked' : ''; ?> class="accent-primary" style="width: 1rem; height: 1rem;" onchange="this.form.submit()">
                                     <span class="text-main group-hover:text-primary transition-colors"><?php echo $label; ?></span>
                                 </label>
                                 <?php endforeach; ?>
@@ -157,14 +154,15 @@ $products = $stmt->fetchAll();
                 <div class="glass-panel px-6 py-4 mb-8 flex flex-col sm:flex-row justify-between items-center gap-4" style="border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); background: var(--bg-surface);">
                     <div class="font-medium text-main"><strong class="text-primary"><?php echo count($products); ?></strong> items matching your criteria</div>
                     <form method="GET" class="flex items-center gap-3">
-                        <?php if($catFilter) echo '<input type="hidden" name="category" value="'.$catFilter.'">'; ?>
+                        <?php if($category) echo '<input type="hidden" name="category" value="'.$category.'">'; ?>
                         <?php if($minPrice) echo '<input type="hidden" name="min_price" value="'.$minPrice.'">'; ?>
                         <?php if($maxPrice) echo '<input type="hidden" name="max_price" value="'.$maxPrice.'">'; ?>
-                        <?php if($condFilter) echo '<input type="hidden" name="condition" value="'.$condFilter.'">'; ?>
+                        <?php if($condition) echo '<input type="hidden" name="condition" value="'.$condition.'">'; ?>
+                        <?php if($search) echo '<input type="hidden" name="q" value="'.sanitize($search).'">'; ?>
                         <span class="text-muted font-bold small uppercase tracking-wider" style="font-size: 0.75rem;">Sort by:</span>
                         <div class="relative">
                             <select name="sort" class="premium-input bg-white font-medium" style="appearance: none; padding: 0.4rem 2.5rem 0.4rem 1rem; border-radius: var(--radius-md); font-size: 0.9rem;" onchange="this.form.submit()">
-                                <option value="latest" <?php echo $sort == 'latest' ? 'selected' : ''; ?>>Latest First</option>
+                                <option value="newest" <?php echo $sort == 'newest' ? 'selected' : ''; ?>>Newest First</option>
                                 <option value="price_asc" <?php echo $sort == 'price_asc' ? 'selected' : ''; ?>>Price: Low to High</option>
                                 <option value="price_desc" <?php echo $sort == 'price_desc' ? 'selected' : ''; ?>>Price: High to Low</option>
                             </select>
@@ -183,37 +181,9 @@ $products = $stmt->fetchAll();
                         <a href="browse.php" class="btn btn-primary mt-6 hover-scale shadow-sm" style="border-radius: var(--radius-full);">Clear All Filters</a>
                     </div>
                 <?php else: ?>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6 gap-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                         <?php foreach ($products as $prod): ?>
-                            <a href="product.php?id=<?php echo $prod['id']; ?>" class="card card-hover flex flex-col h-full" style="text-decoration: none; border-radius: var(--radius-lg); overflow: hidden; background: var(--bg-surface); border: 1px solid var(--border-light);">
-                                <div style="height: 220px; background: #e2e8f0; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center;">
-                                    <?php if ($prod['image_path']): ?>
-                                        <img src="<?php echo BASE_URL; ?>/public/<?php echo $prod['image_path']; ?>" alt="<?php echo sanitize($prod['title']); ?>" style="max-width: 100%; max-height: 100%; object-fit: contain; transition: transform 0.5s ease;">
-                                    <?php else: ?>
-                                        <div style="width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; background: linear-gradient(135deg, var(--bg-main), var(--border-light)); color: var(--text-muted);">
-                                            <svg class="w-12 h-12 mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                                            <span class="text-xs font-medium">No Image</span>
-                                        </div>
-                                    <?php endif; ?>
-                                    
-                                    <div style="position: absolute; top: 0.75rem; right: 0.75rem;">
-                                        <?php $badge = conditionBadge($prod['condition']); ?>
-                                        <span class="badge <?php echo $badge['class']; ?> shadow-sm" style="font-size: 0.7rem; padding: 0.25rem 0.6rem; backdrop-filter: blur(4px);"><?php echo $badge['label']; ?></span>
-                                    </div>
-                                </div>
-                                <div class="p-5 flex flex-col flex-grow">
-                                    <p class="text-primary font-bold small tracking-wider uppercase mb-1" style="font-size: 0.7rem;"><?php echo sanitize($prod['category_name']); ?></p>
-                                    <h4 class="mb-3 text-main font-bold" style="font-size: 1.1rem; line-height: 1.4; flex-grow: 1; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;"><?php echo sanitize($prod['title']); ?></h4>
-                                    
-                                    <div class="flex justify-between items-center mt-auto pt-4 border-t border-light" style="border-color: var(--border-light);">
-                                        <span style="font-weight: 800; color: var(--text-main); font-size: 1.25rem; font-family: 'Inter', sans-serif;">₺ <?php echo number_format($prod['price']); ?></span>
-                                        <div class="flex items-center gap-2">
-                                            <div style="min-width: 24px; min-height: 24px; border-radius: 50%; background: var(--primary-light); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 0.6rem; font-weight: bold; padding:0.2rem;"><?php echo strtoupper(substr($prod['seller_name'],0,2)); ?></div>
-                                            <span class="text-muted font-medium text-sm truncate" style="max-width: 80px;">@<?php echo sanitize($prod['seller_name']); ?></span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </a>
+                            <?php include '../includes/product_card_template.php'; ?>
                         <?php endforeach; ?>
                     </div>
                 <?php endif; ?>
@@ -222,4 +192,4 @@ $products = $stmt->fetchAll();
     </div>
 </div>
 
-<?php require_once __DIR__ . '/../includes/footer.php'; ?>
+<?php include '../includes/footer.php'; ?>

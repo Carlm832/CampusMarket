@@ -13,9 +13,9 @@ $pageTitle = "Moderation Queue";
 
 // Handle Actions
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'], $_POST['report_id'])) {
-    $action = sanitize($_POST['action']);
+    $action   = sanitize($_POST['action']);
     $reportId = (int)$_POST['report_id'];
-    
+
     if ($action === 'dismiss') {
         $pdo->prepare("UPDATE reports SET status = 'dismissed' WHERE id = ?")->execute([$reportId]);
         setFlash('success', 'Report dismissed.');
@@ -26,27 +26,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'], $_POST['rep
         if ($productId) {
             $pdo->prepare("UPDATE products SET status = 'flagged' WHERE id = ?")->execute([$productId]);
             $pdo->prepare("UPDATE reports SET status = 'reviewed' WHERE id = ?")->execute([$reportId]);
-            setFlash('error', 'Item flagged and hidden.');
+            setFlash('error', 'Item flagged and hidden from the marketplace.');
         }
     }
     redirect('reports.php');
 }
 
-// Fetch Reports
+// Fetch pending reports
 $stmt = $pdo->query("
-    SELECT r.*, p.title as product_title, u.username as reporter_name 
-    FROM reports r 
-    JOIN products p ON r.product_id = p.id 
-    JOIN users u ON r.reporter_id = u.id 
-    WHERE r.status = 'pending' 
+    SELECT r.*, p.title as product_title, u.username as reporter_name
+    FROM reports r
+    JOIN products p ON r.product_id = p.id
+    JOIN users u ON r.reporter_id = u.id
+    WHERE r.status = 'pending'
     ORDER BY r.created_at ASC
 ");
 $reports = $stmt->fetchAll();
 ?>
 
 <div class="container mt-8 mb-16">
-    <div class="flex justify-between items-center mb-8">
-        <h1 class="mb-0 gradient-text" style="background: linear-gradient(135deg, #ef4444, #f43f5e); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Safety & Moderation Queue</h1>
+    <div class="flex justify-between items-end mb-8">
+        <div>
+            <div class="admin-breadcrumb mb-2"><a href="index.php">Dashboard</a> › Moderation</div>
+            <h1 class="mb-0 gradient-text" style="background: linear-gradient(135deg, #ef4444, #f43f5e); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Safety & Moderation Queue</h1>
+        </div>
         <div class="badge" style="background: rgba(239,68,68,0.1); color: #b91c1c; font-size: 0.9rem; padding: 0.5rem 1rem; border-radius: var(--radius-full);"><span class="animate-pulse inline-block mr-2" style="color: #ef4444;">●</span><?php echo count($reports); ?> Pending Reviews</div>
     </div>
 
@@ -92,7 +95,7 @@ $reports = $stmt->fetchAll();
                                 <form method="POST" class="flex justify-end gap-2 m-0">
                                     <input type="hidden" name="report_id" value="<?php echo $r['id']; ?>">
                                     <button type="submit" name="action" value="dismiss" class="btn btn-secondary btn-sm hover-scale shadow-sm" style="border-radius: var(--radius-full);">Keep & Dismiss</button>
-                                    <button type="submit" name="action" value="flag" class="btn btn-danger btn-sm hover-scale shadow-sm" style="border-radius: var(--radius-full);">Flag & Remove</button>
+                                    <button type="submit" name="action" value="flag" class="btn btn-danger btn-sm hover-scale shadow-sm" style="border-radius: var(--radius-full);" onclick="return confirm('Flag this item and hide it from the marketplace?')">Flag & Remove</button>
                                 </form>
                             </td>
                         </tr>

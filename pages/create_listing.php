@@ -1,13 +1,16 @@
 <?php
 // pages/create_listing.php
-require_once __DIR__ . '/../config/constants.php';
-require_once __DIR__ . '/../includes/header.php';
+require_once '../includes/bootstrap.php';
+requireLogin();
 
-// Auth Check
-if (!isLoggedIn()) {
-    setFlash('error', 'Please login to list an item.');
-    redirect('login.php');
+// Admins are moderators only — they cannot create listings
+if (isAdmin()) {
+    setFlash('error', 'Administrators cannot create listings. Use the Admin Panel to manage the marketplace.');
+    redirect(BASE_URL . 'admin/index.php');
 }
+
+$pageTitle = "Create New Listing";
+include '../includes/header.php';
 
 $success = false;
 $error = '';

@@ -1,9 +1,16 @@
 <?php
 // pages/wishlist.php
-require_once __DIR__ . '/../config/constants.php';
-require_once __DIR__ . '/../includes/header.php';
+require_once '../includes/bootstrap.php';
+requireLogin();
+
+// Admins are moderators only — no personal wishlist
+if (isAdmin()) {
+    setFlash('error', 'Administrators do not have a wishlist. Use the Admin Panel to manage the marketplace.');
+    redirect(BASE_URL . 'admin/index.php');
+}
 
 $pageTitle = "My Wishlist";
+include '../includes/header.php';
 ?>
 
 <div class="container min-h-screen pt-12 pb-20 relative">
@@ -106,7 +113,7 @@ function updateWishlistUI() {
                     </div>
                     <div class="flex gap-2 mt-3">
                         <a href="product.php?id=${item.id}" class="btn btn-primary btn-sm flex-1 text-center" style="border-radius: var(--radius-full); font-weight: bold; font-size: 0.85rem;">View</a>
-                        <button onclick="toggleWishlist(${item.id}, {}); updateWishlistUI();" class="btn btn-sm hover-scale" style="color: #ef4444; background: #fee2e2; border: none; border-radius: var(--radius-full); font-weight: bold; width: 40px; padding: 0; display:flex; align-items:center; justify-content:center;" title="Remove">
+                        <button onclick="toggleWishlistFromStorage(${item.id})" class="btn btn-sm hover-scale" style="color: #ef4444; background: #fee2e2; border: none; border-radius: var(--radius-full); font-weight: bold; width: 40px; padding: 0; display:flex; align-items:center; justify-content:center;" title="Remove">
                             <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
                         </button>
                     </div>

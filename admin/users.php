@@ -1,7 +1,7 @@
 <?php
 // admin/users.php
 require_once __DIR__ . '/../config/constants.php';
-require_once __DIR__ . '/../includes/header.php';
+require_once __DIR__ . '/../includes/bootstrap.php';
 
 // Auth Check
 if (!isAdmin()) {
@@ -27,16 +27,22 @@ if (isset($_GET['action']) && isset($_GET['id'])) {
         $stmt->execute([$id]);
         setFlash('success', 'User account deleted.');
     }
+    redirect('users.php');
 }
 
 // Fetch Users
 $stmt = $pdo->query("SELECT * FROM users ORDER BY created_at DESC");
 $users = $stmt->fetchAll();
+
+include '../includes/header.php';
 ?>
 
 <div class="container mt-8 mb-16">
-    <div class="flex justify-between items-center mb-8">
-        <h1 class="mb-0 gradient-text">User Management</h1>
+    <div class="flex justify-between items-end mb-8">
+        <div>
+            <div class="admin-breadcrumb mb-2"><a href="index.php">Dashboard</a> › Users</div>
+            <h1 class="mb-0 gradient-text">User Management</h1>
+        </div>
         <div class="badge" style="background: rgba(16,185,129,0.1); color: #059669; font-size: 0.9rem; padding: 0.5rem 1rem; border-radius: var(--radius-full);"><?php echo count($users); ?> Registered Users</div>
     </div>
 

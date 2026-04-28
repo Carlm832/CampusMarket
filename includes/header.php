@@ -10,7 +10,10 @@ require_once __DIR__ . '/bootstrap.php';
     <title><?php echo isset($pageTitle) ? htmlspecialchars($pageTitle) . ' - CampusMarket' : 'CampusMarket'; ?></title>
     
     <!-- Member 5: Design System -->
-    <link rel="stylesheet" href="<?php echo BASE_URL; ?>/public/css/style.css">
+    <link rel="stylesheet" href="<?php echo BASE_URL; ?>public/css/style.css">
+    <?php if (isAdmin()): ?>
+    <link rel="stylesheet" href="<?php echo BASE_URL; ?>public/css/admin.css">
+    <?php endif; ?>
     
     <!-- Theme Initialization -->
     <script>
@@ -46,8 +49,14 @@ require_once __DIR__ . '/bootstrap.php';
                 <svg class="sun-icon" viewBox="0 0 24 24"><path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58c-.39-.39-1.03-.39-1.41 0s-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37c-.39-.39-1.03-.39-1.41 0s-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41l-1.06-1.06zm1.06-12.37c-.39-.39-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06c.39-.39.39-1.03 0-1.41zm-12.37 12.37c-.39-.39-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06c.39-.39.39-1.03 0-1.41z"/></svg>
                 <svg class="moon-icon" viewBox="0 0 24 24"><path d="M12.12 22a9.66 9.66 0 0 1-7.07-2.93 9.66 9.66 0 0 1 0-13.64 9.66 9.66 0 0 1 13.64 0c.39.39.39 1.02 0 1.41a1 1 0 0 1-1.41 0 7.66 7.66 0 0 0-10.82 0 7.66 7.66 0 0 0 0 10.82 7.66 7.66 0 0 0 10.82 0 1 1 0 0 1 1.41 0c.39.39.39 1.02 0 1.41a9.66 9.66 0 0 1-6.57 2.93z"/></svg>
             </button>
-            <a href="<?php echo BASE_URL; ?>/pages/browse.php">Browse</a>
-            <?php if (isLoggedIn()): ?>
+            <a href="<?php echo BASE_URL; ?>pages/browse.php">Browse</a>
+            <?php if (isLoggedIn() && isAdmin()): ?>
+                <!-- Admin-only nav: no marketplace actions -->
+                <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 500; padding: 0.25rem 0.75rem; background: #fef3c7; border: 1px solid #fde68a; border-radius: var(--radius-full);">🛡️ Admin Mode</span>
+                <a href="<?php echo BASE_URL; ?>admin/index.php" style="color: var(--accent); font-weight: bold;">Admin Panel</a>
+                <a href="<?php echo BASE_URL; ?>pages/logout.php" class="btn btn-secondary btn-sm" style="margin-left: 0.5rem;">Logout</a>
+            <?php elseif (isLoggedIn()): ?>
+                <a href="<?php echo BASE_URL; ?>pages/create_listing.php" style="font-weight: 500; color: var(--text-muted); font-size: 0.95rem;">Create Listing</a>
                 <?php 
                     $unreadNotifications = countUnreadNotifications($pdo, currentUserId());
                 ?>
@@ -59,16 +68,13 @@ require_once __DIR__ . '/bootstrap.php';
                         </span>
                     <?php endif; ?>
                 </a>
-                <a href="<?php echo BASE_URL; ?>/pages/my_orders.php">Orders</a>
-                <a href="<?php echo BASE_URL; ?>/pages/wishlist.php">Wishlist</a>
-                <a href="<?php echo BASE_URL; ?>/pages/profile.php">Profile</a>
-                <?php if (isAdmin()): ?>
-                    <a href="<?php echo BASE_URL; ?>/admin/index.php" style="color: var(--accent); font-weight: bold;">Admin</a>
-                <?php endif; ?>
-                <a href="<?php echo BASE_URL; ?>/pages/logout.php" class="btn btn-secondary btn-sm" style="margin-left: 0.5rem;">Logout</a>
+                <a href="<?php echo BASE_URL; ?>pages/my_orders.php">Orders</a>
+                <a href="<?php echo BASE_URL; ?>pages/wishlist.php">Wishlist</a>
+                <a href="<?php echo BASE_URL; ?>pages/profile.php">Profile</a>
+                <a href="<?php echo BASE_URL; ?>pages/logout.php" class="btn btn-secondary btn-sm" style="margin-left: 0.5rem;">Logout</a>
             <?php else: ?>
-                <a href="<?php echo BASE_URL; ?>/pages/login.php">Login</a>
-                <a href="<?php echo BASE_URL; ?>/pages/register.php" class="btn btn-primary btn-sm">Sign Up</a>
+                <a href="<?php echo BASE_URL; ?>pages/login.php">Login</a>
+                <a href="<?php echo BASE_URL; ?>pages/register.php" class="btn btn-primary btn-sm">Sign Up</a>
             <?php endif; ?>
         </div>
     </div>

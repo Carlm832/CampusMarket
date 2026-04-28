@@ -13,9 +13,9 @@ $pageTitle = "Order Oversight";
 
 // Fetch All Orders
 $stmt = $pdo->query("
-    SELECT o.*, 
-           b.username as buyer_name, 
-           p.title as product_title, 
+    SELECT o.*,
+           b.username as buyer_name,
+           p.title as product_title,
            s.username as seller_name,
            p.id as product_id
     FROM orders o
@@ -28,8 +28,11 @@ $orders = $stmt->fetchAll();
 ?>
 
 <div class="container mt-8 mb-16">
-    <div class="flex justify-between items-center mb-8">
-        <h1 class="mb-0 gradient-text">Marketplace Transactions</h1>
+    <div class="flex justify-between items-end mb-8">
+        <div>
+            <div class="admin-breadcrumb mb-2"><a href="index.php">Dashboard</a> › Orders</div>
+            <h1 class="mb-0 gradient-text">Marketplace Transactions</h1>
+        </div>
         <div class="badge" style="background: rgba(245,158,11,0.1); color: #d97706; font-size: 0.9rem; padding: 0.5rem 1rem; border-radius: var(--radius-full);"><?php echo count($orders); ?> Total Orders</div>
     </div>
 
