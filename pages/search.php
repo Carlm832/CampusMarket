@@ -14,11 +14,11 @@ if ($query) {
         JOIN categories c ON p.category_id = c.id
         JOIN users u ON p.user_id = u.id
         LEFT JOIN product_images i ON p.id = i.product_id AND i.is_primary = 1
-        WHERE (p.title LIKE :q OR p.description LIKE :q OR c.name LIKE :q)
+        WHERE (p.title LIKE :q1 OR p.description LIKE :q2 OR c.name LIKE :q3)
         AND p.status = 'active'
         ORDER BY p.created_at DESC
     ");
-    $stmt->execute([':q' => "%$query%"]);
+    $stmt->execute([':q1' => "%$query%", ':q2' => "%$query%", ':q3' => "%$query%"]);
     $results = $stmt->fetchAll();
 }
 ?>
