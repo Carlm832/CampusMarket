@@ -1,7 +1,8 @@
 <?php
 // pages/login.php — Member 2
 // Authenticate via email-or-username + password.
-// Uses Member 1's foundation (bootstrap, sanitize, setFlash, redirect, $pdo).
+// Blocks unverified accounts (is_verified = 0) until they click the
+// link in their verification email.
 
 require_once '../config/constants.php';
 require_once '../includes/bootstrap.php';
@@ -10,8 +11,9 @@ if (isLoggedIn()) {
     redirect(BASE_URL . 'pages/profile.php');
 }
 
-$errors   = [];
-$identity = '';
+$errors    = [];
+$identity  = '';
+$unverified = false;   // true → render "check your inbox" message instead of the generic error
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
@@ -25,7 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Note: named placeholders can't be reused when EMULATE_PREPARES=false,
         // so :id_email and :id_user are bound separately to the same value.
         $stmt = $pdo->prepare('
-            SELECT id, username, email, password_hash, role
+            SELECT id, username, email, password_hash, role, is_verified
             FROM users
             WHERE LOWER(email) = LOWER(:id_email) OR username = :id_user
             LIMIT 1
@@ -42,6 +44,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if (!$user || !password_verify($password, $user['password_hash'])) {
             $errors['form'] = $bad;
+        } elseif ((int) $user['is_verified'] !== 1) {
+            // Correct credentials, but email not verified yet.
+            $unverified = true;
+            $errors['form'] = 'Please verify your email before logging in. '
+                            . 'Check your inbox at ' . sanitize($user['email']) . '.';
         } else {
             // Transparent rehash if default cost moved up since last login.
             if (password_needs_rehash($user['password_hash'], PASSWORD_DEFAULT)) {
@@ -63,7 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Safe internal redirect: allow ?redirect=/pages/..., reject anything else.
             $target = $_GET['redirect'] ?? '';
             if ($target && strpos($target, '/') === 0 && strpos($target, '//') !== 0) {
-                redirect(BASE_URL . $target);
+                redirect(BASE_URL . ltrim($target, '/'));
             }
             redirect(BASE_URL . 'pages/profile.php');
         }
@@ -74,60 +81,85 @@ $pageTitle = 'Log in';
 require_once '../includes/header.php';
 ?>
 
-<div class="container relative mt-16 mb-20 flex justify-center">
-    <!-- Decorative elements -->
-    <div style="position: absolute; top: -50px; right: 20%; width: 250px; height: 250px; border-radius: 50%; background: linear-gradient(135deg, var(--primaryLight), var(--secondaryLight)); opacity: 0.2; filter: blur(40px); z-index: -1;"></div>
-    <div style="position: absolute; bottom: -50px; left: 20%; width: 200px; height: 200px; border-radius: 50%; background: linear-gradient(135deg, #10b981, #34d399); opacity: 0.15; filter: blur(40px); z-index: -1;"></div>
+<style>
+  .auth-card { max-width: 400px; margin: 2rem auto; background: #fff; border-radius: 0.5rem; border: 1px solid #e2e8f0; padding: 2rem; }
+  .auth-card h1 { margin-top: 0; }
+  .form-row { margin-bottom: 1rem; }
+  .form-row label { display: block; font-weight: 500; margin-bottom: 0.35rem; }
+  .form-row input { width: 100%; padding: 0.55rem 0.75rem; border: 1px solid #cbd5e1; border-radius: 0.375rem; font-size: 1rem; box-sizing: border-box; }
+  .form-row input:focus { outline: 2px solid var(--primary); border-color: transparent; }
+  .btn-full { width: 100%; padding: 0.7rem; font-size: 1rem; }
+  .alert-error { background:#fee2e2; color:#991b1b; border:1px solid #fecaca; padding:0.6rem 0.8rem; border-radius:0.375rem; margin-bottom:1rem; }
+  .alert-warn  { background:#fef3c7; color:#92400e; border:1px solid #fde68a; padding:0.6rem 0.8rem; border-radius:0.375rem; margin-bottom:1rem; }
+  .auth-foot { text-align: center; color: #64748b; margin-top: 1.25rem; font-size: 0.9rem; }
 
-    <div class="glass-panel" style="width: 100%; max-width: 440px; padding: 2.5rem; text-align: left; border-radius: var(--radius-xl); box-shadow: var(--shadow-xl); z-index: 10;">
-        <div class="text-center mb-8">
-            <h1 class="gradient-text mb-2" style="font-size: 2.5rem;">Welcome Back</h1>
-            <p class="text-muted text-lg">Log in to your CampusMarket account</p>
-        </div>
+  /* Password eye toggle */
+  .password-wrap { position: relative; }
+  .password-wrap input { padding-right: 2.6rem; }
+  .password-toggle {
+    position: absolute; top: 50%; right: 0.4rem; transform: translateY(-50%);
+    background: none; border: 0; padding: 0.35rem;
+    color: #64748b; cursor: pointer; display: flex; align-items: center;
+    border-radius: 0.25rem;
+  }
+  .password-toggle:hover       { color: #0f172a; }
+  .password-toggle:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+  .password-toggle svg         { width: 1.15rem; height: 1.15rem; }
+  .password-toggle .icon-hide  { display: none; }
+  .password-toggle.is-shown .icon-show { display: none; }
+  .password-toggle.is-shown .icon-hide { display: block; }
+</style>
 
-        <?php if (!empty($errors['form'])): ?>
-            <div class="form-alert" style="margin-bottom: 2rem;">
-                <?php echo sanitize($errors['form']); ?>
-            </div>
-        <?php endif; ?>
+<div class="auth-card">
+  <h1>Log in</h1>
 
-        <form method="post" novalidate class="auth-form">
-            <div class="form-row">
-                <label for="identity" class="form-label">Email or username</label>
-                <input type="text" id="identity" name="identity"
-                       value="<?php echo sanitize($identity); ?>"
-                       required autofocus autocomplete="username"
-                       class="form-control premium-input w-full"
-                       placeholder="e.g. jdoe or jdoe@university.edu"
-                       style="padding: 0.8rem 1rem;">
-            </div>
-
-            <div class="form-row">
-                <div class="flex justify-between items-center mb-2">
-                <label for="password" class="form-label" style="margin-bottom: 0;">Password</label>
-                </div>
-                <div class="input-with-toggle">
-                    <input type="password" id="password" name="password"
-                           required autocomplete="current-password"
-                           class="form-control premium-input w-full"
-                           placeholder="••••••••"
-                           style="padding: 0.8rem 3rem 0.8rem 1rem;">
-                    
-                    <button type="button" class="password-toggle" data-target="password" aria-label="Show password">
-                        <svg class="icon-show" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 1.2rem; height: 1.2rem;"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
-                        <svg class="icon-hide" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 1.2rem; height: 1.2rem; display: none;"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-6.5 0-10-7-10-7a19.8 19.8 0 0 1 5.06-5.94"/><path d="M9.9 4.24A10.94 10.94 0 0 1 12 4c6.5 0 10 7 10 7a19.9 19.9 0 0 1-3.17 4.19"/><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M1 1l22 22"/></svg>
-                    </button>
-                </div>
-            </div>
-
-            <button type="submit" class="btn btn-primary w-full hover-scale shadow-lg" style="margin-top: 1rem; padding: 1rem; font-size: 1.1rem; border-radius: var(--radius-full); font-weight: bold;">Log in securely</button>
-        </form>
-
-        <p class="text-center mt-8 text-muted" style="font-size: 0.95rem;">
-            New here?
-            <a href="<?php echo BASE_URL; ?>/pages/register.php" style="color: var(--primary); font-weight: 600; text-decoration: none; margin-left: 0.25rem;">Create an account</a>
-        </p>
+  <?php if (!empty($errors['form'])): ?>
+    <div class="<?php echo $unverified ? 'alert-warn' : 'alert-error'; ?>">
+      <?php echo sanitize($errors['form']); ?>
     </div>
+  <?php endif; ?>
+
+  <form method="post" novalidate>
+    <div class="form-row">
+      <label for="identity">Email or username</label>
+      <input type="text" id="identity" name="identity"
+             value="<?php echo sanitize($identity); ?>"
+             placeholder="you@std.neu.edu.tr or your username"
+             required autofocus autocomplete="username">
+    </div>
+
+    <div class="form-row">
+      <label for="password">Password</label>
+      <div class="password-wrap">
+        <input type="password" id="password" name="password"
+               placeholder="Your password"
+               required autocomplete="current-password">
+        <button type="button" class="password-toggle" data-target="password" aria-label="Show password">
+          <svg class="icon-show" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+               fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+          <svg class="icon-hide" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+               fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-6.5 0-10-7-10-7a19.8 19.8 0 0 1 5.06-5.94"/>
+            <path d="M9.9 4.24A10.94 10.94 0 0 1 12 4c6.5 0 10 7 10 7a19.9 19.9 0 0 1-3.17 4.19"/>
+            <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/>
+            <path d="M1 1l22 22"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <button type="submit" class="btn btn-full">Log in</button>
+  </form>
+
+  <p class="auth-foot">
+    New here?
+    <a href="<?php echo BASE_URL; ?>pages/register.php">Create an account</a>
+  </p>
 </div>
 
 <script>
@@ -137,24 +169,10 @@ require_once '../includes/header.php';
       if (!input) return;
       var show = input.type === 'password';
       input.type = show ? 'text' : 'password';
-      
-      const iconShow = btn.querySelector('.icon-show');
-      const iconHide = btn.querySelector('.icon-hide');
-      
-      if (show) {
-          iconShow.style.display = 'none';
-          iconHide.style.display = 'block';
-      } else {
-          iconShow.style.display = 'block';
-          iconHide.style.display = 'none';
-      }
+      btn.classList.toggle('is-shown', show);
       btn.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
     });
   });
 </script>
 
 <?php require_once '../includes/footer.php'; ?>
-
-
-
-
