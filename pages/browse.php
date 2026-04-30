@@ -42,6 +42,14 @@ if ($maxPrice) {
 switch ($sort) {
     case 'price_asc': $sql .= " ORDER BY p.price ASC"; break;
     case 'price_desc': $sql .= " ORDER BY p.price DESC"; break;
+    case 'condition_best': 
+        $sql .= " ORDER BY CASE p.condition 
+                    WHEN 'new' THEN 1 
+                    WHEN 'like_new' THEN 2 
+                    WHEN 'used' THEN 3 
+                    WHEN 'poor' THEN 4 
+                    ELSE 5 END ASC"; 
+        break;
     default: $sql .= " ORDER BY p.created_at DESC"; break;
 }
 
@@ -143,15 +151,46 @@ include '../includes/header.php';
 
             <!-- Results -->
             <main class="lg:col-span-4">
-                <div class="mb-8 flex justify-between items-center" style="background: var(--bg-surface); padding: 1.1rem 1.5rem; border-radius: var(--radius-lg); border: 1px solid var(--border-light); box-shadow: var(--shadow-sm);">
-                    <div class="flex items-center gap-3">
-                        <div style="background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; padding: 0.35rem 1rem; border-radius: var(--radius-full); font-weight: 800; font-size: 0.9rem; box-shadow: 0 4px 10px rgba(99,102,241,0.2);">
-                            <?php echo count($products); ?>
+                <div class="mb-8 flex flex-row items-center justify-between gap-4" style="background: var(--bg-surface); padding: 1.1rem 1.5rem; border-radius: var(--radius-lg); border: 1px solid var(--border-light); box-shadow: var(--shadow-sm);">
+                    <div class="flex-1 flex items-center justify-start gap-4">
+                        <div class="flex items-center gap-2">
+                            <div style="background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; padding: 0.35rem 1rem; border-radius: var(--radius-full); font-weight: 800; font-size: 0.9rem; box-shadow: 0 4px 10px rgba(99,102,241,0.2);">
+                                <?php echo count($products); ?>
+                            </div>
+                            <span class="font-bold text-main" style="font-size: 1.05rem; letter-spacing: -0.01em; white-space: nowrap;">Items Available</span>
                         </div>
-                        <span class="font-bold text-main" style="font-size: 1.05rem; letter-spacing: -0.01em;">Items Available</span>
+
+                        <!-- Results Search -->
+                        <form method="GET" action="browse.php" class="flex items-center gap-2 mb-0" style="margin-left: 0.5rem;">
+                            <?php if($category): ?><input type="hidden" name="category" value="<?php echo sanitize($category); ?>"><?php endif; ?>
+                            <?php if($sort): ?><input type="hidden" name="sort" value="<?php echo sanitize($sort); ?>"><?php endif; ?>
+                            <?php if($condition): ?><input type="hidden" name="condition" value="<?php echo sanitize($condition); ?>"><?php endif; ?>
+                            <input type="text" name="q" value="<?php echo sanitize($search); ?>" placeholder="Search items..." 
+                                   class="premium-input py-2 px-4" style="font-size: 0.85rem; width: 200px; border-radius: var(--radius-md); background: var(--bg-main); border: 1px solid var(--border-light);">
+                            <button type="submit" class="btn btn-primary btn-sm" style="padding: 0.5rem 1rem; border-radius: var(--radius-md);">Find</button>
+                        </form>
+                    </div>
+
+                    <!-- Sort Dropdown -->
+                    <div class="flex-1 flex items-center justify-center gap-3">
+                        <span class="text-muted small font-bold uppercase tracking-wider" style="font-size: 0.75rem;">Sort By:</span>
+                        <form method="GET" action="browse.php" id="sort-form" class="mb-0">
+                            <?php if($search): ?><input type="hidden" name="q" value="<?php echo sanitize($search); ?>"><?php endif; ?>
+                            <?php if($category): ?><input type="hidden" name="category" value="<?php echo sanitize($category); ?>"><?php endif; ?>
+                            <?php if($condition): ?><input type="hidden" name="condition" value="<?php echo sanitize($condition); ?>"><?php endif; ?>
+                            <?php if($minPrice): ?><input type="hidden" name="min_price" value="<?php echo sanitize($minPrice); ?>"><?php endif; ?>
+                            <?php if($maxPrice): ?><input type="hidden" name="max_price" value="<?php echo sanitize($maxPrice); ?>"><?php endif; ?>
+                            
+                            <select name="sort" class="premium-input py-2 px-4" style="font-size: 0.85rem; min-width: 180px; border-radius: var(--radius-md); background: var(--bg-main); border: 1px solid var(--border-light); cursor: pointer;" onchange="this.form.submit()">
+                                <option value="newest" <?php echo $sort == 'newest' ? 'selected' : ''; ?>>Newest First</option>
+                                <option value="price_asc" <?php echo $sort == 'price_asc' ? 'selected' : ''; ?>>Price: Low to High</option>
+                                <option value="price_desc" <?php echo $sort == 'price_desc' ? 'selected' : ''; ?>>Price: High to Low</option>
+                                <option value="condition_best" <?php echo $sort == 'condition_best' ? 'selected' : ''; ?>>Condition: Best First</option>
+                            </select>
+                        </form>
                     </div>
                     
-                    <div class="flex items-center gap-2">
+                    <div class="flex-1 flex items-center justify-end gap-2">
                         <span class="text-muted small font-medium uppercase tracking-widest" style="font-size: 0.7rem;">Browsing</span>
                         <span class="bg-primary-light text-primary px-3 py-1 rounded-full font-bold" style="font-size: 0.75rem;">
                             <?php echo $search ?: 'All Items'; ?>
