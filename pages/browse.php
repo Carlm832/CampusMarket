@@ -166,14 +166,14 @@ include '../includes/header.php';
                             <?php if($sort): ?><input type="hidden" name="sort" value="<?php echo sanitize($sort); ?>"><?php endif; ?>
                             <?php if($condition): ?><input type="hidden" name="condition" value="<?php echo sanitize($condition); ?>"><?php endif; ?>
                             <input type="text" name="q" value="<?php echo sanitize($search); ?>" placeholder="Search items..." 
-                                   class="premium-input py-2 px-4" style="font-size: 0.85rem; width: 200px; border-radius: var(--radius-md); background: var(--bg-main); border: 1px solid var(--border-light);">
-                            <button type="submit" class="btn btn-primary btn-sm" style="padding: 0.5rem 1rem; border-radius: var(--radius-md);">Find</button>
+                                   class="premium-input py-2.5 px-4" style="font-size: 1rem; width: 300px; border-radius: var(--radius-md); background: var(--bg-main); border: 1px solid var(--border-light);">
+                            <button type="submit" class="btn btn-primary btn-sm" style="padding: 0.65rem 1.35rem; border-radius: var(--radius-md); font-size: 0.95rem; font-weight: 700;">Find</button>
                         </form>
                     </div>
 
                     <!-- Sort Dropdown -->
                     <div class="flex-1 flex items-center justify-center gap-3">
-                        <span class="text-muted small font-bold uppercase tracking-wider" style="font-size: 0.75rem;">Sort By:</span>
+                        <span class="text-muted small font-bold uppercase tracking-wider" style="font-size: 0.85rem;">Sort By:</span>
                         <form method="GET" action="browse.php" id="sort-form" class="mb-0">
                             <?php if($search): ?><input type="hidden" name="q" value="<?php echo sanitize($search); ?>"><?php endif; ?>
                             <?php if($category): ?><input type="hidden" name="category" value="<?php echo sanitize($category); ?>"><?php endif; ?>
@@ -181,7 +181,7 @@ include '../includes/header.php';
                             <?php if($minPrice): ?><input type="hidden" name="min_price" value="<?php echo sanitize($minPrice); ?>"><?php endif; ?>
                             <?php if($maxPrice): ?><input type="hidden" name="max_price" value="<?php echo sanitize($maxPrice); ?>"><?php endif; ?>
                             
-                            <select name="sort" class="premium-input py-2 px-4" style="font-size: 0.85rem; min-width: 180px; border-radius: var(--radius-md); background: var(--bg-main); border: 1px solid var(--border-light); cursor: pointer;" onchange="this.form.submit()">
+                            <select name="sort" class="premium-input py-2.5 px-4" style="font-size: 1rem; min-width: 220px; border-radius: var(--radius-md); background: var(--bg-main); border: 1px solid var(--border-light); cursor: pointer;" onchange="this.form.submit()">
                                 <option value="newest" <?php echo $sort == 'newest' ? 'selected' : ''; ?>>Newest First</option>
                                 <option value="price_asc" <?php echo $sort == 'price_asc' ? 'selected' : ''; ?>>Price: Low to High</option>
                                 <option value="price_desc" <?php echo $sort == 'price_desc' ? 'selected' : ''; ?>>Price: High to Low</option>
