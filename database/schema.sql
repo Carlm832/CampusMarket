@@ -50,6 +50,7 @@ CREATE TABLE products (
     price       DECIMAL(10,2)  NOT NULL,
     `condition`   ENUM('new', 'like_new', 'used', 'poor') NOT NULL DEFAULT 'used',
     status      ENUM('active', 'sold', 'flagged')       NOT NULL DEFAULT 'active',
+    is_featured TINYINT(1)     NOT NULL DEFAULT 0,
     created_at  TIMESTAMP      NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at  TIMESTAMP      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id)     REFERENCES users(id)      ON DELETE CASCADE,

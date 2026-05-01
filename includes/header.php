@@ -38,8 +38,12 @@ require_once __DIR__ . '/bootstrap.php';
         </a>
         
         <!-- Shared Search Bar -->
-        <form action="<?php echo BASE_URL; ?>/pages/search.php" method="GET" class="search-bar">
-            <input type="text" name="q" placeholder="Search for items, books, tech..." class="search-input" required>
+        <form action="<?php echo BASE_URL; ?>pages/search.php" method="GET" class="search-bar group">
+            <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="text" name="q" placeholder="Search items, books, tech..." class="search-input" required>
             <button type="submit" class="search-btn">Search</button>
         </form>
 
@@ -56,6 +60,13 @@ require_once __DIR__ . '/bootstrap.php';
                 <a href="<?php echo BASE_URL; ?>admin/index.php" style="color: var(--accent); font-weight: bold;">Admin Panel</a>
                 <a href="<?php echo BASE_URL; ?>pages/logout.php" class="btn btn-secondary btn-sm" style="margin-left: 0.5rem;">Logout</a>
             <?php elseif (isLoggedIn()): ?>
+                <?php $unreadNotifications = countUnreadNotifications($pdo, currentUserId()); ?>
+                <a href="<?php echo BASE_URL; ?>/pages/inbox.php" class="flex items-center gap-1">
+                    Inbox
+                    <?php if ($unreadNotifications > 0): ?>
+                        <span class="badge" style="background: var(--accent); color: white; padding: 0.1rem 0.4rem; font-size: 0.7rem;"><?php echo $unreadNotifications; ?></span>
+                    <?php endif; ?>
+                </a>
                 <a href="<?php echo BASE_URL; ?>pages/create_listing.php" style="font-weight: 600; color: var(--primary);">Sell Item</a>
                 
                 <!-- User Account Dropdown -->
@@ -65,15 +76,6 @@ require_once __DIR__ . '/bootstrap.php';
                         <svg viewBox="0 0 20 20" fill="currentColor" style="width: 16px; height: 16px;"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
                     </button>
                     <div class="user-dropdown-content">
-                        <?php 
-                            $unreadNotifications = countUnreadNotifications($pdo, currentUserId());
-                        ?>
-                        <a href="<?php echo BASE_URL; ?>/pages/inbox.php" class="flex justify-between items-center">
-                            Inbox
-                            <?php if ($unreadNotifications > 0): ?>
-                                <span class="badge" style="background: var(--accent); color: white;"><?php echo $unreadNotifications; ?></span>
-                            <?php endif; ?>
-                        </a>
                         <a href="<?php echo BASE_URL; ?>pages/my_orders.php">My Orders</a>
                         <a href="<?php echo BASE_URL; ?>pages/wishlist.php">Wishlist</a>
                         <a href="<?php echo BASE_URL; ?>pages/profile.php">Profile Settings</a>

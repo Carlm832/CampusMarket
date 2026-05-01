@@ -14,11 +14,11 @@ if ($query) {
         JOIN categories c ON p.category_id = c.id
         JOIN users u ON p.user_id = u.id
         LEFT JOIN product_images i ON p.id = i.product_id AND i.is_primary = 1
-        WHERE (p.title LIKE :q OR p.description LIKE :q OR c.name LIKE :q)
+        WHERE (p.title LIKE :q1 OR p.description LIKE :q2 OR c.name LIKE :q3)
         AND p.status = 'active'
         ORDER BY p.created_at DESC
     ");
-    $stmt->execute([':q' => "%$query%"]);
+    $stmt->execute([':q1' => "%$query%", ':q2' => "%$query%", ':q3' => "%$query%"]);
     $results = $stmt->fetchAll();
 }
 ?>
@@ -28,17 +28,18 @@ if ($query) {
     <div style="position: absolute; top: -5%; left: 10%; width: 500px; height: 500px; border-radius: 50%; background: radial-gradient(circle, rgba(99,102,241,0.06) 0%, rgba(255,255,255,0) 70%); z-index: -1;"></div>
     <div style="position: absolute; top: 20%; right: -5%; width: 400px; height: 400px; border-radius: 50%; background: radial-gradient(circle, rgba(236,72,153,0.04) 0%, rgba(255,255,255,0) 70%); z-index: -1;"></div>
 
-    <div class="mb-10 text-center lg:text-left flex flex-col md:flex-row justify-between items-center gap-6 glass-panel p-8" style="border-radius: var(--radius-xl); box-shadow: var(--shadow-md);">
-        <div>
-            <h1 class="font-bold text-4xl mb-2 gradient-text" style="background: linear-gradient(135deg, var(--text-main), var(--primary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Search Results</h1>
-            <p class="text-muted text-lg font-medium">Found <strong class="text-primary"><?php echo count($results); ?></strong> matching items for "<strong class="text-main"><?php echo $query; ?></strong>"</p>
+    <div class="mb-8 flex flex-col md:flex-row justify-between items-center gap-4 glass-panel p-6" style="border-radius: var(--radius-xl); box-shadow: var(--shadow-sm);">
+        <div class="text-center md:text-left">
+            <h1 class="font-bold text-2xl mb-1 text-main">Search Results</h1>
+            <p class="text-muted font-medium" style="font-size: 0.95rem;">Found <strong class="text-primary"><?php echo count($results); ?></strong> items for "<strong class="text-main"><?php echo sanitize($query); ?></strong>"</p>
         </div>
-        <form action="search.php" method="GET" class="flex items-center gap-3 w-full md:w-auto mt-4 md:mt-0">
-            <div class="relative w-full md:w-80 border-0">
-                <span style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--text-muted);"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg></span>
-                <input type="text" name="q" value="<?php echo htmlspecialchars($query); ?>" placeholder="Search something else..." class="w-full premium-input bg-white shadow-sm" style="padding: 0.8rem 1rem 0.8rem 2.8rem; border-radius: var(--radius-full); font-size: 1rem;" required>
+        
+        <form action="search.php" method="GET" class="flex items-center w-full md:w-auto" style="background: var(--bg-main); border-radius: var(--radius-full); padding: 0.25rem; border: 1px solid var(--border-light);">
+            <div class="flex items-center pl-3">
+                <svg class="w-4 h-4 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
             </div>
-            <button type="submit" class="btn btn-primary hover-scale shadow-md" style="border-radius: var(--radius-full); padding: 0.8rem 1.8rem; font-weight: bold;">Search</button>
+            <input type="text" name="q" value="<?php echo htmlspecialchars($query); ?>" placeholder="Search..." class="bg-transparent border-none search-input w-full md:w-64" style="padding: 0.5rem 0.75rem; font-size: 0.95rem; color: var(--text-main);" required>
+            <button type="submit" class="btn btn-primary btn-sm shadow-sm" style="border-radius: var(--radius-full); padding: 0.4rem 1.2rem; font-weight: 600;">Search</button>
         </form>
     </div>
 

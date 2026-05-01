@@ -60,19 +60,30 @@ document.addEventListener('DOMContentLoaded', function() {
             <h2 class="mb-0">Shop by Category</h2>
             <a href="pages/categories.php" class="text-muted" style="font-weight: 500;">View all</a>
         </div>
-        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-6">
             <?php 
-            $catIcons = [
-                1 => '💻', 2 => '📚', 3 => '🪑', 4 => '👕', 5 => '🍳', 
-                6 => '🧴', 7 => '🍕', 8 => '✏️', 9 => '🏠', 10 => '🚲'
+            // Hardcoded categories as requested
+            $hardcodedCategories = [
+                ['id' => 5,  'name' => 'Kitchen essentials',            'icon' => '🍳'],
+                ['id' => 1,  'name' => 'Electronics and accessories',    'icon' => '💻'],
+                ['id' => 4,  'name' => 'Clothing and fashion',          'icon' => '👕'],
+                ['id' => 3,  'name' => 'Dorms and living essentials',   'icon' => '🪑'],
+                ['id' => 10, 'name' => 'Transportation (bikes and scooter)', 'icon' => '🚲'],
+                ['id' => 2,  'name' => 'Books and study materials',     'icon' => '📚']
             ];
-            foreach ($topCategories as $cat): ?>
-                <a href="pages/browse.php?category=<?php echo $cat['id']; ?>" class="card card-hover p-4 flex flex-col items-center justify-center text-center">
-                    <div style="background: var(--bg-main); width: 48px; height: 48px; border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; margin-bottom: 0.75rem; font-size: 1.5rem;">
-                        <?php echo $catIcons[$cat['id']] ?? '🏷️'; ?>
+
+            foreach ($hardcodedCategories as $cat): 
+                // Fetch real count for each hardcoded category
+                $stmt = $pdo->prepare("SELECT COUNT(*) FROM products WHERE category_id = ? AND status = 'active'");
+                $stmt->execute([$cat['id']]);
+                $count = $stmt->fetchColumn();
+            ?>
+                <a href="pages/browse.php?category=<?php echo $cat['id']; ?>" class="card card-hover p-6 flex flex-col items-center justify-center text-center">
+                    <div style="background: var(--bg-main); width: 56px; height: 56px; border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; margin-bottom: 1rem; font-size: 1.75rem;">
+                        <?php echo $cat['icon']; ?>
                     </div>
-                    <strong><?php echo sanitize($cat['name']); ?></strong>
-                    <span class="text-muted small"><?php echo $cat['product_count']; ?> items</span>
+                    <strong style="font-size: 1.1rem; margin-bottom: 0.25rem;"><?php echo $cat['name']; ?></strong>
+                    <span class="text-muted small"><?php echo $count; ?> items available</span>
                 </a>
             <?php endforeach; ?>
         </div>

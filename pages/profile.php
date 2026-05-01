@@ -555,6 +555,16 @@ body.dark-mode .btn-white-solid:hover {
             <div class="info-row">
 
                 <div class="info-item">
+                    <span class="info-label">Status</span>
+                    <span class="info-verified">
+                        <svg width="15" height="15" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                        Verified Student
+                    </span>
+                </div>
+
+                <div class="info-divider"></div>
+
+                <div class="info-item">
                     <span class="info-label">Username</span>
                     <span class="info-value">@<?php echo sanitize($user['username']); ?></span>
                 </div>
@@ -583,15 +593,7 @@ body.dark-mode .btn-white-solid:hover {
                     <span class="info-value"><?php echo formatJoinDate($user['created_at']); ?></span>
                 </div>
 
-                <div class="info-divider"></div>
 
-                <div class="info-item">
-                    <span class="info-label">Status</span>
-                    <span class="info-verified">
-                        <svg width="15" height="15" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
-                        Verified Student
-                    </span>
-                </div>
 
                 <?php if ($user['role'] === 'admin'): ?>
                 <div class="info-divider"></div>
