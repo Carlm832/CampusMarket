@@ -208,7 +208,7 @@ p {
   .xl\:grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); } 
 }
 @media (min-width: 1536px) { 
-  .2xl\:grid-cols-5 { grid-template-columns: repeat(5, minmax(0, 1fr)); } 
+  .\32 xl\:grid-cols-5 { grid-template-columns: repeat(5, minmax(0, 1fr)); } 
 }
 
 .mt-2 { margin-top: 0.5rem; }
@@ -270,6 +270,7 @@ p {
   font-weight: 800;
   background: linear-gradient(135deg, var(--primary), var(--secondary));
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
   text-decoration: none;
 }
@@ -365,7 +366,7 @@ p {
   align-items: center;
   background: var(--bg-surface);
   border-radius: var(--radius-full);
-  padding: 0 1rem; /* Padding for proper icon/input spacing */
+  padding: 0 1.25rem; /* Increased padding to pull button away from boundary */
   border: 1px solid var(--border-light);
   width: 100%;
   max-width: 450px;
@@ -373,6 +374,7 @@ p {
   transition: all 0.3s ease;
   box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
   outline: none !important;
+  min-width: 0; /* Allow flex children to shrink below content size */
 }
 
 .search-bar:focus-within, .search-bar:hover {
@@ -420,6 +422,8 @@ body.dark-mode .search-bar:focus-within, body.dark-mode .search-bar:hover {
   font-size: 0.95rem;
   font-weight: 500;
   line-height: 1;
+  min-width: 0;
+  width: 0;
 }
 
 .search-input:focus, 
@@ -455,13 +459,16 @@ input:-webkit-autofill:active {
   background: var(--primary);
   color: white;
   border: none;
-  padding: 0.5rem 1.5rem;
+  padding: 0.4rem 1rem;
+  margin-left: 0.75rem;
   border-radius: var(--radius-full);
   cursor: pointer;
   font-weight: 700;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   letter-spacing: 0.02em;
   transition: var(--transition);
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .search-btn:hover {
@@ -1014,6 +1021,7 @@ body.dark-mode .input-invalid {
 .gradient-text {
     background: linear-gradient(135deg, var(--primary), var(--secondary));
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
 }
 

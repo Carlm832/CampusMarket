@@ -59,6 +59,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($password !== $confirm) {
         $errors['password_confirm'] = 'Passwords do not match.';
     }
+    if (empty($_POST['terms'])) {
+        $errors['terms'] = 'You must agree to the Terms of Service and Privacy Policy.';
+    }
 
     // Uniqueness check (case-insensitive on email)
     if (!$errors) {
@@ -84,6 +87,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $hash = password_hash($password, PASSWORD_DEFAULT);
 
         $pdo->beginTransaction();
+        $token = '';
         try {
             $ins = $pdo->prepare('
                 INSERT INTO users (username, email, password_hash, role, phone, is_verified)
@@ -280,6 +284,16 @@ require_once '../includes/header.php';
         <div class="error"><?php echo sanitize($errors['password_confirm']); ?></div>
       <?php endif; ?>
     </div>
+
+    <div class="form-row" style="display: flex; align-items: flex-start; gap: 0.5rem; margin-top: 1.5rem; margin-bottom: 1.5rem;">
+      <input type="checkbox" id="terms" name="terms" value="1" style="width: auto; margin-top: 0.25rem; transform: scale(1.1); cursor: pointer;" required <?php echo isset($_POST['terms']) ? 'checked' : ''; ?>>
+      <label for="terms" style="font-weight: 400; font-size: 0.9rem; color: #475569; margin: 0; line-height: 1.5; cursor: pointer;">
+        I agree to the <a href="<?php echo BASE_URL; ?>pages/terms.php" style="color: var(--primary); text-decoration: underline;" target="_blank">Terms of Service</a> and <a href="<?php echo BASE_URL; ?>pages/privacy.php" style="color: var(--primary); text-decoration: underline;" target="_blank">Privacy Policy</a>.
+      </label>
+    </div>
+    <?php if (isset($errors['terms'])): ?>
+      <div class="error" style="margin-top: -1rem; margin-bottom: 1rem; color: #b91c1c; font-size: 0.85rem;"><?php echo sanitize($errors['terms']); ?></div>
+    <?php endif; ?>
 
     <button type="submit" class="btn btn-full">Create account</button>
   </form>

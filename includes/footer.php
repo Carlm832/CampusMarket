@@ -22,18 +22,18 @@
             <div class="footer-col">
                 <h4>Support</h4>
                 <ul>
-                    <li><a href="#">Safety Guidelines</a></li>
-                    <li><a href="#">Meeting Points</a></li>
-                    <li><a href="#">Report an Issue</a></li>
+                    <li><a href="<?php echo BASE_URL; ?>/pages/safety.php">Safety Guidelines</a></li>
+                    <li><a href="<?php echo BASE_URL; ?>/pages/safety.php#meeting-points">Meeting Points</a></li>
+                    <li><a href="<?php echo BASE_URL; ?>/pages/report.php">Report an Issue</a></li>
                 </ul>
             </div>
 
             <div class="footer-col">
                 <h4>Legal</h4>
                 <ul>
-                    <li><a href="#">Terms of Service</a></li>
-                    <li><a href="#">Privacy Policy</a></li>
-                    <li><a href="#">Community Rules</a></li>
+                    <li><a href="<?php echo BASE_URL; ?>/pages/terms.php">Terms of Service</a></li>
+                    <li><a href="<?php echo BASE_URL; ?>/pages/privacy.php">Privacy Policy</a></li>
+                    <li><a href="<?php echo BASE_URL; ?>/pages/rules.php">Community Rules</a></li>
                 </ul>
             </div>
         </div>

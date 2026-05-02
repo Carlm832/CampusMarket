@@ -38,12 +38,13 @@ require_once __DIR__ . '/bootstrap.php';
         </a>
         
         <!-- Shared Search Bar -->
-        <form action="<?php echo BASE_URL; ?>pages/search.php" method="GET" class="search-bar group">
+        <form action="<?php echo BASE_URL; ?>pages/search.php" method="GET" class="search-bar group" <?php if(isLoggedIn() && isAdmin()) echo 'style="max-width: 380px;"'; ?>>
             <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18">
                 <circle cx="11" cy="11" r="8"></circle>
                 <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
             </svg>
-            <input type="text" name="q" placeholder="Search items, books, tech..." class="search-input" required>
+            <?php $placeholder = (isLoggedIn() && isAdmin()) ? "Search items..." : "Search items, books, tech..."; ?>
+            <input type="text" name="q" placeholder="<?php echo $placeholder; ?>" class="search-input" required>
             <button type="submit" class="search-btn">Search</button>
         </form>
 
@@ -56,9 +57,13 @@ require_once __DIR__ . '/bootstrap.php';
             <a href="<?php echo BASE_URL; ?>pages/browse.php">Browse</a>
             <?php if (isLoggedIn() && isAdmin()): ?>
                 <!-- Admin-only nav: no marketplace actions -->
-                <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 500; padding: 0.25rem 0.75rem; background: #fef3c7; border: 1px solid #fde68a; border-radius: var(--radius-full);">🛡️ Admin Mode</span>
-                <a href="<?php echo BASE_URL; ?>admin/index.php" style="color: var(--accent); font-weight: bold;">Admin Panel</a>
-                <a href="<?php echo BASE_URL; ?>pages/logout.php" class="btn btn-secondary btn-sm" style="margin-left: 0.5rem;">Logout</a>
+                <div class="flex items-center gap-4" style="border-left: 1px solid var(--border-light); padding-left: 1.5rem; margin-left: 0.25rem;">
+                    <span style="font-size: 0.85rem; color: var(--text-main); font-weight: 600; padding: 0.35rem 0.85rem; background: var(--warning-bg); border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; text-align: center; gap: 0.4rem; box-shadow: var(--shadow-sm);">
+                        🛡️ Admin Mode
+                    </span>
+                    <a href="<?php echo BASE_URL; ?>admin/index.php" style="color: var(--primary); font-weight: 700; font-size: 0.95rem;">Admin Panel</a>
+                    <a href="<?php echo BASE_URL; ?>pages/logout.php" class="btn btn-danger btn-sm" style="border-radius: var(--radius-full); padding: 0.45rem 1.2rem; font-weight: 600;">Logout</a>
+                </div>
             <?php elseif (isLoggedIn()): ?>
                 <?php $unreadNotifications = countUnreadNotifications($pdo, currentUserId()); ?>
                 <a href="<?php echo BASE_URL; ?>/pages/inbox.php" class="flex items-center gap-1">
