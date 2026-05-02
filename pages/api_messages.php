@@ -75,7 +75,7 @@ if ($action === 'fetch') {
             'body' => htmlspecialchars($msg['body']),
             'is_mine' => $msg['sender_id'] == $currentUserId,
             'sender_name' => $msg['sender_name'],
-            'created_at' => date('g:i A, M j', strtotime($msg['created_at']))
+            'created_at' => date('Y-m-d H:i:s', strtotime($msg['created_at']))
         ];
     }
     
@@ -118,6 +118,89 @@ if ($action === 'send') {
         $pdo->rollBack();
         echo json_encode(['error' => 'Database error']);
     }
+    exit;
+}
+
+if ($action === 'propose') {
+    $productId = (int)($_POST['product_id'] ?? 0);
+    
+    if (!$productId) {
+        echo json_encode(['error' => 'Missing product ID']);
+        exit;
+    }
+    
+    // Get product details
+    $stmt = $pdo->prepare("SELECT title, price, user_id FROM products WHERE id = :id");
+    $stmt->execute([':id' => $productId]);
+    $product = $stmt->fetch();
+    
+    if (!$product) {
+        echo json_encode(['error' => 'Product not found']);
+        exit;
+    }
+    
+    $receiverId = $product['user_id'];
+    
+    if (!isValidProductConversation($pdo, $productId, $currentUserId, $receiverId)) {
+        echo json_encode(['error' => 'Invalid conversation context']);
+        exit;
+    }
+    
+    // Generate proposed message
+    $proposedBody = "Hi! I'm interested in purchasing your item '" . $product['title'] . "' for " . formatPrice($product['price']) . ". Can we arrange a meetup to complete the transaction? Please let me know your availability.";
+    
+    try {
+        $pdo->beginTransaction();
+        
+        $stmt = $pdo->prepare("INSERT INTO messages (sender_id, receiver_id, product_id, body) VALUES (:sid, :rid, :pid, :body)");
+        $stmt->execute([
+            ':sid' => $currentUserId,
+            ':rid' => $receiverId,
+            ':pid' => $productId,
+            ':body' => $proposedBody
+        ]);
+        
+        // Notify receiver
+        createNotification($pdo, $receiverId, 'message', "Purchase Proposal", "Someone wants to buy your item.", $productId);
+        
+        $pdo->commit();
+        echo json_encode(['success' => true, 'message' => 'Purchase proposal sent!']);
+    } catch (PDOException $e) {
+        $pdo->rollBack();
+        echo json_encode(['error' => 'Database error']);
+    }
+    exit;
+}
+
+if ($action === 'get_propose') {
+    $productId = (int)($_GET['product_id'] ?? 0);
+    
+    if (!$productId) {
+        echo json_encode(['error' => 'Missing product ID']);
+        exit;
+    }
+    
+    // Get product details
+    $stmt = $pdo->prepare("SELECT title, price, user_id FROM products WHERE id = :id");
+    $stmt->execute([':id' => $productId]);
+    $product = $stmt->fetch();
+    
+    if (!$product) {
+        echo json_encode(['error' => 'Product not found']);
+        exit;
+    }
+    
+    $receiverId = $product['user_id'];
+    
+    if (!isValidProductConversation($pdo, $productId, $currentUserId, $receiverId)) {
+        echo json_encode(['error' => 'Invalid conversation context']);
+        exit;
+    }
+    
+    // Generate proposed message
+    $proposedBody = "Hi! I'm interested in purchasing your item '" . $product['title'] . "' for " . formatPrice($product['price']) . ". Can we arrange a meetup to complete the transaction? Please let me know your availability.";
+    
+    echo json_encode(['success' => true, 'proposed_text' => $proposedBody]);
     exit;
 }
 

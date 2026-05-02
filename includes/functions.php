@@ -9,7 +9,7 @@
  * Sanitize user input to prevent XSS
  */
 function sanitize(string $input): string {
-    return htmlspecialchars(strip_tags(trim($input)), ENT_QUOTES, 'UTF-8');
+    return strip_tags(trim($input));
 }
 
 /**
