@@ -130,7 +130,7 @@ if ($action === 'propose') {
     }
     
     // Get product details
-    $stmt = $pdo->prepare("SELECT title, price, user_id FROM products WHERE id = :id");
+    $stmt = $pdo->prepare("SELECT title, price, discount_percent, user_id FROM products WHERE id = :id");
     $stmt->execute([':id' => $productId]);
     $product = $stmt->fetch();
     
@@ -147,7 +147,8 @@ if ($action === 'propose') {
     }
     
     // Generate proposed message
-    $proposedBody = "Hi! I'm interested in purchasing your item '" . $product['title'] . "' for " . formatPrice($product['price']) . ". Can we arrange a meetup to complete the transaction? Please let me know your availability.";
+    $quotedPrice = formatPrice(getDiscountedPrice($product));
+    $proposedBody = "Hi! I'm interested in purchasing your item '" . $product['title'] . "' for " . $quotedPrice . ". Can we arrange a meetup to complete the transaction? Please let me know your availability.";
     
     try {
         $pdo->beginTransaction();
@@ -181,7 +182,7 @@ if ($action === 'get_propose') {
     }
     
     // Get product details
-    $stmt = $pdo->prepare("SELECT title, price, user_id FROM products WHERE id = :id");
+    $stmt = $pdo->prepare("SELECT title, price, discount_percent, user_id FROM products WHERE id = :id");
     $stmt->execute([':id' => $productId]);
     $product = $stmt->fetch();
     
@@ -198,7 +199,8 @@ if ($action === 'get_propose') {
     }
     
     // Generate proposed message
-    $proposedBody = "Hi! I'm interested in purchasing your item '" . $product['title'] . "' for " . formatPrice($product['price']) . ". Can we arrange a meetup to complete the transaction? Please let me know your availability.";
+    $quotedPrice = formatPrice(getDiscountedPrice($product));
+    $proposedBody = "Hi! I'm interested in purchasing your item '" . $product['title'] . "' for " . $quotedPrice . ". Can we arrange a meetup to complete the transaction? Please let me know your availability.";
     
     echo json_encode(['success' => true, 'proposed_text' => $proposedBody]);
     exit;

@@ -13,7 +13,7 @@ if (!$productId || !$otherUserId) {
 }
 
 // Fetch context info
-$stmt = $pdo->prepare("SELECT title, price FROM products WHERE id = :id");
+$stmt = $pdo->prepare("SELECT title, price, discount_percent FROM products WHERE id = :id");
 $stmt->execute([':id' => $productId]);
 $product = $stmt->fetch();
 
@@ -61,7 +61,7 @@ require_once __DIR__ . '/../includes/header.php';
             <a href="<?= BASE_URL ?>/pages/product.php?id=<?= $productId ?>" class="font-bold text-main hover:text-primary transition-colors" style="text-decoration: none;">
                 <?= htmlspecialchars($product['title']) ?>
             </a>
-            <p class="text-primary font-bold mb-0"><?= formatPrice($product['price']) ?></p>
+            <p class="text-primary font-bold mb-0"><?= renderProductPrice($product) ?></p>
         </div>
     </div>
     

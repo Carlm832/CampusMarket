@@ -74,7 +74,7 @@ if ($query) {
                         <h4 class="mb-3 text-main font-bold" style="font-size: 1.1rem; line-height: 1.4; flex-grow: 1; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;"><?php echo sanitize($prod['title']); ?></h4>
                         
                         <div class="flex justify-between items-center mt-auto pt-4 border-t border-gray-100">
-                            <span style="font-weight: 800; color: var(--text-main); font-size: 1.25rem; font-family: 'Inter', sans-serif;"><?php echo formatPrice($prod['price']); ?></span>
+                            <span style="font-weight: 800; color: var(--text-main); font-size: 1.05rem; font-family: 'Inter', sans-serif;"><?php echo renderProductPrice($prod); ?></span>
                             <div class="flex items-center gap-2">
                                 <div style="min-width: 24px; min-height: 24px; border-radius: 50%; background: var(--primaryLight); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 0.6rem; font-weight: bold; padding:0.2rem;"><?php echo strtoupper(substr($prod['seller_name'],0,2)); ?></div>
                                 <span class="text-muted font-medium text-sm truncate" style="max-width: 80px;">@<?php echo sanitize($prod['seller_name']); ?></span>

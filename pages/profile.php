@@ -30,8 +30,36 @@ if (!$user) {
 
 $isSelf  = isLoggedIn() && (int)currentUserId() === (int)$user['id'];
 $rating  = getSellerRating($pdo, (int)$user['id']);
+$trust   = getSellerTrustScore($pdo, (int)$user['id']);
 $pageTitle = sanitize($user['username']) . "'s Profile";
 $activeTab = ($_GET['tab'] ?? 'listings') === 'about' ? 'about' : 'listings';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $isSelf && isset($_POST['action'], $_POST['product_id'])) {
+    $action = sanitize($_POST['action']);
+    $productId = (int)($_POST['product_id'] ?? 0);
+    $discountPercent = (int)($_POST['discount_percent'] ?? 0);
+
+    $ownStmt = $pdo->prepare("SELECT * FROM products WHERE id = :pid AND user_id = :uid");
+    $ownStmt->execute([':pid' => $productId, ':uid' => $viewId]);
+    $ownedProduct = $ownStmt->fetch();
+
+    if (!$ownedProduct) {
+        setFlash('error', 'Listing not found.');
+    } elseif (!isDiscountEligible($ownedProduct)) {
+        setFlash('error', 'Discounts are available only for active listings older than ' . LISTING_DISCOUNT_MIN_DAYS . ' days.');
+    } else {
+        if ($action === 'set_discount') {
+            if ($discountPercent < 0 || $discountPercent > LISTING_DISCOUNT_MAX_PERCENT) {
+                setFlash('error', 'Discount must be between 0 and ' . LISTING_DISCOUNT_MAX_PERCENT . ' percent.');
+            } else {
+                $upd = $pdo->prepare("UPDATE products SET discount_percent = :dp, discount_set_at = NOW() WHERE id = :pid");
+                $upd->execute([':dp' => $discountPercent, ':pid' => $productId]);
+                setFlash('success', $discountPercent > 0 ? 'Discount updated.' : 'Discount removed.');
+            }
+        }
+    }
+    redirect(BASE_URL . 'pages/profile.php?id=' . $viewId . '#listings');
+}
 
 // Fetch listings count for the stat pill
 $listingCountStmt = $pdo->prepare("SELECT COUNT(*) FROM products WHERE user_id = :uid AND status = 'active'");
@@ -226,7 +254,7 @@ include '../includes/header.php';
 
 .profile-stat-row {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 0;
     border: 1px solid var(--border-light);
     border-radius: var(--radius-lg);
@@ -385,6 +413,19 @@ include '../includes/header.php';
     padding: 0.15rem 0.6rem;
     align-self: flex-start;
 }
+.listing-card-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+.discount-form {
+    margin-top: 0.35rem;
+}
+.discount-form select {
+    width: 100%;
+    margin-bottom: 0.35rem;
+}
 
 /* Empty state */
 .empty-state {
@@ -502,6 +543,12 @@ body.dark-mode .btn-white-solid:hover {
                         <span>No reviews yet</span>
                     <?php endif; ?>
                 </div>
+                <div style="margin-top: 0.45rem; display: inline-flex; align-items: center; gap: 0.45rem;">
+                    <span class="badge" style="background: rgba(255,255,255,0.22); color: #fff; font-size: 0.72rem; padding: 0.18rem 0.55rem; border: 1px solid rgba(255,255,255,0.35);">
+                        <?php echo sanitize($trust['tier']); ?>
+                    </span>
+                    <span style="font-size: 0.82rem; color: rgba(255,255,255,0.88);">Trust Score: <?php echo (int)$trust['score']; ?>/100</span>
+                </div>
             </div>
 
             <!-- Action buttons -->
@@ -546,6 +593,10 @@ body.dark-mode .btn-white-solid:hover {
             <div class="profile-stat">
                 <div class="profile-stat-num"><?php echo $rating['count'] > 0 ? $rating['avg'] : '—'; ?></div>
                 <div class="profile-stat-label">Rating</div>
+            </div>
+            <div class="profile-stat">
+                <div class="profile-stat-num"><?php echo (int)$trust['score']; ?></div>
+                <div class="profile-stat-label">Trust</div>
             </div>
         </div>
 
@@ -630,19 +681,39 @@ body.dark-mode .btn-white-solid:hover {
         <?php else: ?>
             <div class="listing-grid">
                 <?php foreach ($userProducts as $prod): ?>
-                    <a href="product.php?id=<?php echo $prod['id']; ?>" class="listing-card">
-                        <img
-                            class="listing-card-img"
-                            src="<?php echo $prod['image_path'] ? BASE_URL . 'public/' . ltrim($prod['image_path'], '/') : BASE_URL . 'public/images/placeholder.png'; ?>"
-                            alt="<?php echo sanitize($prod['title']); ?>"
-                            loading="lazy"
-                        >
+                    <div class="listing-card">
+                        <a href="product.php?id=<?php echo $prod['id']; ?>" style="text-decoration:none; color:inherit;">
+                            <img
+                                class="listing-card-img"
+                                src="<?php echo $prod['image_path'] ? BASE_URL . 'public/' . ltrim($prod['image_path'], '/') : BASE_URL . 'public/images/placeholder.png'; ?>"
+                                alt="<?php echo sanitize($prod['title']); ?>"
+                                loading="lazy"
+                            >
+                        </a>
                         <div class="listing-card-body">
-                            <p class="listing-card-title"><?php echo sanitize($prod['title']); ?></p>
-                            <p class="listing-card-price"><?php echo formatPrice($prod['price']); ?></p>
-                            <span class="listing-card-cat"><?php echo sanitize($prod['category_name']); ?></span>
+                            <a href="product.php?id=<?php echo $prod['id']; ?>" style="text-decoration:none; color:inherit;">
+                                <p class="listing-card-title"><?php echo sanitize($prod['title']); ?></p>
+                                <p class="listing-card-price"><?php echo renderProductPrice($prod); ?></p>
+                            </a>
+                            <div class="listing-card-meta">
+                                <span class="listing-card-cat"><?php echo sanitize($prod['category_name']); ?></span>
+                            </div>
+                            <?php if ($isSelf && isDiscountEligible($prod)): ?>
+                                <form method="post" class="discount-form">
+                                    <input type="hidden" name="action" value="set_discount">
+                                    <input type="hidden" name="product_id" value="<?php echo (int)$prod['id']; ?>">
+                                    <select name="discount_percent" class="premium-input" style="padding: 0.35rem 0.45rem; font-size: 0.82rem;">
+                                        <?php foreach ([0, 5, 10, 15, 20, 25, 30, 40, 50] as $d): ?>
+                                            <option value="<?php echo $d; ?>" <?php echo ((int)($prod['discount_percent'] ?? 0) === $d) ? 'selected' : ''; ?>>
+                                                <?php echo $d === 0 ? 'No discount' : ('-' . $d . '%'); ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                    <button type="submit" class="btn btn-secondary btn-sm" style="width: 100%; font-size: 0.78rem;">Save Discount</button>
+                                </form>
+                            <?php endif; ?>
                         </div>
-                    </a>
+                    </div>
                 <?php endforeach; ?>
             </div>
         <?php endif; ?>

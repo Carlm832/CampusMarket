@@ -107,6 +107,46 @@ function formatPrice($amount): string {
 }
 
 /**
+ * Calculate discounted listing price.
+ */
+function getDiscountedPrice(array $product): float {
+    $base = (float)($product['price'] ?? 0);
+    $discountPercent = (int)($product['discount_percent'] ?? 0);
+    if ($discountPercent <= 0) {
+        return $base;
+    }
+    $discountPercent = max(0, min(90, $discountPercent));
+    return round($base * (1 - ($discountPercent / 100)), 2);
+}
+
+/**
+ * Check if a listing is old enough for seller discounting.
+ */
+function isDiscountEligible(array $product, int $minimumDays = LISTING_DISCOUNT_MIN_DAYS): bool {
+    if (($product['status'] ?? 'active') !== 'active') return false;
+    if (!isset($product['created_at'])) return false;
+    $created = strtotime((string)$product['created_at']);
+    if (!$created) return false;
+    return ((time() - $created) >= ($minimumDays * 86400));
+}
+
+/**
+ * Render product price with discount visual when applicable.
+ */
+function renderProductPrice(array $product): string {
+    $discountPercent = (int)($product['discount_percent'] ?? 0);
+    $base = (float)($product['price'] ?? 0);
+    $final = getDiscountedPrice($product);
+    if ($discountPercent <= 0 || $final >= $base) {
+        return '<span>' . formatPrice($base) . '</span>';
+    }
+    return
+        '<span style="font-weight:800;color:var(--primary);">' . formatPrice($final) . '</span> ' .
+        '<span style="text-decoration:line-through;opacity:.65;font-weight:600;font-size:.9em;">' . formatPrice($base) . '</span> ' .
+        '<span class="badge badge-new" style="font-size:.68rem;padding:.15rem .45rem;">-' . $discountPercent . '%</span>';
+}
+
+/**
  * Human-readable time ago (e.g., "3 hours ago")
  */
 function timeAgo(string $datetime): string {
@@ -293,6 +333,66 @@ function getSellerRating(PDO $pdo, int $sellerId): array {
     return [
         'avg'   => $result['avg_rating'] ?? 0,
         'count' => $result['review_count']
+    ];
+}
+
+/**
+ * Compute seller trust score (0-100) based on reviews, completion reliability, and sell speed.
+ */
+function getSellerTrustScore(PDO $pdo, int $sellerId): array {
+    $rating = getSellerRating($pdo, $sellerId);
+    $avgRating = (float)($rating['avg'] ?? 0);
+    $reviewCount = (int)($rating['count'] ?? 0);
+
+    $orderStmt = $pdo->prepare("
+        SELECT
+            COUNT(*) AS total_orders,
+            SUM(CASE WHEN o.status = 'completed' THEN 1 ELSE 0 END) AS completed_orders,
+            SUM(CASE WHEN o.status = 'cancelled' THEN 1 ELSE 0 END) AS cancelled_orders,
+            AVG(CASE WHEN o.status = 'completed' THEN TIMESTAMPDIFF(HOUR, p.created_at, o.updated_at) END) AS avg_hours_to_sell
+        FROM orders o
+        JOIN products p ON p.id = o.product_id
+        WHERE p.user_id = :sid
+    ");
+    $orderStmt->execute([':sid' => $sellerId]);
+    $orderMetrics = $orderStmt->fetch() ?: [];
+
+    $totalOrders = (int)($orderMetrics['total_orders'] ?? 0);
+    $completedOrders = (int)($orderMetrics['completed_orders'] ?? 0);
+    $avgHoursToSell = isset($orderMetrics['avg_hours_to_sell']) ? (float)$orderMetrics['avg_hours_to_sell'] : null;
+
+    $ratingQuality = max(0.0, min(1.0, $avgRating / 5.0));
+    $reviewConfidence = min(1.0, $reviewCount / 10.0);
+    $ratingScore = 50.0 * ((0.7 * $ratingQuality) + (0.3 * $reviewConfidence));
+
+    $completionRate = $totalOrders > 0 ? ($completedOrders / $totalOrders) : 0.0;
+    $reliabilityScore = 20.0 * $completionRate;
+
+    // 30 points if sold in <=24h, 0 points if >=14 days. Linear in-between.
+    $speedScore = 0.0;
+    if ($avgHoursToSell !== null) {
+        $speedNorm = 1.0 - (($avgHoursToSell - 24.0) / (336.0 - 24.0));
+        $speedNorm = max(0.0, min(1.0, $speedNorm));
+        $speedScore = 30.0 * $speedNorm;
+    }
+
+    $score = (int)round($ratingScore + $reliabilityScore + $speedScore);
+    $score = max(0, min(100, $score));
+
+    $tier = 'New Seller';
+    if ($completedOrders >= 3 || $reviewCount >= 3) {
+        if ($score >= 88) $tier = 'Highly Trusted';
+        elseif ($score >= 75) $tier = 'Trusted';
+        else $tier = 'Growing Reputation';
+    }
+
+    return [
+        'score' => $score,
+        'tier' => $tier,
+        'review_count' => $reviewCount,
+        'avg_rating' => $avgRating,
+        'total_orders' => $totalOrders,
+        'completed_orders' => $completedOrders,
     ];
 }
 

@@ -34,7 +34,7 @@ global $pdo; // Ensure PDO is available if included inside a function scope
             <h4 class="mb-3 text-main" style="font-size: 1.15rem; font-weight: 700; line-height: 1.3; margin-bottom: 1rem; flex-grow: 1;"><?php echo sanitize($prod['title']); ?></h4>
             
             <div class="mt-auto flex items-center gap-4">
-                <span style="font-weight: 800; color: var(--text-main); font-size: 1.4rem; white-space: nowrap;"><?php echo formatPrice($prod['price']); ?></span>
+                <span style="font-weight: 800; color: var(--text-main); font-size: 1.15rem; white-space: nowrap;"><?php echo renderProductPrice($prod); ?></span>
                 <div style="height: 4px; width: 32px; background: var(--primary); border-radius: 3px;"></div>
             </div>
         </div>

@@ -156,6 +156,10 @@ INSERT INTO products (id, user_id, category_id, title, description, price, `cond
 (99, 4, 10, 'Heavy Duty Black Scooter', 'Durable pro', 2500.0, 'new', 'active'),
 (100, 5, 10, '21-Speed Mountain Bike', 'All terrain', 5500.0, 'like_new', 'active');
 
+-- Ensure admin has no listings; distribute all seeded products across member users (2-5)
+UPDATE products
+SET user_id = 2 + ((id - 1) % 4);
+
 -- ─── Product Images (Corrected Paths with Fixed Spelling) ─────────────────────
 INSERT INTO product_images (product_id, image_path, is_primary) VALUES
 (1, 'images/air pods pro.jpeg', 1), (2, 'images/iphone 17 pro max.jpeg', 1), (3, 'images/macbook pro.jpeg', 1), (4, 'images/bluetooth speaker.jpeg', 1), (5, 'images/gaming mouse.jpeg', 1), (6, 'images/headphones.jpeg', 1), (7, 'images/hp laptop.jpeg', 1), (8, 'images/huawei.jpeg', 1), (9, 'images/i pad .jpeg', 1), (10, 'images/i pad white.jpeg', 1), (69, 'images/buy one get one free.jpeg', 1),
