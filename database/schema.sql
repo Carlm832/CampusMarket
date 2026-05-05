@@ -48,6 +48,8 @@ CREATE TABLE products (
     title       VARCHAR(200)   NOT NULL,
     description TEXT,
     price       DECIMAL(10,2)  NOT NULL,
+    discount_percent TINYINT   NOT NULL DEFAULT 0,
+    discount_set_at DATETIME   NULL,
     `condition`   ENUM('new', 'like_new', 'used', 'poor') NOT NULL DEFAULT 'used',
     status      ENUM('active', 'sold', 'flagged')       NOT NULL DEFAULT 'active',
     is_featured TINYINT(1)     NOT NULL DEFAULT 0,

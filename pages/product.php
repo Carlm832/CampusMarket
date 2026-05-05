@@ -27,8 +27,9 @@ $stmt = $pdo->prepare("SELECT * FROM product_images WHERE product_id = :id ORDER
 $stmt->execute([':id' => $productId]);
 $images = $stmt->fetchAll();
 
-// Seller Rating
+// Seller Rating + Trust
 $rating = getSellerRating($pdo, $product['seller_id']);
+$trust = getSellerTrustScore($pdo, (int)$product['seller_id']);
 ?>
 
 <div class="container mt-8 mb-20 relative">
@@ -84,7 +85,7 @@ $rating = getSellerRating($pdo, $product['seller_id']);
                 <p class="text-primary font-bold tracking-widest uppercase small mb-2" style="font-size: 0.8rem;"><?php echo sanitize($product['category_name']); ?></p>
                 <h1 class="mb-4 text-main font-bold" style="font-size: 2.75rem; line-height: 1.2; letter-spacing: -0.5px;"><?php echo sanitize($product['title']); ?></h1>
                 <div class="flex items-center gap-4">
-                    <span style="font-size: 2.5rem; font-weight: 800; color: var(--primary); font-family: 'Inter', sans-serif; letter-spacing: -1px;"><?php echo formatPrice($product['price']); ?></span>
+                    <span style="font-size: 2.1rem; font-weight: 800; color: var(--primary); font-family: 'Inter', sans-serif; letter-spacing: -1px;"><?php echo renderProductPrice($product); ?></span>
                     <span class="text-muted small px-3 py-1 rounded-full font-medium" style="background: var(--bg-main); border: 1px solid var(--border-light);">Listed <?php echo timeAgo($product['created_at']); ?></span>
                 </div>
             </div>
@@ -101,6 +102,12 @@ $rating = getSellerRating($pdo, $product['seller_id']);
                         <div class="flex items-center gap-2 text-sm mt-1">
                             <span style="color: #f59e0b; font-weight: bold;">★ <?php echo $rating['avg']; ?></span>
                             <span class="text-muted">(<?php echo $rating['count']; ?> reviews)</span>
+                        </div>
+                        <div class="flex items-center gap-2 text-xs mt-1">
+                            <span class="badge" style="background: rgba(16,185,129,0.14); color: #065f46; font-weight: 700; font-size: 0.68rem; padding: 0.15rem 0.5rem;">
+                                <?php echo sanitize($trust['tier']); ?>
+                            </span>
+                            <span class="text-muted">Trust Score: <?php echo (int)$trust['score']; ?>/100</span>
                         </div>
                     </div>
                 </div>

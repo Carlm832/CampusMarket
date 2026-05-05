@@ -23,6 +23,8 @@ define('ITEMS_PER_PAGE',   12);
 define('APP_NAME',         'CampusMarket');
 define('APP_TAGLINE',      'Buy & Sell Within Your Campus');
 define('APP_CURRENCY',     '₺');
+define('LISTING_DISCOUNT_MIN_DAYS', 14);
+define('LISTING_DISCOUNT_MAX_PERCENT', 50);
 
 // Session name
 define('SESSION_NAME',     'campusmarket_session');

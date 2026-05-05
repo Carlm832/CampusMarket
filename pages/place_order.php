@@ -39,6 +39,8 @@ if ($product['user_id'] == $currentUserId) {
     redirect(BASE_URL . '/pages/product.php?id=' . $productId);
 }
 
+$effectivePrice = getDiscountedPrice($product);
+
 $error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $meetingPoint = sanitize($_POST['meeting_point'] ?? '');
@@ -50,7 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             $pdo->beginTransaction();
             $stmt = $pdo->prepare("INSERT INTO orders (buyer_id, product_id, amount, status, meeting_point, notes) VALUES (:buyer_id, :product_id, :amount, 'pending', :meeting_point, :notes)");
-            $stmt->execute([':buyer_id' => $currentUserId, ':product_id' => $productId, ':amount' => $product['price'], ':meeting_point' => $meetingPoint, ':notes' => $notes]);
+            $stmt->execute([':buyer_id' => $currentUserId, ':product_id' => $productId, ':amount' => $effectivePrice, ':meeting_point' => $meetingPoint, ':notes' => $notes]);
             $orderId = $pdo->lastInsertId();
             createNotification($pdo, $product['user_id'], 'order', "New Order Placed!", "Someone wants to buy '{$product['title']}'. Check your sales!", $orderId);
             $pdo->commit();
@@ -89,7 +91,7 @@ require_once __DIR__ . '/../includes/header.php';
                         <svg class="w-4 h-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
                         Sold by <span class="text-main font-bold">@<?php echo sanitize($product['seller_name']); ?></span>
                     </p>
-                    <div class="text-3xl font-bold text-primary font-inter tracking-tight"><?php echo formatPrice($product['price']); ?></div>
+                    <div class="text-3xl font-bold text-primary font-inter tracking-tight"><?php echo renderProductPrice($product); ?></div>
                 </div>
             </div>
             

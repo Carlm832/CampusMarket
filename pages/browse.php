@@ -10,7 +10,8 @@ $sort = $_GET['sort'] ?? 'newest';
 
 // Filters and sorting logic
 $params = [];
-$sql = "SELECT p.*, c.name as category_name, u.username as seller_name, i.image_path
+$sql = "SELECT p.*, c.name as category_name, u.username as seller_name, i.image_path,
+               (p.price * (100 - p.discount_percent) / 100) AS effective_price
         FROM products p 
         JOIN categories c ON p.category_id = c.id 
         JOIN users u ON p.user_id = u.id 
@@ -31,17 +32,17 @@ if ($condition) {
     $params[] = $condition;
 }
 if ($minPrice) {
-    $sql .= " AND p.price >= ?";
+    $sql .= " AND (p.price * (100 - p.discount_percent) / 100) >= ?";
     $params[] = $minPrice;
 }
 if ($maxPrice) {
-    $sql .= " AND p.price <= ?";
+    $sql .= " AND (p.price * (100 - p.discount_percent) / 100) <= ?";
     $params[] = $maxPrice;
 }
 
 switch ($sort) {
-    case 'price_asc': $sql .= " ORDER BY p.price ASC"; break;
-    case 'price_desc': $sql .= " ORDER BY p.price DESC"; break;
+    case 'price_asc': $sql .= " ORDER BY effective_price ASC"; break;
+    case 'price_desc': $sql .= " ORDER BY effective_price DESC"; break;
     case 'condition_best': 
         $sql .= " ORDER BY CASE p.condition 
                     WHEN 'new' THEN 1 
