@@ -38,7 +38,7 @@ INSERT INTO categories (id, name, slug) VALUES
 INSERT INTO products (id, user_id, category_id, title, description, price, `condition`, status) VALUES
 -- 1. Electronics
 (1, 1, 1, 'AirPods Pro (2nd Gen)', 'Active noise cancellation, like new', 8100.0, 'like_new', 'active'),
-(2, 2, 1, 'iPhone 17 Pro Max', '256GB, Titanium, barely used', 135000.0, 'like_new', 'active'),
+(2, 2, 1, 'iPhone 17 Pro Max', '256GB, Titanium, barely used', 105000.0, 'like_new', 'active'),
 (3, 3, 1, 'MacBook Pro 14"', 'M3 Chip, 16GB RAM, Space Gray', 115000.0, 'new', 'active'),
 (4, 4, 1, 'Bluetooth Speaker', 'Waterproof, deep bass', 1530.0, 'new', 'active'),
 (5, 5, 1, 'Gaming Mouse', 'RGB, 12000 DPI', 810.0, 'new', 'active'),
@@ -66,7 +66,7 @@ INSERT INTO products (id, user_id, category_id, title, description, price, `cond
 (22, 2, 3, 'Compact Study Desk', 'Perfect for dorms', 2025.0, 'used', 'active'),
 (23, 3, 3, 'Modern Nightstand', 'Sleek design', 810.0, 'new', 'active'),
 (24, 4, 3, 'Comfortable Study Sofa', 'Soft seating', 3825.0, 'used', 'active'),
-(25, 5, 3, '55-inch Smart TV', 'Ultra HD', 5400.0, 'like_new', 'active'),
+(25, 5, 3, '55-inch Smart TV', 'Ultra HD', 19500.0, 'like_new', 'active'),
 (26, 1, 3, 'Floor Lamp', 'Adjustable height', 675.0, 'new', 'active'),
 (27, 2, 3, 'Ergonomic Desk Chair', 'Comfy seating', 2475.0, 'like_new', 'active'),
 (28, 3, 3, 'Rolling Storage Cart', 'Mobile organizer', 810.0, 'new', 'active'),
@@ -75,8 +75,8 @@ INSERT INTO products (id, user_id, category_id, title, description, price, `cond
 
 -- 4. Clothing
 (31, 1, 4, 'Women Summer Dress', 'Elegant blue casual dress', 540.0, 'new', 'active'),
-(32, 2, 4, 'Slim Fit Jeans', 'Durable denim', 450.0, 'like_new', 'active'),
-(33, 3, 4, 'Leather Jacket', 'Black premium leather', 1950.0, 'new', 'active'),
+(32, 2, 4, 'Slim Fit Jeans', 'Durable denim', 950.0, 'like_new', 'active'),
+(33, 3, 4, 'Leather Jacket', 'Black premium leather', 4800.0, 'new', 'active'),
 (34, 4, 4, 'Office Wear Suit', 'Professional business attire', 1350.0, 'used', 'active'),
 (35, 5, 4, 'Oversized Sweatshirt', 'Warm campus gear', 540.0, 'new', 'active'),
 (36, 1, 4, 'Basic T-Shirt', 'Essential cotton tee', 135.0, 'new', 'active'),
@@ -96,8 +96,8 @@ INSERT INTO products (id, user_id, category_id, title, description, price, `cond
 (48, 3, 5, 'Stainless Spoon Set', '12 pieces', 225.0, 'new', 'active'),
 (49, 4, 5, 'Wooden Cutting Board', 'Heavy duty', 425.0, 'new', 'active'),
 (50, 5, 5, 'Microwave Oven', 'Student essential', 3750.0, 'used', 'active'),
-(74, 4, 5, 'Professional Dough Cutter', 'Heavy duty kitchen tool', 600.0, 'new', 'active'),
-(55, 5, 5, 'Granite Mortar & Pestle', 'Traditional kitchen tool', 750.0, 'new', 'active'),
+(74, 4, 5, 'Professional Dough Cutter', 'Heavy duty kitchen tool', 250.0, 'new', 'active'),
+(55, 5, 5, 'Granite Mortar & Pestle', 'Traditional kitchen tool', 450.0, 'new', 'active'),
 
 -- 6. Health
 (51, 1, 6, 'Refreshing Body Wash', 'Citrus scent', 180.0, 'new', 'active'),
@@ -122,7 +122,7 @@ INSERT INTO products (id, user_id, category_id, title, description, price, `cond
 (70, 5, 7, 'Skor Chocolate Bar', 'Crisp butter toffee chocolate', 65.0, 'new', 'active'),
 
 -- 8. Stationery
-(71, 1, 8, 'A4 Printing Paper', 'High quality', 300.0, 'new', 'active'),
+(71, 1, 8, 'A4 Printing Paper', 'High quality', 180.0, 'new', 'active'),
 (72, 2, 8, 'Scientific Calculator', 'Math essential', 1225.0, 'used', 'active'),
 (73, 3, 8, 'Color Pencils Pack', '24 colors', 300.0, 'new', 'active'),
 (75, 5, 8, 'Hardbound Notebook', 'Sturdy paper', 160.0, 'new', 'active'),
@@ -137,12 +137,12 @@ INSERT INTO products (id, user_id, category_id, title, description, price, `cond
 (82, 2, 9, 'Modern Floor Lamp', 'Warm lighting', 1800.0, 'like_new', 'active'),
 (83, 3, 9, 'Laundry Detergent', 'Fresh scent', 260.0, 'new', 'active'),
 (84, 4, 9, 'Full Wall Mirror', 'Tall mirror', 4800.0, 'new', 'active'),
-(85, 5, 9, 'Premium Toilet Paper', '4-roll pack', 100.0, 'new', 'active'),
+(85, 5, 9, 'Premium Toilet Paper', '4-roll pack', 65.0, 'new', 'active'),
 (86, 1, 9, 'HD Pro Webcam', '1080p for online classes', 3400.0, 'new', 'active'),
-(87, 2, 9, '24-inch IPS Monitor', 'Slim bezel display', 14000.0, 'like_new', 'active'),
+(87, 2, 9, '24-inch IPS Monitor', 'Slim bezel display', 5500.0, 'like_new', 'active'),
 (88, 3, 9, 'Laptop Charger', 'Universal fit', 1800.0, 'new', 'active'),
 (89, 4, 9, 'Laptop Stand', 'Ergonomic', 1000.0, 'new', 'active'),
-(90, 5, 9, 'Mechanical Keyboard', 'Dorm setup', 6000.0, 'new', 'active'),
+(90, 5, 9, 'Mechanical Keyboard', 'Dorm setup', 2450.0, 'new', 'active'),
 
 -- 10. Transportation
 (91, 1, 10, '2-in-1 Scooter', 'Versatile kick scooter', 2640.0, 'new', 'active'),
@@ -151,8 +151,8 @@ INSERT INTO products (id, user_id, category_id, title, description, price, `cond
 (94, 4, 10, 'Blue Electric Scooter', 'Long battery life', 40700.0, 'new', 'active'),
 (95, 5, 10, 'Lightweight Road Bike', 'Carbon frame', 33000.0, 'like_new', 'active'),
 (96, 1, 10, 'LED Light Scooter', 'Fun for campus', 3300.0, 'new', 'active'),
-(97, 2, 10, 'Mini Travel Scooter', 'Compact fold', 2090.0, 'new', 'active'),
-(98, 3, 10, 'Standard Kick Scooter', 'Basic reliable', 1870.0, 'used', 'active'),
+(97, 2, 10, 'Mini Travel Scooter', 'Compact fold', 4500.0, 'new', 'active'),
+(98, 3, 10, 'Standard Kick Scooter', 'Basic reliable', 1200.0, 'used', 'active'),
 (99, 4, 10, 'Heavy Duty Black Scooter', 'Durable pro', 5500.0, 'new', 'active'),
 (100, 5, 10, '21-Speed Mountain Bike', 'All terrain', 12100.0, 'like_new', 'active');
 
