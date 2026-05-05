@@ -37,17 +37,17 @@ INSERT INTO categories (id, name, slug) VALUES
 -- ─── Products (Exactly 10 per category = 100 products) ─────
 INSERT INTO products (id, user_id, category_id, title, description, price, `condition`, status) VALUES
 -- 1. Electronics
-(1, 1, 1, 'AirPods Pro (2nd Gen)', 'Active noise cancellation, like new', 8100.0, 'like_new', 'active'),
-(2, 2, 1, 'iPhone 17 Pro Max', '256GB, Titanium, barely used', 105000.0, 'like_new', 'active'),
-(3, 3, 1, 'MacBook Pro 14"', 'M3 Chip, 16GB RAM, Space Gray', 115000.0, 'new', 'active'),
-(4, 4, 1, 'Bluetooth Speaker', 'Waterproof, deep bass', 1530.0, 'new', 'active'),
-(5, 5, 1, 'Gaming Mouse', 'RGB, 12000 DPI', 810.0, 'new', 'active'),
-(6, 1, 1, 'High Fidelity Headphones', 'Studio quality', 3240.0, 'new', 'active'),
-(7, 2, 1, 'HP Student Laptop', 'Reliable study tool', 22500.0, 'used', 'active'),
-(8, 3, 1, 'Huawei Smartphone', 'Premium display', 17100.0, 'new', 'active'),
-(9, 4, 1, 'iPad Air (Space Gray)', 'Light and powerful', 33300.0, 'like_new', 'active'),
-(10, 5, 1, 'iPad Pro (White)', '12.9-inch screen', 57600.0, 'like_new', 'active'),
-(69, 4, 1, 'BOGO Tablet (Student Edition)', 'Portable tablet for notes', 9900.0, 'new', 'active'),
+(1, 1, 1, 'AirPods Pro (2nd Gen)', 'Active noise cancellation, like new', 5800.0, 'like_new', 'active'),
+(2, 2, 1, 'iPhone 17 Pro Max', '256GB, Titanium, barely used', 85000.0, 'like_new', 'active'),
+(3, 3, 1, 'MacBook Pro 14"', 'M3 Chip, 16GB RAM, Space Gray', 88000.0, 'new', 'active'),
+(4, 4, 1, 'Bluetooth Speaker', 'Waterproof, deep bass', 950.0, 'new', 'active'),
+(5, 5, 1, 'Gaming Mouse', 'RGB, 12000 DPI', 550.0, 'new', 'active'),
+(6, 1, 1, 'High Fidelity Headphones', 'Studio quality', 2100.0, 'new', 'active'),
+(7, 2, 1, 'HP Student Laptop', 'Reliable study tool', 16500.0, 'used', 'active'),
+(8, 3, 1, 'Huawei Smartphone', 'Premium display', 12500.0, 'new', 'active'),
+(9, 4, 1, 'iPad Air (Space Gray)', 'Light and powerful', 24000.0, 'like_new', 'active'),
+(10, 5, 1, 'iPad Pro (White)', '12.9-inch screen', 42000.0, 'like_new', 'active'),
+(69, 4, 1, 'BOGO Tablet (Student Edition)', 'Portable tablet for notes', 7200.0, 'new', 'active'),
 
 -- 2. Books
 (11, 1, 2, 'General Biology', 'Science textbook', 625.0, 'used', 'active'),
