@@ -45,6 +45,20 @@ if ($action === 'fetch') {
         ':other' => $otherUserId,
         ':pid' => $productId
     ]);
+
+    // Keep notification badge in sync with read state in chat.
+    $stmtNotifRead = $pdo->prepare("
+        UPDATE notifications
+        SET is_read = 1
+        WHERE user_id = :uid
+          AND type = 'message'
+          AND reference_id = :pid
+          AND is_read = 0
+    ");
+    $stmtNotifRead->execute([
+        ':uid' => $currentUserId,
+        ':pid' => $productId
+    ]);
     
     // Fetch messages
     $stmt = $pdo->prepare("

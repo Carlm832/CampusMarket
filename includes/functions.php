@@ -285,6 +285,15 @@ function countUnreadNotifications(PDO $pdo, int $userId): int {
     return (int) $stmt->fetchColumn();
 }
 
+/**
+ * Count unread chat messages for a user.
+ */
+function countUnreadMessages(PDO $pdo, int $userId): int {
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM messages WHERE receiver_id = :uid AND is_read = 0");
+    $stmt->execute([':uid' => $userId]);
+    return (int) $stmt->fetchColumn();
+}
+
 // ─── Marketplace Data Helpers ────────────────────────────
 
 /**

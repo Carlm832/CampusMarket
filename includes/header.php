@@ -11,6 +11,14 @@ $navCategories = $pdo->query("SELECT id, name FROM categories ORDER BY name ASC"
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo isset($pageTitle) ? htmlspecialchars($pageTitle) . ' - CampusMarket' : 'CampusMarket'; ?></title>
+    <meta name="theme-color" content="#4f46e5">
+    <meta name="application-name" content="CampusMarket">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="CampusMarket">
+    <link rel="manifest" href="<?php echo BASE_URL; ?>manifest.webmanifest">
+    <link rel="icon" type="image/png" href="<?php echo BASE_URL; ?>public/images/logo.png">
+    <link rel="apple-touch-icon" href="<?php echo BASE_URL; ?>public/images/logo.png">
     
     <!-- Member 5: Design System -->
     <link rel="stylesheet" href="<?php echo BASE_URL; ?>public/css/style.css">
@@ -68,11 +76,11 @@ $navCategories = $pdo->query("SELECT id, name FROM categories ORDER BY name ASC"
                     <a href="<?php echo BASE_URL; ?>pages/logout.php" class="btn btn-danger btn-sm" style="border-radius: var(--radius-full); padding: 0.45rem 1.2rem; font-weight: 600;">Logout</a>
                 </div>
             <?php elseif (isLoggedIn()): ?>
-                <?php $unreadNotifications = countUnreadNotifications($pdo, currentUserId()); ?>
+                <?php $unreadMessages = countUnreadMessages($pdo, currentUserId()); ?>
                 <a href="<?php echo BASE_URL; ?>/pages/inbox.php" class="flex items-center gap-1">
                     Inbox
-                    <?php if ($unreadNotifications > 0): ?>
-                        <span class="badge" style="background: var(--accent); color: white; padding: 0.1rem 0.4rem; font-size: 0.7rem;"><?php echo $unreadNotifications; ?></span>
+                    <?php if ($unreadMessages > 0): ?>
+                        <span class="badge" style="background: var(--accent); color: white; padding: 0.1rem 0.4rem; font-size: 0.7rem;"><?php echo $unreadMessages; ?></span>
                     <?php endif; ?>
                 </a>
                 <a href="<?php echo BASE_URL; ?>pages/create_listing.php" style="font-weight: 600; color: var(--primary);">Sell Item</a>
