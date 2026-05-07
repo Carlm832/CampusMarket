@@ -1,0 +1,24 @@
+{
+  "name": "CampusMarket",
+  "short_name": "CampusMarket",
+  "description": "Buy and sell safely within your university community.",
+  "start_url": "/campusmarket/index.php",
+  "scope": "/campusmarket/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#4f46e5",
+  "icons": [
+    {
+      "src": "/campusmarket/public/images/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/campusmarket/public/images/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
