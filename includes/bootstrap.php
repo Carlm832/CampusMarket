@@ -8,6 +8,10 @@ require_once __DIR__ . '/../config/constants.php';
 session_name(SESSION_NAME);
 session_start();
 
+if (file_exists(ROOT_PATH . 'config/secrets.php')) {
+    require_once ROOT_PATH . 'config/secrets.php';
+}
+require_once ROOT_PATH . 'config/supabase.php';
 require_once ROOT_PATH . 'config/db.php';
 require_once ROOT_PATH . 'includes/functions.php';
 
