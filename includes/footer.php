@@ -44,5 +44,7 @@
     </div>
 </footer>
 
+<script src="<?php echo BASE_URL; ?>public/js/pwa.js"></script>
+
 </body>
 </html>
