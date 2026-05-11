@@ -559,11 +559,9 @@ input:-webkit-autofill:active {
   fill: currentColor;
 }
 
-.sun-icon { display: none; }
-.moon-icon { display: block; }
+.toggle-icon { display: block; }
 
-body.dark-mode .sun-icon { display: block; }
-body.dark-mode .moon-icon { display: none; }
+body.dark-mode .toggle-icon { display: block; }
 
 /* Forms & Inputs */
 .form-group {
