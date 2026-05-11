@@ -14,6 +14,7 @@
                 <h4>Quick Links</h4>
                 <ul>
                     <li><a href="<?php echo BASE_URL; ?>/pages/browse.php">Browse All</a></li>
+                    <li><a href="<?php echo BASE_URL; ?>/pages/categories.php">Categories</a></li>
                     <li><a href="<?php echo BASE_URL; ?>/pages/create_listing.php">Post an Item</a></li>
                     <li><a href="<?php echo BASE_URL; ?>/pages/register.php">Create Account</a></li>
                 </ul>
@@ -22,6 +23,7 @@
             <div class="footer-col">
                 <h4>Support</h4>
                 <ul>
+                    <li><a href="<?php echo BASE_URL; ?>/pages/donate.php" style="color: var(--primary); font-weight: 700;">❤️ Donate</a></li>
                     <li><a href="<?php echo BASE_URL; ?>/pages/safety.php">Safety Guidelines</a></li>
                     <li><a href="<?php echo BASE_URL; ?>/pages/safety.php#meeting-points">Meeting Points</a></li>
                     <li><a href="<?php echo BASE_URL; ?>/pages/report.php">Report an Issue</a></li>
@@ -34,6 +36,7 @@
                     <li><a href="<?php echo BASE_URL; ?>/pages/terms.php">Terms of Service</a></li>
                     <li><a href="<?php echo BASE_URL; ?>/pages/privacy.php">Privacy Policy</a></li>
                     <li><a href="<?php echo BASE_URL; ?>/pages/rules.php">Community Rules</a></li>
+                    <li><a href="<?php echo BASE_URL; ?>/pages/safety.php">Cookie Policy</a></li>
                 </ul>
             </div>
         </div>

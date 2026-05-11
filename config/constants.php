@@ -28,3 +28,8 @@ define('LISTING_DISCOUNT_MAX_PERCENT', 50);
 
 // Session name
 define('SESSION_NAME',     'campusmarket_session');
+
+// Stripe Settings (Sandbox/Test Mode)
+// Replace with your actual keys from https://dashboard.stripe.com/test/apikeys
+define('STRIPE_PUBLISHABLE_KEY', 'pk_test_YOUR_PUBLISHABLE_KEY');
+define('STRIPE_SECRET_KEY',      'sk_test_YOUR_SECRET_KEY');

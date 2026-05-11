@@ -40,18 +40,19 @@ if ($maxPrice) {
     $params[] = $maxPrice;
 }
 
+$sql .= " ORDER BY p.is_featured DESC, ";
 switch ($sort) {
-    case 'price_asc': $sql .= " ORDER BY effective_price ASC"; break;
-    case 'price_desc': $sql .= " ORDER BY effective_price DESC"; break;
+    case 'price_asc': $sql .= "effective_price ASC"; break;
+    case 'price_desc': $sql .= "effective_price DESC"; break;
     case 'condition_best': 
-        $sql .= " ORDER BY CASE p.condition 
+        $sql .= "CASE p.condition 
                     WHEN 'new' THEN 1 
                     WHEN 'like_new' THEN 2 
                     WHEN 'used' THEN 3 
                     WHEN 'poor' THEN 4 
                     ELSE 5 END ASC"; 
         break;
-    default: $sql .= " ORDER BY p.created_at DESC"; break;
+    default: $sql .= "p.created_at DESC"; break;
 }
 
 $stmt = $pdo->prepare($sql);
