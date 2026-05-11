@@ -101,8 +101,8 @@ $navCategories = $pdo->query("SELECT id, name FROM categories ORDER BY name ASC"
                     <div class="user-dropdown-content">
                         <a href="<?php echo BASE_URL; ?>pages/my_orders.php">My Orders</a>
                         <a href="<?php echo BASE_URL; ?>pages/wishlist.php">Wishlist</a>
-                        <a href="<?php echo BASE_URL; ?>pages/promotions.php">Promotions & Donate</a>
-                        <a href="<?php echo BASE_URL; ?>pages/profile.php">Profile Settings</a>
+                        <a href="<?php echo BASE_URL; ?>pages/promotions.php">Promotions</a>
+                        <a href="<?php echo BASE_URL; ?>pages/profile.php">My Profile</a>
                         <div style="border-top: 1px solid var(--border-light); margin: 0.5rem 0;"></div>
                         <a href="<?php echo BASE_URL; ?>pages/logout.php" style="color: var(--error);">Logout</a>
                     </div>

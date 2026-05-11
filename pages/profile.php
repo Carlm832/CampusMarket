@@ -848,6 +848,32 @@ body.dark-mode .btn-white-solid:hover {
             </div>
         </div>
 
+        <?php 
+        // Mini Analytics: Only show for self
+        if ($isSelf): 
+            $featuredOwn = array_filter($userProducts, function($p) { return (int)$p['is_featured'] === 1; });
+            if (!empty($featuredOwn)):
+        ?>
+            <div class="card mt-6" style="padding: 1.5rem; border-radius: var(--radius-xl); border: 1px solid rgba(99, 102, 241, 0.2); background: rgba(99, 102, 241, 0.02);">
+                <h3 style="font-size: 1rem; margin-bottom: 1rem; color: var(--primary); display: flex; align-items: center; gap: 0.5rem;">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                    Promotion Status
+                </h3>
+                <div class="info-row">
+                    <?php foreach ($featuredOwn as $fp): ?>
+                        <div class="info-item" style="padding-bottom: 0.75rem; border-bottom: 1px solid var(--border-light); margin-bottom: 0.75rem;">
+                            <span class="info-value" style="font-size: 0.85rem; font-weight: 700;"><?php echo sanitize($fp['title']); ?></span>
+                            <span class="info-label" style="text-transform: none; font-size: 0.75rem; color: var(--success); display: flex; align-items: center; gap: 0.3rem;">
+                                <span style="display:inline-block; width: 6px; height: 6px; background: currentColor; border-radius: 50%;"></span>
+                                Actively Promoted
+                            </span>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+                <p class="text-muted" style="font-size: 0.75rem; margin-top: 0.5rem;">These items are boosted to the top of search results and the homepage.</p>
+            </div>
+        <?php endif; endif; ?>
+
     </aside>
 
 </div>
