@@ -3,7 +3,11 @@
 require_once __DIR__ . '/../config/constants.php';
 require_once __DIR__ . '/../includes/header.php';
 
-$productId = $_GET['id'] ?? 0;
+$productId = (int)($_GET['id'] ?? 0);
+
+if ($productId <= 0) {
+    redirect(BASE_URL . 'pages/browse.php');
+}
 
 // Fetch Product Details
 $stmt = $pdo->prepare("
@@ -22,6 +26,39 @@ if (!$product) {
     exit;
 }
 
+$isOwner = isLoggedIn() && (int)currentUserId() === (int)$product['seller_id'];
+
+// Handle Price Update
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $isOwner && isset($_POST['action']) && $_POST['action'] === 'update_price') {
+    $newPrice = (float)($_POST['new_price'] ?? 0);
+    if ($newPrice > 0) {
+        $stmtUp = $pdo->prepare("UPDATE products SET price = :price, updated_at = NOW() WHERE id = :id");
+        $stmtUp->execute([':price' => $newPrice, ':id' => $productId]);
+        setFlash('success', 'Price updated successfully!');
+        redirect(BASE_URL . 'pages/product.php?id=' . $productId);
+    } else {
+        setFlash('error', 'Price must be greater than zero.');
+    }
+}
+
+// Handle Mark as Sold
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $isOwner && isset($_POST['action']) && $_POST['action'] === 'mark_sold') {
+    $stmt = $pdo->prepare("UPDATE products SET status = 'sold', updated_at = NOW() WHERE id = ?");
+    if ($stmt->execute([$productId])) {
+        setFlash('success', 'Product marked as sold!');
+        redirect(BASE_URL . 'pages/profile.php');
+    }
+}
+
+// Handle Delete Listing
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $isOwner && isset($_POST['action']) && $_POST['action'] === 'delete_listing') {
+    $stmt = $pdo->prepare("DELETE FROM products WHERE id = ?");
+    if ($stmt->execute([$productId])) {
+        setFlash('success', 'Listing deleted permanently.');
+        redirect(BASE_URL . 'pages/profile.php');
+    }
+}
+
 // Fetch Images
 $stmt = $pdo->prepare("SELECT * FROM product_images WHERE product_id = :id ORDER BY is_primary DESC");
 $stmt->execute([':id' => $productId]);
@@ -30,9 +67,76 @@ $images = $stmt->fetchAll();
 // Seller Rating + Trust
 $rating = getSellerRating($pdo, $product['seller_id']);
 $trust = getSellerTrustScore($pdo, (int)$product['seller_id']);
+
+// Increment views if not the owner
+if (!isLoggedIn() || (int)currentUserId() !== (int)$product['seller_id']) {
+    $pdo->prepare("UPDATE products SET views = views + 1 WHERE id = ?")->execute([$productId]);
+}
+
+// Fetch Wishlist count
+$stmtWish = $pdo->prepare("SELECT COUNT(*) FROM wishlists WHERE product_id = ?");
+$stmtWish->execute([$productId]);
+$wishlistCount = (int)$stmtWish->fetchColumn();
 ?>
 
+<style>
+@media (min-width: 1024px) {
+    .scc-wrapper {
+        width: min(1060px, 100%);
+        margin-left: auto;
+    }
+}
+
+@media (max-width: 1023.98px) {
+    .scc-wrapper {
+        width: 100%;
+        margin-left: 0;
+    }
+}
+
+.scc-seller-card {
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
+}
+
+.scc-main-card {
+    border-radius: 20px;
+    border: 1px solid #e9eef7;
+    background: #fff;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
+}
+
+.scc-colorful-shell {
+    background:
+        radial-gradient(circle at 10% 10%, rgba(59, 130, 246, 0.10), transparent 34%),
+        radial-gradient(circle at 90% 15%, rgba(99, 102, 241, 0.09), transparent 32%),
+        radial-gradient(circle at 50% 100%, rgba(16, 185, 129, 0.06), transparent 36%),
+        linear-gradient(180deg, #fbfdff 0%, #ffffff 56%, #f9fbff 100%);
+}
+
+.scc-metric-blue {
+    background: linear-gradient(145deg, #ffffff 0%, #f4f8ff 100%);
+    border-color: #e3ecff !important;
+}
+
+.scc-metric-violet {
+    background: linear-gradient(145deg, #ffffff 0%, #f7f3ff 100%);
+    border-color: #ece5ff !important;
+}
+</style>
+
 <div class="container mt-8 mb-20 relative">
+    <?php if ($isOwner): ?>
+        <div class="seller-management-banner" style="background: linear-gradient(90deg, var(--secondary), var(--secondary-hover)); color: white; padding: 0.75rem 1.5rem; border-radius: var(--radius-lg); margin-bottom: 2rem; display: flex; align-items: center; justify-content: space-between; box-shadow: var(--shadow-md);">
+            <div class="flex items-center gap-3">
+                <span style="font-size: 1.5rem;">⚙️</span>
+                <div>
+                    <h4 class="mb-0 font-bold" style="line-height: 1.2;">Management Mode</h4>
+                    <p class="mb-0 opacity-80 small">You are viewing your own listing. Only you can see these controls.</p>
+                </div>
+            </div>
+            <a href="profile.php" class="btn btn-sm" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3);">Go to Dashboard</a>
+        </div>
+    <?php endif; ?>
     
     <!-- Background Accents -->
 
@@ -89,46 +193,178 @@ $trust = getSellerTrustScore($pdo, (int)$product['seller_id']);
                 </div>
             </div>
 
-            <!-- Seller Card -->
-            <div class="glass-panel p-6 mb-8 flex items-center justify-between" style="border-radius: var(--radius-lg); border-left: 4px solid var(--primary); background: rgba(99,102,241,0.04);">
-                <div class="flex items-center gap-4">
-                    <div style="width: 60px; height: 60px; background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; border-radius: var(--radius-lg); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.5rem; box-shadow: var(--shadow-md);">
-                        <?php echo strtoupper(substr($product['seller_name'], 0, 1)); ?>
+            <!-- SELLER COMMAND CENTER -->
+            <?php if ($isOwner): ?>
+            <div class="scc-wrapper">
+                
+                <!-- TOP SELLER CARD -->
+                <div class="scc-seller-card" style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; border: 1px solid #dbe6f6; border-left: 4px solid #3b82f6; border-radius: 16px; padding: 1.2rem 1.4rem; background: #fff; margin-bottom: 1rem;">
+                    <div class="flex items-center" style="gap: 14px;">
+                        <div style="width: 74px; height: 74px; background: #3155f6; color: white; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 2rem; box-shadow: 0 8px 18px rgba(49, 85, 246, 0.25);">
+                            <?php echo strtoupper(substr($product['seller_name'], 0, 1)); ?>
+                        </div>
+                        <div style="margin-left: 4px;">
+                            <h4 class="m-0 font-bold text-slate-900" style="font-size: 2.25rem; line-height: 1.05; letter-spacing: -0.01em;">@<?php echo sanitize($product['seller_name']); ?></h4>
+                            <div class="flex items-center gap-3 text-[0.95rem] font-bold mt-1">
+                                <div class="flex items-center gap-1">
+                                    <span style="color: #f59e0b;">&#9733;</span>
+                                    <span class="text-slate-800">0</span>
+                                    <span class="text-slate-400 font-medium">(0 reviews)</span>
+                                </div>
+                                <span style="background: #ecfdf5; color: #10b981; padding: 0.2rem 0.75rem; border-radius: 10px; font-size: 0.78rem;">New Seller</span>
+                                <div class="text-slate-700">Trust Score: <span class="font-bold">0/100</span> <span style="opacity: 0.35; cursor: help;">&#9432;</span></div>
+                            </div>
+                        </div>
                     </div>
-                    <div>
-                        <p class="text-muted small mb-0 uppercase tracking-wider font-bold" style="font-size: 0.7rem;">Seller</p>
-                        <h4 class="mb-0 font-bold text-main" style="font-size: 1.2rem;">@<?php echo sanitize($product['seller_name']); ?></h4>
-                        <div class="flex items-center gap-2 text-sm mt-1">
-                            <span style="color: #f59e0b; font-weight: bold;">★ <?php echo $rating['avg']; ?></span>
-                            <span class="text-muted">(<?php echo $rating['count']; ?> reviews)</span>
+                    <a href="profile.php" class="flex items-center gap-2 px-6 py-2.5 border border-slate-200 rounded-xl font-bold text-slate-600 text-sm hover:bg-slate-50 transition-all" style="min-width: 168px; justify-content: center;">
+                        View Profile <span style="opacity: 0.45; font-size: 0.8rem; margin-left: 4px;">&#10095;</span>
+                    </a>
+                </div>
+                <!-- MAIN INSIGHTS BOX -->
+                <div class="bg-white scc-main-card scc-colorful-shell" style="padding: 2rem; margin-bottom: 2rem; margin-left: auto;">
+                    <!-- Insights Header -->
+                    <div class="flex items-start justify-between mb-8">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-500">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                            </div>
+                            <div>
+                                <h3 class="m-0 font-black text-slate-800" style="font-size: 1.4rem;">Listing Insights</h3>
+                                <p class="m-0 text-slate-400 font-bold" style="font-size: 0.9rem;">Live Performance Center</p>
+                            </div>
                         </div>
-                        <div class="flex items-center gap-2 text-xs mt-1">
-                            <span class="badge" style="background: rgba(16,185,129,0.14); color: #065f46; font-weight: 700; font-size: 0.68rem; padding: 0.15rem 0.5rem;">
-                                <?php echo sanitize($trust['tier']); ?>
-                            </span>
-                            <span class="text-muted">Trust Score: <?php echo (int)$trust['score']; ?>/100</span>
+                        <span style="font-size: 0.65rem; font-weight: 900; color: #94a3b8; background: #f8fafc; padding: 0.25rem 0.6rem; border-radius: 6px; letter-spacing: 0.05em; border: 1px solid #f1f5f9;">SELLER</span>
+                    </div>
+
+                    <!-- Metrics Grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-7">
+                        <!-- Card 1 -->
+                        <div class="p-5 rounded-[1rem] relative border border-[#edf2fb] bg-white shadow-sm overflow-hidden flex items-center justify-between scc-metric-blue">
+                            <div class="relative z-10">
+                                <div class="flex items-center gap-4 mb-4">
+                                    <div class="w-12 h-12 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600 shadow-sm">
+                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                    </div>
+                                    <span class="text-[0.95rem] font-bold text-slate-600">Total Reach</span>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <h2 class="text-4xl font-black text-slate-800 m-0"><?php echo (int)($product['views'] ?? 0); ?></h2>
+                                    <span class="text-emerald-500 font-bold text-[1rem] flex items-center">↑ 12%</span>
+                                </div>
+                                <p class="text-[0.75rem] font-bold text-slate-400 m-0 mt-1">vs last 7 days</p>
+                            </div>
+                            <svg class="absolute bottom-0 right-0 w-1/2 h-24 opacity-95" viewBox="0 0 100 40" preserveAspectRatio="none">
+                                <defs>
+                                    <linearGradient id="reachFill" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" stop-color="#2563eb" stop-opacity="0.55"/>
+                                        <stop offset="50%" stop-color="#06b6d4" stop-opacity="0.38"/>
+                                        <stop offset="100%" stop-color="#22c55e" stop-opacity="0.42"/>
+                                    </linearGradient>
+                                </defs>
+                                <path d="M0 34 C 12 24, 24 34, 36 30 C 48 26, 62 30, 74 18 C 84 8, 92 20, 100 6 L 100 40 L 0 40 Z" fill="url(#reachFill)"/>
+                                <path d="M0 34 C 12 24, 24 34, 36 30 C 48 26, 62 30, 74 18 C 84 8, 92 20, 100 6" stroke="#1d4ed8" stroke-width="2.4" fill="none"/>
+                            </svg>
                         </div>
+                        <!-- Card 2 -->
+                        <div class="p-5 rounded-[1rem] relative border border-[#edf2fb] bg-white shadow-sm overflow-hidden flex items-center justify-between scc-metric-violet">
+                            <div class="relative z-10">
+                                <div class="flex items-center gap-4 mb-4">
+                                    <div class="w-12 h-12 rounded-full bg-purple-50 flex items-center justify-center text-purple-600 shadow-sm">
+                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+                                    </div>
+                                    <span class="text-[0.95rem] font-bold text-slate-600">Student Interest</span>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <h2 class="text-4xl font-black text-slate-800 m-0"><?php echo $wishlistCount; ?></h2>
+                                    <span class="text-emerald-500 font-black text-[0.8rem] flex items-center gap-1">
+                                        <div class="w-2 h-2 rounded-full bg-emerald-500"></div>
+                                        ACTIVE
+                                    </span>
+                                </div>
+                                <p class="text-[0.75rem] font-bold text-slate-400 m-0 mt-1">Students showing interest</p>
+                            </div>
+                            <svg class="absolute bottom-0 right-0 w-1/2 h-24 opacity-95" viewBox="0 0 100 40" preserveAspectRatio="none">
+                                <defs>
+                                    <linearGradient id="interestFill" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" stop-color="#7c3aed" stop-opacity="0.52"/>
+                                        <stop offset="55%" stop-color="#ec4899" stop-opacity="0.38"/>
+                                        <stop offset="100%" stop-color="#f97316" stop-opacity="0.42"/>
+                                    </linearGradient>
+                                </defs>
+                                <path d="M0 36 C 12 28, 24 36, 36 32 C 48 30, 60 34, 72 24 C 84 14, 92 24, 100 10 L 100 40 L 0 40 Z" fill="url(#interestFill)"/>
+                                <path d="M0 36 C 12 28, 24 36, 36 32 C 48 30, 60 34, 72 24 C 84 14, 92 24, 100 10" stroke="#9333ea" stroke-width="2.4" fill="none"/>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <!-- PRICING STRATEGY -->
+                    <div class="mb-8">
+                        <h4 class="font-bold text-slate-800 mb-4" style="font-size: 1.15rem;">Current Pricing Strategy</h4>
+                        <form method="post" class="flex flex-wrap items-stretch gap-4">
+                            <input type="hidden" name="action" value="update_price">
+                            <div class="flex-grow bg-white border border-slate-200 p-4 relative" style="border-radius: 14px; min-height: 76px;">
+                                <div class="text-slate-400 font-black text-[1rem]" style="position: absolute; top: 0.65rem; left: 1rem;">&#8377;</div>
+                                <input type="number" name="new_price" step="0.01" value="<?php echo (float)$product['price']; ?>" 
+                                       style="width: 100%; background: transparent; border: none; font-size: 2rem; font-weight: 800; color: #1e293b; outline: none; padding-top: 0.8rem; letter-spacing: -0.01em;" required>
+                            </div>
+                            <button type="submit" class="text-white font-black px-6 rounded-[12px] text-sm transition-all hover:brightness-110 active:scale-95 shadow-lg" style="height: 56px; min-width: 132px; background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%); box-shadow: 0 10px 20px rgba(37, 99, 235, 0.28); cursor: pointer;">
+                                Update Price
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- PROGRESS BAR ACTIONS (HORIZONTAL FLEX) -->
+                    <div class="flex flex-wrap items-center gap-4">
+                        <form method="post" class="flex-grow" onsubmit="return confirm('Mark as sold?')">
+                            <input type="hidden" name="action" value="mark_sold">
+                            <button type="submit" class="relative w-full h-[38px] bg-slate-100 rounded-full overflow-hidden border border-slate-50 group shadow-inner" style="cursor: pointer;">
+                                <div class="absolute top-0 left-0 h-full flex items-center justify-center transition-all duration-700 pointer-events-none" style="width: 58%; background: linear-gradient(90deg, #10b981 0%, #14b8a6 100%); box-shadow: inset 0 0 18px rgba(255, 255, 255, 0.18);">
+                                    <span class="font-black text-white text-[0.72rem] tracking-[0.08em] whitespace-nowrap">MARK AS SOLD</span>
+                                </div>
+                            </button>
+                        </form>
+                        
+                        <form method="post" onsubmit="return confirm('Delete listing?')">
+                            <input type="hidden" name="action" value="delete_listing">
+                            <button type="submit" class="flex items-center gap-2 font-black text-[0.72rem] uppercase tracking-[0.14em] transition-all hover:brightness-95" style="height: 38px; color: #e11d48; background: linear-gradient(180deg, #fff1f2 0%, #ffe4e6 100%); border: 1px solid #fecdd3; padding: 0 0.75rem; border-radius: 10px; cursor: pointer;">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                DELETE LISTING
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- FOOTER NAVIGATION -->
+                    <a href="profile.php" class="inline-flex items-center gap-2 text-indigo-500 font-bold text-[1rem] mt-12 hover:translate-x-[-4px] transition-transform">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="stroke-width: 3;"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                        Return to Dashboard
+                    </a>
+                </div>
+            </div>
+            <?php endif; ?>
+
+                <!-- DESCRIPTION CARD (BOTTOM) -->
+                <div class="bg-white p-10 mt-8" style="border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.01); border: 1px solid #f1f5f9;">
+                    <div class="flex items-center gap-4 mb-8">
+                        <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-500">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        </div>
+                        <h3 class="m-0 font-bold text-slate-800" style="font-size: 1.4rem;">Product Description</h3>
+                    </div>
+                    <div style="line-height: 2; color: #64748b; font-size: 1.15rem;">
+                        <?php echo nl2br(sanitize($product['description'])); ?>
                     </div>
                 </div>
-                <a href="profile.php?id=<?php echo $product['seller_id']; ?>" class="btn btn-secondary btn-sm hover-scale shadow-sm" style="border-radius: var(--radius-lg);">View Profile</a>
             </div>
 
-            <div class="glass-panel p-8 mb-8 flex-grow" style="border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); background: var(--bg-surface); border: 1px solid var(--border-light);">
-                <h3 class="mb-6 font-bold flex items-center gap-3 border-b border-gray-100 pb-4 text-xl text-main">
-                    <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 24px; height: 24px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path></svg>
-                    Description
-                </h3>
-                <div style="line-height: 1.8; color: var(--text-main); font-size: 1.1rem; text-wrap: pretty; min-height: 150px;">
-                    <?php echo nl2br(sanitize($product['description'])); ?>
+            <!-- Action Buttons for Buyer -->
+            <?php if (!$isOwner): ?>
+                <div class="flex flex-col gap-4 sticky bottom-4 z-10 glass-panel p-4" style="border-radius: var(--radius-xl); box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1); background: color-mix(in srgb, var(--bg-surface) 95%, transparent); backdrop-filter: blur(10px);">
+                    <a href="messages.php?other_user_id=<?php echo $product['seller_id']; ?>&product_id=<?php echo $product['id']; ?>" class="btn btn-primary flex-grow justify-center py-4 text-lg shadow-lg hover-scale" style="border-radius: var(--radius-lg); font-weight: bold;">
+                        Message Seller
+                    </a>
                 </div>
-            </div>
-
-            <!-- Action Buttons -->
-            <div class="flex gap-4 sticky bottom-4 z-10 glass-panel p-4" style="border-radius: var(--radius-xl); box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1); background: color-mix(in srgb, var(--bg-surface) 95%, transparent); backdrop-filter: blur(10px);">
-                <a href="messages.php?other_user_id=<?php echo $product['seller_id']; ?>&product_id=<?php echo $product['id']; ?>" class="btn btn-primary flex-grow justify-center py-4 text-lg shadow-lg hover-scale" style="border-radius: var(--radius-lg); font-weight: bold;">
-                    Message Seller
-                </a>
-            </div>
+            <?php endif; ?>
+        </div>
         </div>
 
     </div>
@@ -147,3 +383,6 @@ function updateMainImage(src, element) {
 </script>
 
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>
+
+
+
