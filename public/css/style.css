@@ -440,7 +440,9 @@ p {
   z-index: 100;
 }
 
-.user-dropdown:hover .user-dropdown-content {
+.user-dropdown:hover .user-dropdown-content,
+.user-dropdown:focus-within .user-dropdown-content,
+.user-dropdown.active .user-dropdown-content {
   opacity: 1;
   visibility: visible;
   transform: translateY(0);
@@ -990,6 +992,7 @@ body.dark-mode .flash-error {
 .hero .container {
     position: relative;
     z-index: 10;
+    padding-top: clamp(1rem, 3vh, 2rem);
 }
 
 .hero h1, .hero p {

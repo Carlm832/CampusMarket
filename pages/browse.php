@@ -40,18 +40,19 @@ if ($maxPrice) {
     $params[] = $maxPrice;
 }
 
+$sql .= " ORDER BY p.is_featured DESC, ";
 switch ($sort) {
-    case 'price_asc': $sql .= " ORDER BY effective_price ASC"; break;
-    case 'price_desc': $sql .= " ORDER BY effective_price DESC"; break;
+    case 'price_asc': $sql .= "effective_price ASC"; break;
+    case 'price_desc': $sql .= "effective_price DESC"; break;
     case 'condition_best': 
-        $sql .= " ORDER BY CASE p.condition 
+        $sql .= "CASE p.condition 
                     WHEN 'new' THEN 1 
                     WHEN 'like_new' THEN 2 
                     WHEN 'used' THEN 3 
                     WHEN 'poor' THEN 4 
                     ELSE 5 END ASC"; 
         break;
-    default: $sql .= " ORDER BY p.created_at DESC"; break;
+    default: $sql .= "p.created_at DESC"; break;
 }
 
 $stmt = $pdo->prepare($sql);
@@ -68,34 +69,23 @@ include '../includes/header.php';
 
     <div class="container">
         <!-- Browse Header -->
-        <div class="mb-10 text-center lg-text-left flex flex-col lg-flex-row justify-between items-end gap-6">
-            <div>
+        <div class="mb-10 flex justify-between items-end gap-6">
+            <div class="text-left">
                 <h1 class="font-bold text-4xl mb-2 gradient-text" style="background: linear-gradient(135deg, var(--text-main), var(--primary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Discover Great Finds</h1>
                 <p class="text-muted text-lg">Browse items from students around your campus</p>
             </div>
             
-            <div class="flex items-center gap-2 text-muted font-medium mb-1">
+            <div class="flex items-center gap-2 text-muted font-medium">
                 <span class="w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
                 Live Marketplace
             </div>
-        </div>
-
-        <!-- Mobile Filter Toggle -->
-        <div class="lg-hidden mb-6">
-            <button id="filter-toggle-btn" class="btn btn-secondary w-full flex items-center justify-between py-4" style="border-radius: var(--radius-lg); font-weight: 700;">
-                <span class="flex items-center gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
-                    Filters & Categories
-                </span>
-                <svg id="filter-chevron" class="w-5 h-5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-            </button>
         </div>
 
         <div class="grid grid-cols-1 lg-grid-cols-5 gap-8 items-start">
             
             <!-- Sidebar Filters -->
             <aside class="lg-col-span-1">
-                <div id="filter-sidebar" class="hidden lg-block glass-panel p-5 sticky-desktop" style="border-radius: var(--radius-lg); border: 1px solid var(--border-light);">
+                <div id="filter-sidebar" class="glass-panel p-5 sticky-desktop" style="border-radius: var(--radius-lg); border: 1px solid var(--border-light);">
                     <div class="flex justify-between items-center mb-8 pb-4 border-b">
                         <h2 class="mb-0" style="font-size: 1.25rem;">Filters</h2>
                         <a href="browse.php" class="text-muted small font-bold uppercase tracking-wider hover:text-primary">Clear</a>

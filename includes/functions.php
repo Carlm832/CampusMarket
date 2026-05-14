@@ -316,6 +316,25 @@ function getRecentProducts(PDO $pdo, int $limit = 8): array {
 }
 
 /**
+ * Fetch featured products for the homepage scroller
+ */
+function getFeaturedProducts(PDO $pdo, int $limit = 6): array {
+    $stmt = $pdo->prepare("
+        SELECT p.*, c.name as category_name, i.image_path, u.username as seller_name
+        FROM products p
+        JOIN categories c ON p.category_id = c.id
+        JOIN users u ON p.user_id = u.id
+        LEFT JOIN product_images i ON p.id = i.product_id AND i.is_primary = 1
+        WHERE p.status = 'active' AND p.is_featured = 1 AND (p.featured_until IS NULL OR p.featured_until > NOW())
+        ORDER BY p.discount_set_at DESC, p.created_at DESC
+        LIMIT :limit
+    ");
+    $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+    $stmt->execute();
+    return $stmt->fetchAll();
+}
+
+/**
  * Fetch all categories with a count of active products in each
  */
 function getTopCategories(PDO $pdo): array {
@@ -325,6 +344,20 @@ function getTopCategories(PDO $pdo): array {
         LEFT JOIN products p ON c.id = p.category_id AND p.status = 'active'
         GROUP BY c.id
         ORDER BY product_count DESC
+    ")->fetchAll();
+}
+
+/**
+ * Fetch top donors for the Hall of Fame
+ */
+function getDonors(PDO $pdo, int $limit = 5): array {
+    return $pdo->query("
+        SELECT DISTINCT u.username, u.avatar
+        FROM promotion_payments pp
+        JOIN users u ON u.id = pp.user_id
+        WHERE pp.payment_type = 'donation' AND pp.status = 'approved'
+        ORDER BY pp.approved_at DESC
+        LIMIT $limit
     ")->fetchAll();
 }
 

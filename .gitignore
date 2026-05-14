@@ -15,3 +15,12 @@ public/uploads/*
 !public/uploads/.gitkeep
 scratch/
 config/secrets.php
+.env
+*.local.php
+/vendor/
+
+# Node & Playwright Testing
+node_modules/
+test-results/
+playwright-report/
+playwright/.cache/

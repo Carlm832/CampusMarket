@@ -25,7 +25,7 @@ $navCategories = $pdo->query("SELECT id, name FROM categories ORDER BY name ASC"
     <?php endif; ?>
     
     <!-- Member 5: Design System -->
-    <link rel="stylesheet" href="<?php echo BASE_URL; ?>public/css/style.css">
+    <link rel="stylesheet" href="<?php echo BASE_URL; ?>public/css/style.css?v=<?php echo filemtime(__DIR__ . '/../public/css/style.css'); ?>">
     <?php if (isAdmin()): ?>
     <link rel="stylesheet" href="<?php echo BASE_URL; ?>public/css/admin.css">
     <?php endif; ?>
@@ -51,31 +51,13 @@ $navCategories = $pdo->query("SELECT id, name FROM categories ORDER BY name ASC"
 <nav class="navbar">
     <div class="container flex justify-between items-center">
         <!-- Logo -->
-        <a href="<?php echo BASE_URL; ?>index.php" class="logo" style="display: flex; align-items: center; gap: 0.6rem;">
-            <img src="<?php echo BASE_URL; ?>public/images/logo.png" alt="CampusMarket Logo" style="height: 38px; width: auto; object-fit: contain;">
-            <span class="lg-block hidden">CampusMarket</span>
+        <a href="<?php echo rtrim(BASE_URL, '/'); ?>/index.php" class="logo" style="display: flex; align-items: center; gap: 0.6rem;">
+            <img src="<?php echo rtrim(BASE_URL, '/'); ?>/public/images/logo.png" alt="CampusMarket Logo" style="height: 42px; width: auto; object-fit: contain;">
+            <span>CampusMarket</span>
         </a>
         
-        <!-- Mobile Controls (Search + Theme + Menu) -->
-        <div class="flex items-center gap-2 lg-hidden" style="flex: 1; justify-content: flex-end; min-width: 0; padding-left: 0.5rem;">
-            <!-- Compact Mobile Search -->
-            <form action="<?php echo BASE_URL; ?>pages/search.php" method="GET" class="search-bar compact-search" style="flex: 1; margin: 0;">
-                <input type="text" name="q" value="<?php echo sanitize($_GET['q'] ?? ''); ?>" placeholder="Search..." class="search-input" style="padding: 0.4rem 0.75rem; font-size: 0.85rem;">
-                <button type="submit" class="search-btn" style="padding: 0.4rem 0.75rem;">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                </button>
-            </form>
-
-            <button id="theme-toggle-mobile" class="theme-toggle" aria-label="Toggle dark mode">
-                <svg class="toggle-icon" viewBox="0 0 24 24"><path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58c-.39-.39-1.03-.39-1.41 0s-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37c-.39-.39-1.03-.39-1.41 0s-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41l-1.06-1.06zm1.06-12.37c-.39-.39-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06c.39-.39.39-1.03 0-1.41zm-12.37 12.37c-.39-.39-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06c.39-.39.39-1.03 0-1.41z"/></svg>
-            </button>
-            <button class="nav-mobile-toggle" id="mobile-menu-btn" aria-label="Toggle Menu">
-                <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
-            </button>
-        </div>
-
         <!-- Shared Search Bar (Desktop) -->
-        <form action="<?php echo BASE_URL; ?>pages/search.php" method="GET" class="search-bar group hidden lg-flex" style="flex: 1; max-width: 450px;">
+        <form action="<?php echo rtrim(BASE_URL, '/'); ?>/pages/search.php" method="GET" class="search-bar group" style="flex: 1; max-width: 450px; margin: 0 auto;">
             <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18">
                 <circle cx="11" cy="11" r="8"></circle>
                 <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
@@ -94,6 +76,11 @@ $navCategories = $pdo->query("SELECT id, name FROM categories ORDER BY name ASC"
                 </button>
             </div>
 
+            <!-- Mobile Theme Toggle -->
+            <button id="theme-toggle-mobile" class="theme-toggle lg-hidden" aria-label="Toggle dark mode">
+                <svg class="toggle-icon" viewBox="0 0 24 24"><path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58c-.39-.39-1.03-.39-1.41 0s-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37c-.39-.39-1.03-.39-1.41 0s-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41l-1.06-1.06zm1.06-12.37c-.39-.39-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06c.39-.39.39-1.03 0-1.41zm-12.37 12.37c-.39-.39-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06c.39-.39.39-1.03 0-1.41z"/></svg>
+            </button>
+
             <a href="<?php echo BASE_URL; ?>pages/browse.php">Browse</a>
             <?php if (isLoggedIn() && isAdmin()): ?>
                 <a href="<?php echo BASE_URL; ?>admin/index.php">Admin Panel</a>
@@ -107,15 +94,15 @@ $navCategories = $pdo->query("SELECT id, name FROM categories ORDER BY name ASC"
                 
                 <!-- User Account Dropdown -->
                 <div class="user-dropdown">
-                    <button class="user-dropdown-btn">
+                    <button type="button" class="user-dropdown-btn" aria-expanded="false" aria-haspopup="true">
                         <span><?php echo sanitize($_SESSION['username'] ?? 'Account'); ?></span>
                         <svg viewBox="0 0 20 20" fill="currentColor" style="width: 16px; height: 16px;"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
                     </button>
                     <div class="user-dropdown-content">
                         <a href="<?php echo BASE_URL; ?>pages/my_orders.php">My Orders</a>
                         <a href="<?php echo BASE_URL; ?>pages/wishlist.php">Wishlist</a>
-                        <a href="<?php echo BASE_URL; ?>pages/promotions.php">Promotions & Donate</a>
-                        <a href="<?php echo BASE_URL; ?>pages/profile.php">Profile Settings</a>
+                        <a href="<?php echo BASE_URL; ?>pages/promotions.php">Promotions</a>
+                        <a href="<?php echo BASE_URL; ?>pages/profile.php">My Profile</a>
                         <div style="border-top: 1px solid var(--border-light); margin: 0.5rem 0;"></div>
                         <a href="<?php echo BASE_URL; ?>pages/logout.php" style="color: var(--error);">Logout</a>
                     </div>
@@ -125,11 +112,20 @@ $navCategories = $pdo->query("SELECT id, name FROM categories ORDER BY name ASC"
                 <a href="<?php echo BASE_URL; ?>pages/register.php" class="btn btn-primary btn-sm" style="color: white !important;">Sign Up</a>
             <?php endif; ?>
         </div>
+
+        <!-- Mobile Menu Toggle -->
+        <button id="mobile-menu-btn" class="nav-mobile-toggle" aria-label="Toggle mobile menu">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="24" height="24">
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+        </button>
     </div>
 </nav>
 
-<script src="<?php echo BASE_URL; ?>public/js/theme.js"></script>
-<script src="<?php echo BASE_URL; ?>public/js/mobile-menu.js"></script>
+<script src="<?php echo BASE_URL; ?>public/js/theme.js?v=<?php echo filemtime(__DIR__ . '/../public/js/theme.js'); ?>"></script>
+<script src="<?php echo BASE_URL; ?>public/js/mobile-menu.js?v=<?php echo filemtime(__DIR__ . '/../public/js/mobile-menu.js'); ?>"></script>
 
 <div class="container">
     <?php if ($flash = getFlash()): ?>
