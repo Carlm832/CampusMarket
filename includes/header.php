@@ -101,7 +101,7 @@ $navCategories = $pdo->query("SELECT id, name FROM categories ORDER BY name ASC"
             <?php elseif (isLoggedIn()): ?>
                 <?php $unreadMessages = countUnreadMessages($pdo, currentUserId()); ?>
                 <a href="<?php echo BASE_URL; ?>/pages/inbox.php" class="flex items-center gap-1">
-                    Inbox <?php if ($unreadMessages > 0): ?><span class="badge" style="background: var(--accent); color: white; padding: 0.1rem 0.4rem; font-size: 0.7rem;"><?php echo $unreadMessages; ?></span><?php endif; ?>
+                    Inbox <?php if ($unreadMessages > 0): ?><span class="badge" style="background: var(--accent); color: white; padding: 0.1rem 0.4rem; font-size: 0.7rem; border-radius: var(--radius-lg);"><?php echo $unreadMessages; ?></span><?php endif; ?>
                 </a>
                 <a href="<?php echo BASE_URL; ?>pages/create_listing.php" style="font-weight: 600; color: var(--primary);">Sell Item</a>
                 
