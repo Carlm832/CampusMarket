@@ -1,4 +1,45 @@
 <?php
-// Vercel Entry Point
-// This file bridges Vercel's /api requirements to your root index.php
-require __DIR__ . '/../index.php';
+// ============================================================
+// Vercel Front Controller
+// Routes all requests to the correct PHP file
+// ============================================================
+
+$projectRoot = realpath(__DIR__ . '/..');
+
+// Parse the incoming request URI
+$requestUri = $_SERVER['REQUEST_URI'] ?? '/';
+$path = parse_url($requestUri, PHP_URL_PATH);
+$path = rtrim($path, '/');
+
+// Default to index.php for root
+if ($path === '' || $path === '/') {
+    $targetFile = $projectRoot . '/index.php';
+} else {
+    // Try exact path first (e.g., /pages/browse.php)
+    $targetFile = $projectRoot . $path;
+}
+
+// Resolve and validate the target file
+$realFile = realpath($targetFile);
+
+// If exact path didn't work, try appending .php
+if (!$realFile || !is_file($realFile)) {
+    $realFile = realpath($targetFile . '.php');
+}
+
+// Security: ensure file is within project root and is a PHP file
+if (
+    $realFile
+    && str_starts_with($realFile, $projectRoot)
+    && is_file($realFile)
+    && strtolower(pathinfo($realFile, PATHINFO_EXTENSION)) === 'php'
+) {
+    // Set working directory to the target file's directory
+    // This ensures relative require/include paths work correctly
+    // (e.g., browse.php's `require '../includes/bootstrap.php'`)
+    chdir(dirname($realFile));
+    require $realFile;
+} else {
+    http_response_code(404);
+    echo '<!DOCTYPE html><html><head><title>404</title></head><body><h1>404 — Page Not Found</h1></body></html>';
+}
