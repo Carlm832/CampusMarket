@@ -20,17 +20,17 @@ $topCategories = getTopCategories($pdo);
     </div>
     <div class="hero-overlay"></div>
     
-    <div class="container">
+    <div class="container text-center">
         <h1 style="font-size: 4rem; font-weight: 800; margin-bottom: 1.5rem; text-shadow: 0 4px 12px rgba(0,0,0,0.3); color: white;">The Campus Marketplace</h1>
-        <p style="font-size: 1.5rem; max-width: 700px; margin: 0 auto 3rem; font-weight: 500; text-shadow: 0 2px 8px rgba(0,0,0,0.3); color: white;">
+        <p style="font-size: 1.5rem; max-width: 700px; margin: 0 auto 3rem; font-weight: 500; text-shadow: 0 2px 8px rgba(0,0,0,0.3); color: white; text-align: center;">
             The safest way to buy and sell within your university community.
         </p>
-        <div class="flex justify-center gap-6">
-            <a href="pages/browse.php" class="btn" style="background: white; color: var(--primary); padding: 1rem 2.5rem; font-size: 1.1rem; font-weight: 700; border-radius: 1rem; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.2);">Start Browsing</a>
+        <div class="flex flex-col sm:flex-row justify-center items-center gap-6">
+            <a href="<?php echo rtrim(BASE_URL, '/'); ?>/pages/browse.php" class="btn" style="background: white; color: var(--primary); padding: 1rem 2.5rem; font-size: 1.1rem; font-weight: 700; border-radius: 1rem; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.2); width: fit-content;">Start Browsing</a>
             <?php if (isLoggedIn()): ?>
-                <a href="pages/create_listing.php" class="btn btn-secondary" style="background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.4); color: white; padding: 1rem 2.5rem; font-size: 1.1rem; font-weight: 700; border-radius: 1rem; backdrop-filter: blur(8px);">Sell an Item</a>
+                <a href="<?php echo rtrim(BASE_URL, '/'); ?>/pages/create_listing.php" class="btn btn-secondary" style="background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.4); color: white; padding: 1rem 2.5rem; font-size: 1.1rem; font-weight: 700; border-radius: 1rem; backdrop-filter: blur(8px); width: fit-content;">Sell an Item</a>
             <?php else: ?>
-                <a href="pages/register.php" class="btn btn-secondary" style="background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.4); color: white; padding: 1rem 2.5rem; font-size: 1.1rem; font-weight: 700; border-radius: 1rem; backdrop-filter: blur(8px);">Join to Sell</a>
+                <a href="<?php echo rtrim(BASE_URL, '/'); ?>/pages/register.php" class="btn btn-secondary" style="background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.4); color: white; padding: 1rem 2.5rem; font-size: 1.1rem; font-weight: 700; border-radius: 1rem; backdrop-filter: blur(8px); width: fit-content;">Join to Sell</a>
             <?php endif; ?>
         </div>
     </div>
@@ -94,6 +94,37 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
 </section>
 
+<!-- Featured Spotlight (Paid Ads) -->
+<?php 
+$featuredProducts = getFeaturedProducts($pdo, 6);
+if (!empty($featuredProducts)): 
+?>
+<section class="mt-16 py-12" style="background: rgba(99, 102, 241, 0.03); border-top: 1px solid var(--border-light); border-bottom: 1px solid var(--border-light);">
+    <div class="container">
+        <div class="flex justify-between items-center mb-8">
+            <div>
+                <h2 class="mb-1" style="display: flex; align-items: center; gap: 0.75rem;">
+                    <span style="background: var(--primary); color: white; padding: 0.4rem; border-radius: var(--radius-md); display: flex;">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                    </span>
+                    Featured Spotlight
+                </h2>
+                <p class="text-muted mb-0">Premium listings currently being promoted by our community</p>
+            </div>
+            <a href="pages/promotions.php" class="btn btn-outline btn-sm" style="font-size: 0.8rem; padding: 0.4rem 1rem;">Promote Your Listing</a>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
+            <?php foreach ($featuredProducts as $prod): ?>
+                <div class="featured-card-wrap">
+                    <?php include 'includes/product_card_template.php'; ?>
+                </div>
+            <?php endforeach; ?>
+        </div>
+    </div>
+</section>
+<?php endif; ?>
+
 <!-- Recent Products -->
 <section class="mt-16 mb-16">
     <div class="container">
@@ -102,7 +133,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <a href="pages/browse.php" class="btn btn-secondary btn-sm">See everything</a>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <div class="grid grid-cols-1 sm-grid-cols-2 md-grid-cols-3 lg-grid-cols-4 gap-6">
             <?php if (empty($recentProducts)): ?>
                 <div class="col-span-full text-center py-12 bg-white rounded-lg border">
                     <p class="text-muted">No products listed yet. Be the first to sell something!</p>
@@ -124,5 +155,60 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>
     </div>
 </section>
+
+<!-- Donation Hall of Fame -->
+<?php 
+$donors = getDonors($pdo, 12);
+if (!empty($donors)): 
+?>
+<section class="mb-24">
+    <div class="container">
+        <div class="glass-panel py-16 px-8 text-center" style="border-radius: var(--radius-3xl); background: linear-gradient(135deg, rgba(99, 102, 241, 0.04), rgba(168, 85, 247, 0.04)); border: 1px solid rgba(0,0,0,0.03); position: relative; overflow: hidden; text-align: center;">
+            
+            <div class="inline-flex items-center gap-2 mb-6 font-bold" style="font-size: 0.9rem; color: var(--primary); letter-spacing: 0.05em; text-transform: uppercase;">
+                <span style="font-size: 1.1rem; animation: pulse 2s infinite;">❤️</span>
+                Wall of Supporters
+            </div>
+            
+            <h2 class="font-bold text-4xl mb-4" style="color: var(--text-main); letter-spacing: -0.02em;">Community Hall of Fame</h2>
+            <p class="text-muted text-lg mb-8" style="line-height: 1.6; opacity: 0.8; text-align: center; width: 100%;">
+                Our platform thrives because of the generosity of our students. Join these incredible individuals in keeping CampusMarket free for everyone.
+            </p>
+            
+            <div class="flex flex-wrap justify-center gap-8 md:gap-12" style="min-height: 120px; align-items: center;">
+                <?php foreach ($donors as $donor): ?>
+                    <div class="donor-card" style="transition: var(--transition); cursor: pointer;">
+                        <div style="position: relative; display: inline-block;">
+                            <img src="<?php echo avatarUrl($donor['avatar']); ?>" 
+                                 alt="<?php echo sanitize($donor['username']); ?>"
+                                 style="width: 80px; height: 80px; border-radius: 22px; border: 3px solid white; box-shadow: var(--shadow-lg); object-fit: cover; transform: rotate(-3deg); transition: var(--transition); background: white;">
+                            <div style="position: absolute; top: -8px; right: -8px; background: #fbbf24; color: white; width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; border: 2px solid white; box-shadow: var(--shadow-sm); z-index: 2;">
+                                ★
+                            </div>
+                        </div>
+                        <p style="font-weight: 800; font-size: 0.9rem; color: var(--text-main); margin-top: 1rem; letter-spacing: -0.01em;">@<?php echo sanitize($donor['username']); ?></p>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+
+            <div class="mt-10" style="padding-bottom: 2rem;">
+                <a href="pages/donate.php" class="btn btn-primary" style="padding: 1rem 3.5rem; border-radius: var(--radius-full); font-weight: 800; box-shadow: 0 10px 25px rgba(99, 102, 241, 0.2);">
+                    Become a Supporter
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+.donor-card:hover {
+    transform: translateY(-6px);
+}
+.donor-card:hover img {
+    transform: rotate(0deg);
+    border-color: var(--primary-light);
+}
+</style>
+<?php endif; ?>
 
 <?php require_once 'includes/footer.php'; ?>
