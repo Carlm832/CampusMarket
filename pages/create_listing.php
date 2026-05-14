@@ -125,7 +125,7 @@ $categories = $pdo->query("SELECT * FROM categories ORDER BY name ASC")->fetchAl
                         $default = 'used';
                         foreach($opts as $val => $label):
                         ?>
-                        <label class="condition-label group flex items-center gap-3 cursor-pointer glass-panel py-3 px-5 transition-all duration-200" style="border-radius: var(--radius-full); border: 2px solid transparent;">
+                        <label class="condition-label group flex items-center gap-3 cursor-pointer glass-panel py-3 px-5 transition-all duration-200" style="border-radius: var(--radius-lg); border: 2px solid transparent;">
                             <input type="radio" name="condition" value="<?php echo $val; ?>" <?php echo $val == $default ? 'checked' : ''; ?> class="hidden-radio">
                             <span class="custom-radio"></span>
                             <span class="font-semibold text-main"><?php echo $label; ?></span>
@@ -154,7 +154,7 @@ $categories = $pdo->query("SELECT * FROM categories ORDER BY name ASC")->fetchAl
 
                 <div class="flex justify-between items-center">
                     <a href="browse.php" class="text-muted font-medium hover:text-main transition-colors">Cancel</a>
-                    <button type="submit" class="btn btn-primary px-8 py-3 hover-scale shadow-lg" style="border-radius: var(--radius-full); font-weight: bold; font-size: 1.1rem;">Publish Listing ✨</button>
+                    <button type="submit" class="btn btn-primary px-8 py-3 hover-scale shadow-lg" style="border-radius: var(--radius-lg); font-weight: bold; font-size: 1.1rem;">Publish Listing ✨</button>
                 </div>
 
             </form>
