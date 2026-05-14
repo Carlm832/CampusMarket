@@ -387,11 +387,12 @@ function getDonors(PDO $pdo, int $limit = 5): array {
     }
 
     $stmt = $pdo->prepare("
-        SELECT DISTINCT u.username, u.avatar
+        SELECT u.username, u.avatar
         FROM promotion_payments pp
         JOIN users u ON u.id = pp.user_id
         WHERE pp.payment_type = 'donation' AND pp.status = 'approved'
-        ORDER BY pp.approved_at DESC
+        GROUP BY u.id, u.username, u.avatar
+        ORDER BY MAX(pp.approved_at) DESC
         LIMIT :limit
     ");
     $stmt->bindValue(':limit', max(1, $limit), PDO::PARAM_INT);
