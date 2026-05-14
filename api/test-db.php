@@ -3,7 +3,7 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-require __DIR__ . '/../includes/bootstrap.php';
+// require __DIR__ . '/../includes/bootstrap.php';
 
 header('Content-Type: text/plain');
 echo "--- LOUD DEBUG MODE ---\n";
