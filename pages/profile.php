@@ -807,7 +807,7 @@ body.dark-mode .btn-white-solid:hover {
                     🛍️ Active Listings (<?php echo count($userProducts); ?>)
                 </h2>
                 <?php if ($isSelf): ?>
-                    <a href="<?php echo BASE_URL; ?>pages/add_product.php" class="btn btn-primary btn-sm hover-scale shadow-sm" style="border-radius: var(--radius-lg); padding: 0.5rem 1rem;">
+                    <a href="<?php echo BASE_URL; ?>pages/create_listing.php" class="btn btn-primary btn-sm hover-scale shadow-sm" style="border-radius: var(--radius-lg); padding: 0.5rem 1rem;">
                         + New Listing
                     </a>
                 <?php endif; ?>
@@ -819,20 +819,20 @@ body.dark-mode .btn-white-solid:hover {
                     <h3>No active listings</h3>
                     <p><?php echo $isSelf ? "You haven't listed anything for sale yet." : "This user doesn't have any active listings."; ?></p>
                     <?php if ($isSelf): ?>
-                        <a href="<?php echo BASE_URL; ?>pages/add_product.php" class="btn btn-primary btn-sm" style="border-radius: var(--radius-lg);">Create Your First Listing</a>
+                        <a href="<?php echo BASE_URL; ?>pages/create_listing.php" class="btn btn-primary btn-sm" style="border-radius: var(--radius-lg);">Create Your First Listing</a>
                     <?php endif; ?>
                 </div>
             <?php else: ?>
                 <div class="listing-grid">
                     <?php foreach ($userProducts as $prod): ?>
                         <div class="listing-card">
-                            <a href="<?php echo BASE_URL; ?>pages/product_details.php?id=<?php echo (int)$prod['id']; ?>" style="text-decoration: none; color: inherit; display: block;">
+                            <a href="<?php echo BASE_URL; ?>pages/product.php?id=<?php echo (int)$prod['id']; ?>" style="text-decoration: none; color: inherit; display: block;">
                                 <img 
                                     class="listing-card-img" 
                                     src="<?php echo $prod['image_path'] ? BASE_URL . 'public/' . ltrim($prod['image_path'], '/') : BASE_URL . 'public/images/placeholder.png'; ?>" 
                                     alt="<?php echo sanitize($prod['title']); ?>"
                                     loading="lazy"
-                                >
+                                />
                             </a>
                             <div class="listing-card-body">
                                 <div class="listing-card-meta">
@@ -840,7 +840,7 @@ body.dark-mode .btn-white-solid:hover {
                                     <span class="listing-card-price"><?php echo formatPrice($prod['price']); ?></span>
                                 </div>
                                 <h3 class="listing-card-title">
-                                    <a href="<?php echo BASE_URL; ?>pages/product_details.php?id=<?php echo (int)$prod['id']; ?>" style="text-decoration: none; color: inherit;">
+                                    <a href="<?php echo BASE_URL; ?>pages/product.php?id=<?php echo (int)$prod['id']; ?>" style="text-decoration: none; color: inherit;">
                                         <?php echo sanitize($prod['title']); ?>
                                     </a>
                                 </h3>

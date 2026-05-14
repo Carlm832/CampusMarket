@@ -294,6 +294,8 @@ p {
   border-bottom: 1px solid var(--border-light);
   padding: max(0.6rem, var(--safe-top)) 0 0.6rem;
   transition: var(--transition);
+  overflow: visible !important;
+  max-height: none !important;
 }
 
 .navbar--scrolled {
@@ -436,7 +438,7 @@ p {
 }
 
 .user-dropdown-content {
-  position: absolute;
+  position: absolute !important;
   right: 0;
   top: 100%;
   width: 220px;
@@ -446,7 +448,7 @@ p {
   box-shadow: var(--shadow-lg);
   padding: 0.5rem;
   display: none;
-  z-index: 1001 !important; /* Above navbar but below modal if any */
+  z-index: 1001; /* Removed !important to follow request, still higher than navbar */
   margin-top: 0.5rem;
   transform-origin: top right;
   animation: dropdownFadeIn 0.2s ease-out;
@@ -1507,7 +1509,7 @@ body {
 }
 
 .container {
-  overflow-x: hidden;
+  overflow: visible !important;
 }
 
 
