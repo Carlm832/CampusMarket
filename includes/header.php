@@ -25,7 +25,7 @@ $navCategories = $pdo->query("SELECT id, name FROM categories ORDER BY name ASC"
     <?php endif; ?>
     
     <!-- Member 5: Design System -->
-    <link rel="stylesheet" href="<?php echo BASE_URL; ?>public/css/style.css?v=<?php echo filemtime(__DIR__ . '/../public/css/style.css'); ?>">
+    <link rel="stylesheet" href="<?php echo BASE_URL; ?>public/css/style.css?v=<?php echo @filemtime(__DIR__ . '/../public/css/style.css') ?: time(); ?>">
     <?php if (isAdmin()): ?>
     <link rel="stylesheet" href="<?php echo BASE_URL; ?>public/css/admin.css">
     <?php endif; ?>
@@ -124,8 +124,8 @@ $navCategories = $pdo->query("SELECT id, name FROM categories ORDER BY name ASC"
     </div>
 </nav>
 
-<script src="<?php echo BASE_URL; ?>public/js/theme.js?v=<?php echo filemtime(__DIR__ . '/../public/js/theme.js'); ?>"></script>
-<script src="<?php echo BASE_URL; ?>public/js/mobile-menu.js?v=<?php echo filemtime(__DIR__ . '/../public/js/mobile-menu.js'); ?>"></script>
+<script src="<?php echo BASE_URL; ?>public/js/theme.js?v=<?php echo @filemtime(__DIR__ . '/../public/js/theme.js') ?: time(); ?>"></script>
+<script src="<?php echo BASE_URL; ?>public/js/mobile-menu.js?v=<?php echo @filemtime(__DIR__ . '/../public/js/mobile-menu.js') ?: time(); ?>"></script>
 
 <div class="container">
     <?php if ($flash = getFlash()): ?>

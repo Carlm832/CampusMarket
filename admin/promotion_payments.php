@@ -11,7 +11,7 @@ if (!isAdmin()) {
 $pageTitle = 'Promotion & Donation Payments';
 $promoPaymentsTableExists = false;
 try {
-    $promoPaymentsTableExists = (bool)$pdo->query("SHOW TABLES LIKE 'promotion_payments'")->fetchColumn();
+    $promoPaymentsTableExists = (bool)$pdo->query("SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'promotion_payments' LIMIT 1")->fetchColumn();
 } catch (PDOException $e) {
     $promoPaymentsTableExists = false;
 }
@@ -34,13 +34,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['payment_id'], $_POST[
                 UPDATE promotion_payments
                 SET status = :status,
                     admin_note = :note,
-                    approved_at = CASE WHEN :status = "approved" THEN NOW() ELSE NULL END,
+                    approved_at = CASE WHEN :status2 = \'approved\' THEN NOW() ELSE NULL END,
                     approved_by = :admin
                 WHERE id = :id
-                  AND status = "pending"
+                  AND status = \'pending\'
             ');
             $stmt->execute([
                 ':status' => $newStatus,
+                ':status2' => $newStatus,
                 ':note' => $adminNote !== '' ? $adminNote : null,
                 ':admin' => currentUserId(),
                 ':id' => $paymentId,
@@ -62,7 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['payment_id'], $_POST[
                     else $days = max(1, floor($amount / 15)); // Linear ₺15 per day
 
                     // Automatically feature the product with expiration
-                    $updProd = $pdo->prepare("UPDATE products SET is_featured = 1, discount_set_at = NOW(), featured_until = DATE_ADD(NOW(), INTERVAL ? DAY) WHERE id = ?");
+                    $updProd = $pdo->prepare("UPDATE products SET is_featured = 1, discount_set_at = NOW(), featured_until = NOW() + INTERVAL '1 day' * ? WHERE id = ?");
                     $updProd->execute([$days, $payData['product_id']]);
                 }
             }
@@ -84,7 +85,7 @@ $rows = $pdo->query('
     JOIN users u ON u.id = pp.user_id
     LEFT JOIN products p ON p.id = pp.product_id
     ORDER BY
-        CASE pp.status WHEN "pending" THEN 0 WHEN "approved" THEN 1 ELSE 2 END,
+        CASE pp.status WHEN \'pending\' THEN 0 WHEN \'approved\' THEN 1 ELSE 2 END,
         pp.created_at DESC
 ')->fetchAll();
 ?>

@@ -71,7 +71,11 @@ $trust = getSellerTrustScore($pdo, (int)$product['seller_id']);
 
 // Increment views if not the owner
 if (!isLoggedIn() || (int)currentUserId() !== (int)$product['seller_id']) {
-    $pdo->prepare("UPDATE products SET views = views + 1 WHERE id = ?")->execute([$productId]);
+    try {
+        $pdo->prepare("UPDATE products SET views = views + 1 WHERE id = ?")->execute([$productId]);
+    } catch (PDOException $e) {
+        // views column may not exist — silently skip
+    }
 }
 
 // Fetch Wishlist count
@@ -312,7 +316,7 @@ require_once __DIR__ . '/../includes/header.php';
                                 <div class="flex items-center gap-3">
                                     <h2 class="text-4xl font-black text-slate-800 m-0"><?php echo $wishlistCount; ?></h2>
                                     <span class="text-emerald-500 font-black text-[0.8rem] flex items-center gap-1">
-                                        <div class="w-2 h-2 rounded-full bg-emerald-500"></div>
+                                        <div class="w-2.5 h-2.5 rounded-sm bg-emerald-500"></div>
                                         ACTIVE
                                     </span>
                                 </div>

@@ -13,10 +13,10 @@ $topCategories = getTopCategories($pdo);
 <!-- Hero Section with Background Carousel -->
 <section class="hero">
     <div class="hero-carousel">
-        <div class="hero-slide active" style="background-image: url('public/images/hero/hero1.png');"></div>
-        <div class="hero-slide" style="background-image: url('public/images/hero/hero2.png');"></div>
-        <div class="hero-slide" style="background-image: url('public/images/hero/hero3.png');"></div>
-        <div class="hero-slide" style="background-image: url('public/images/hero/hero4.png');"></div>
+        <div class="hero-slide active" style="background-image: url('<?php echo BASE_URL; ?>public/images/hero/hero1.png');"></div>
+        <div class="hero-slide" style="background-image: url('<?php echo BASE_URL; ?>public/images/hero/hero2.png');"></div>
+        <div class="hero-slide" style="background-image: url('<?php echo BASE_URL; ?>public/images/hero/hero3.png');"></div>
+        <div class="hero-slide" style="background-image: url('<?php echo BASE_URL; ?>public/images/hero/hero4.png');"></div>
     </div>
     <div class="hero-overlay"></div>
     
