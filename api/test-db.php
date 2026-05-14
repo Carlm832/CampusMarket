@@ -3,7 +3,7 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-require __DIR__ . '/../includes/bootstrap.php';
+// require __DIR__ . '/../includes/bootstrap.php';
 
 header('Content-Type: text/plain');
 echo "--- LOUD DEBUG MODE ---\n";
@@ -38,18 +38,31 @@ if (!$host || !$user) {
 }
 
 echo "Attempting connection with PDO...\n";
-try {
-    $dsn = ($type === 'pgsql') 
-        ? "pgsql:host=$host;port=$port;dbname=$db;sslmode=require"
-        : "mysql:host=$host;port=$port;dbname=$db;charset=utf8mb4";
-        
-    $pdo = new PDO($dsn, $user, $pass, [
-        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-        PDO::ATTR_TIMEOUT => 5
-    ]);
-    echo "SUCCESS: Connected to $type!\n";
-} catch (PDOException $e) {
-    echo "FAILURE: Connection failed!\n";
-    echo "ERROR: " . $e->getMessage() . "\n";
-    echo "CODE:  " . $e->getCode() . "\n";
+
+$ports_to_test = [5432, 6543];
+$hosts_to_test = [$host];
+
+// Also try the pooler host if it's ap-southeast-1
+if (strpos($host, 'ghfzfzscpjlknooxxfjx') !== false) {
+    $hosts_to_test[] = 'aws-0-ap-southeast-1.pooler.supabase.com';
+}
+
+foreach ($hosts_to_test as $current_host) {
+    foreach ($ports_to_test as $current_port) {
+        echo "Testing $current_host:$current_port...\n";
+        try {
+            $dsn = ($type === 'pgsql') 
+                ? "pgsql:host=$current_host;port=$current_port;dbname=$db;sslmode=require"
+                : "mysql:host=$current_host;port=$current_port;dbname=$db;charset=utf8mb4";
+                
+            $pdo = new PDO($dsn, $user, $pass, [
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                PDO::ATTR_TIMEOUT => 5
+            ]);
+            echo "✅ SUCCESS: Connected to $current_host:$current_port!\n";
+            die(); // Stop on first success
+        } catch (PDOException $e) {
+            echo "❌ FAILED: " . $e->getMessage() . "\n";
+        }
+    }
 }
