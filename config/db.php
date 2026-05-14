@@ -2,13 +2,22 @@
 // config/db.php
 // Central Database Connection using PDO
 
-$host = 'localhost';
-$db   = 'campusmarket';
-$user = 'root';
-$pass = '';
+// Database configuration with support for MySQL (Local) and PostgreSQL (Supabase)
+$type = getenv('DB_TYPE') ?: 'mysql'; // Default to mysql for local XAMPP
+$host = getenv('DB_HOST') ?: 'localhost';
+$port = getenv('DB_PORT') ?: ($type === 'mysql' ? '3306' : '5432');
+$db   = getenv('DB_NAME') ?: 'campusmarket';
+$user = getenv('DB_USER') ?: 'root';
+$pass = getenv('DB_PASS') ?: '';
 $charset = 'utf8mb4';
 
-$dsn = "mysql:host=$host;dbname=$db;charset=$charset";
+// Select DSN based on type
+if ($type === 'pgsql') {
+    $dsn = "pgsql:host=$host;port=$port;dbname=$db;sslmode=require";
+} else {
+    $dsn = "mysql:host=$host;port=$port;dbname=$db;charset=$charset";
+}
+
 $options = [
     PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
@@ -18,6 +27,11 @@ $options = [
 try {
      $pdo = new PDO($dsn, $user, $pass, $options);
 } catch (\PDOException $e) {
+     if (getenv('VERCEL')) {
+         // Log the error internally but don't show to user
+         error_log("DB Connection Error: " . $e->getMessage());
+         die("Database connection failed. Please check your environment variables.");
+     }
      die("Database connection failed: " . $e->getMessage());
 }
 
