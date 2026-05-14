@@ -1,24 +1,45 @@
 <?php
-// Vercel Database Debug Tool
-// Access this via /test-db.php
+// Vercel Database Debug Tool (LOUD MODE)
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
 require __DIR__ . '/../includes/bootstrap.php';
 
 header('Content-Type: text/plain');
-echo "Checking Database Connection (via api/ gateway)...\n";
-echo "DB_TYPE: " . (getenv('DB_TYPE') ?: 'mysql') . "\n";
-echo "DB_HOST: " . (getenv('DB_HOST') ?: 'localhost') . "\n";
+echo "--- LOUD DEBUG MODE ---\n";
+echo "Checking environment variables...\n";
 
+$type = getenv('DB_TYPE') ?: 'mysql';
+$host = getenv('DB_HOST');
+$port = getenv('DB_PORT');
+$db   = getenv('DB_NAME');
+$user = getenv('DB_USER');
+$pass = getenv('DB_PASS');
+
+echo "TYPE: $type\n";
+echo "HOST: $host\n";
+echo "PORT: $port\n";
+echo "DB:   $db\n";
+echo "USER: $user\n";
+echo "PASS: " . ($pass ? "SET (hidden)" : "NOT SET") . "\n\n";
+
+if (!$host || !$user) {
+    die("CRITICAL: Essential environment variables (DB_HOST or DB_USER) are missing in Vercel settings!\n");
+}
+
+echo "Attempting connection with PDO...\n";
 try {
-    // Attempt connection
-    $pdo = require __DIR__ . '/../config/db.php';
-    echo "SUCCESS: Database connection established!\n";
-    
-    $stmt = $pdo->query("SELECT current_user");
-    $user = $stmt->fetchColumn();
-    echo "Current DB User: " . $user . "\n";
-    
-} catch (Exception $e) {
+    $dsn = ($type === 'pgsql') 
+        ? "pgsql:host=$host;port=$port;dbname=$db;sslmode=require"
+        : "mysql:host=$host;port=$port;dbname=$db;charset=utf8mb4";
+        
+    $pdo = new PDO($dsn, $user, $pass, [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_TIMEOUT => 5
+    ]);
+    echo "SUCCESS: Connected to $type!\n";
+} catch (PDOException $e) {
     echo "FAILURE: Connection failed!\n";
-    echo "Error Message: " . $e->getMessage() . "\n";
-    echo "\nTrace:\n" . $e->getTraceAsString() . "\n";
+    echo "ERROR: " . $e->getMessage() . "\n";
+    echo "CODE:  " . $e->getCode() . "\n";
 }
