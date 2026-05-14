@@ -5,6 +5,7 @@ const CORE_ASSETS = [
   "./",
   "index.php",
   "manifest.webmanifest",
+  "favicon.ico",
   "public/css/style.css",
   "public/js/theme.js",
   "public/js/pwa.js",
