@@ -22,6 +22,18 @@
   ],
   "routes": [
     {
+      "src": "/manifest.webmanifest",
+      "dest": "/manifest.webmanifest"
+    },
+    {
+      "src": "/sw.js",
+      "dest": "/sw.js"
+    },
+    {
+      "src": "/favicon.ico",
+      "dest": "/public/images/logo.png"
+    },
+    {
       "src": "/(.*\\.php)",
       "dest": "/api/index.php"
     },
