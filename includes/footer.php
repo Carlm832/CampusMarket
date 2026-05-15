@@ -16,6 +16,9 @@
                     <li><a href="<?php echo BASE_URL; ?>/pages/browse.php">Browse All</a></li>
                     <li><a href="<?php echo BASE_URL; ?>/pages/categories.php">Categories</a></li>
                     <li><a href="<?php echo BASE_URL; ?>/pages/create_listing.php">Post an Item</a></li>
+                    <?php if (isLoggedIn()): ?>
+                        <li><a href="<?php echo BASE_URL; ?>/pages/recycle_bin.php">Recycle Bin</a></li>
+                    <?php endif; ?>
                     <li><a href="<?php echo BASE_URL; ?>/pages/register.php">Create Account</a></li>
                 </ul>
             </div>
@@ -48,7 +51,11 @@
 </footer>
 
 <script>const PWA_SW_URL = "<?php echo BASE_URL; ?>sw.js";</script>
-<script src="<?php echo BASE_URL; ?>public/js/pwa.js"></script>
+<?php
+    $pwaJsPath = __DIR__ . '/../public/js/pwa.js';
+    $pwaJsVer = file_exists($pwaJsPath) ? filemtime($pwaJsPath) : '1';
+?>
+<script src="<?php echo BASE_URL; ?>public/js/pwa.js?v=<?php echo $pwaJsVer; ?>"></script>
 
 </body>
 </html>
