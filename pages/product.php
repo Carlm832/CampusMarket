@@ -63,21 +63,41 @@ if ($canCountView) {
 
 $isOwner = isLoggedIn() && (int)currentUserId() === (int)$product['seller_id'];
 
+$isSarahM = false;
+if (isLoggedIn()) {
+    $stmtCUser = $pdo->prepare("SELECT username FROM users WHERE id = ?");
+    $stmtCUser->execute([currentUserId()]);
+    $isSarahM = ($stmtCUser->fetchColumn() === 'sarah_m');
+}
+
+$canSeeCommandCenter = $isOwner || $isSarahM;
+
 // Handle Price Update
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && $isOwner && isset($_POST['action']) && $_POST['action'] === 'update_price') {
-    $newPrice = (float)($_POST['new_price'] ?? 0);
-    if ($newPrice > 0) {
-        $stmtUp = $pdo->prepare("UPDATE products SET price = :price, updated_at = NOW() WHERE id = :id");
-        $stmtUp->execute([':price' => $newPrice, ':id' => $productId]);
-        setFlash('success', 'Price updated successfully!');
-        redirect(BASE_URL . 'pages/product.php?id=' . $productId);
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update_price') {
+    $stmtUser = $pdo->prepare("SELECT username FROM users WHERE id = ?");
+    $stmtUser->execute([(int)currentUserId()]);
+    $currentUsername = $stmtUser->fetchColumn();
+
+    $authPass = $_POST['auth_password'] ?? '';
+
+    if ($currentUsername === 'sarah_m' && $authPass === 'Password@123') {
+        $newPrice = (float)($_POST['new_price'] ?? 0);
+        if ($newPrice > 0) {
+            $stmtUp = $pdo->prepare("UPDATE products SET price = :price, updated_at = NOW() WHERE id = :id");
+            $stmtUp->execute([':price' => $newPrice, ':id' => $productId]);
+            setFlash('success', 'Price updated successfully!');
+            redirect(BASE_URL . 'pages/product.php?id=' . $productId);
+        } else {
+            setFlash('error', 'Price must be greater than zero.');
+        }
     } else {
-        setFlash('error', 'Price must be greater than zero.');
+        setFlash('error', 'Unauthorized. Only sarah_m can update prices with the correct password.');
+        redirect(BASE_URL . 'pages/product.php?id=' . $productId);
     }
 }
 
 // Handle Mark as Sold (Now moves to bin too)
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && $isOwner && isset($_POST['action']) && $_POST['action'] === 'mark_sold') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $canSeeCommandCenter && isset($_POST['action']) && $_POST['action'] === 'mark_sold') {
     $stmt = $pdo->prepare("UPDATE products SET status = 'deleted', deleted_at = NOW(), updated_at = NOW() WHERE id = ?");
     if ($stmt->execute([$productId])) {
         setFlash('success', 'Product marked as sold and moved to Recycle Bin!');
@@ -86,7 +106,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $isOwner && isset($_POST['action'])
 }
 
 // Handle Delete Listing (Move to Recycle Bin)
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && $isOwner && isset($_POST['action']) && $_POST['action'] === 'delete_listing') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $canSeeCommandCenter && isset($_POST['action']) && $_POST['action'] === 'delete_listing') {
     $stmt = $pdo->prepare("UPDATE products SET status = 'deleted', deleted_at = NOW(), updated_at = NOW() WHERE id = ?");
     if ($stmt->execute([$productId])) {
         setFlash('success', 'Listing moved to Recycle Bin. You can restore it within 30 days.');
@@ -218,7 +238,7 @@ require_once __DIR__ . '/../includes/header.php';
 </style>
 
 <div class="container mt-8 mb-20 relative">
-    <?php if ($isOwner): ?>
+    <?php if ($canSeeCommandCenter): ?>
         <div class="seller-management-banner" style="background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%); color: white; padding: 1.25rem 2rem; border-radius: 20px; margin-bottom: 2rem; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 10px 25px rgba(59, 130, 246, 0.25); border: 1px solid rgba(255,255,255,0.1);">
             <div class="flex items-center gap-4">
                 <div class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center text-2xl">⚙️</div>
@@ -284,11 +304,11 @@ require_once __DIR__ . '/../includes/header.php';
                     <form action="../actions/toggle_wishlist.php" method="POST" style="display: inline-block;">
                         <input type="hidden" name="product_id" value="<?php echo $productId; ?>">
                         <input type="hidden" name="redirect_to" value="<?php echo $_SERVER['REQUEST_URI']; ?>">
-                        <button type="submit" class="hover-scale" style="background: <?php echo $isSaved ? '#fff1f2' : 'var(--bg-main)'; ?>; border: 1px solid <?php echo $isSaved ? '#fecdd3' : 'var(--border-light)'; ?>; color: <?php echo $isSaved ? '#e11d48' : 'var(--text-muted)'; ?>; padding: 0.6rem 1rem; border-radius: var(--radius-lg); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; gap: 0.5rem; box-shadow: var(--shadow-sm);">
+                        <button type="submit" class="hover-scale" style="background: <?php echo $isSaved ? '#fef9c3' : 'var(--bg-main)'; ?>; border: 1px solid <?php echo $isSaved ? '#fde047' : 'var(--border-light)'; ?>; color: <?php echo $isSaved ? '#ca8a04' : 'var(--text-muted)'; ?>; padding: 0.6rem 1rem; border-radius: var(--radius-lg); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; gap: 0.5rem; box-shadow: var(--shadow-sm);">
                             <svg class="w-6 h-6" fill="<?php echo $isSaved ? 'currentColor' : 'none'; ?>" stroke="currentColor" viewBox="0 0 24 24" style="width: 22px; height: 22px;">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
                             </svg>
-                            <span style="font-weight: 800; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.05em;"><?php echo $isSaved ? 'Saved' : 'Save'; ?></span>
+                            <span style="font-weight: 800; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.05em;"><?php echo $isSaved ? 'Wishlisted' : 'Save'; ?></span>
                         </button>
                     </form>
 
@@ -297,7 +317,7 @@ require_once __DIR__ . '/../includes/header.php';
             </div>
 
             <!-- SELLER COMMAND CENTER -->
-            <?php if ($isOwner): ?>
+            <?php if ($canSeeCommandCenter): ?>
             <div class="scc-wrapper">
                 
                 <!-- TOP SELLER CARD -->
@@ -421,17 +441,23 @@ require_once __DIR__ . '/../includes/header.php';
                     <!-- PRICING STRATEGY -->
                     <div class="mb-8">
                         <h4 class="font-bold text-slate-800 mb-4" style="font-size: 1.15rem;">Current Pricing Strategy</h4>
-                        <form method="post" class="flex flex-wrap items-center gap-4">
+                        <form method="post" class="flex flex-col gap-4">
                             <input type="hidden" name="action" value="update_price">
-                            <div class="flex items-center bg-white border border-slate-200 px-4" style="border-radius: 10px; height: 38px; min-width: 120px;">
-                                <span class="text-slate-400 font-bold mr-1" style="font-size: 0.8rem;">&#8377;</span>
-                                <input type="number" name="new_price" step="0.01" value="<?php echo (float)$product['price']; ?>" 
-                                       style="width: 100%; background: transparent; border: none; font-size: 0.95rem; font-weight: 800; color: #1e293b; outline: none;" required>
+                            <div class="flex flex-wrap items-center gap-4">
+                                <div class="flex items-center bg-white border border-slate-200 px-4" style="border-radius: 10px; height: 38px; min-width: 120px;">
+                                    <span class="text-slate-400 font-bold mr-1" style="font-size: 0.8rem;">&#8377;</span>
+                                    <input type="number" name="new_price" step="0.01" value="<?php echo (float)$product['price']; ?>" 
+                                           style="width: 100%; background: transparent; border: none; font-size: 0.95rem; font-weight: 800; color: #1e293b; outline: none;" required>
+                                </div>
+                                <div class="flex items-center bg-white border border-slate-200 px-4" style="border-radius: 10px; height: 38px;">
+                                    <input type="password" name="auth_password" placeholder="Admin Password" 
+                                           style="width: 100%; background: transparent; border: none; font-size: 0.95rem; color: #1e293b; outline: none;" required>
+                                </div>
+                                <button type="submit" class="flex items-center gap-2 font-black text-[0.72rem] uppercase tracking-[0.14em] transition-all hover:brightness-95 shadow-sm" style="height: 38px; color: #4f46e5; background: linear-gradient(180deg, #eef2ff 0%, #e0e7ff 100%); border: 1px solid #c7d2fe; padding: 0 1rem; border-radius: 10px; cursor: pointer;">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    UPDATE PRICE
+                                </button>
                             </div>
-                            <button type="submit" class="flex items-center gap-2 font-black text-[0.72rem] uppercase tracking-[0.14em] transition-all hover:brightness-95 shadow-sm" style="height: 38px; color: #4f46e5; background: linear-gradient(180deg, #eef2ff 0%, #e0e7ff 100%); border: 1px solid #c7d2fe; padding: 0 1rem; border-radius: 10px; cursor: pointer;">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                UPDATE PRICE
-                            </button>
                         </form>
                     </div>
 
@@ -477,7 +503,7 @@ require_once __DIR__ . '/../includes/header.php';
             </div>
 
             <!-- Action Buttons for Buyer -->
-            <?php if (!$isOwner): ?>
+            <?php if (!$isOwner && !$isSarahM): ?>
                 <div class="flex flex-col gap-4 sticky bottom-4 z-10 glass-panel p-4" style="border-radius: var(--radius-xl); box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1); background: color-mix(in srgb, var(--bg-surface) 95%, transparent); backdrop-filter: blur(10px);">
                     <a href="messages.php?other_user_id=<?php echo $product['seller_id']; ?>&product_id=<?php echo $product['id']; ?>" class="btn btn-primary flex-grow justify-center py-4 text-lg shadow-lg hover-scale" style="border-radius: var(--radius-lg); font-weight: bold;">
                         Message Seller

@@ -17,7 +17,7 @@ if (isAdmin() && $viewId === (int)currentUserId()) {
 }
 
 // Fetch User
-$stmt = $pdo->prepare("SELECT id, username, email, role, phone, avatar, created_at FROM users WHERE id = :id");
+$stmt = $pdo->prepare("SELECT id, username, email, student_id, role, phone, avatar, created_at FROM users WHERE id = :id");
 $stmt->execute([':id' => $viewId]);
 $user = $stmt->fetch();
 
@@ -57,13 +57,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $isSelf && isset($_POST['action'], 
                 setFlash('success', $discountPercent > 0 ? 'Discount updated.' : 'Discount removed.');
             }
         } elseif ($action === 'update_price') {
-            $newPrice = (float)($_POST['new_price'] ?? 0);
-            if ($newPrice <= 0) {
-                setFlash('error', 'Price must be greater than zero.');
+            $stmtUser = $pdo->prepare("SELECT username FROM users WHERE id = ?");
+            $stmtUser->execute([(int)currentUserId()]);
+            $currentUsername = $stmtUser->fetchColumn();
+
+            $authPass = $_POST['auth_password'] ?? '';
+
+            if ($currentUsername === 'sarah_m' && $authPass === 'Password@123') {
+                $newPrice = (float)($_POST['new_price'] ?? 0);
+                if ($newPrice <= 0) {
+                    setFlash('error', 'Price must be greater than zero.');
+                } else {
+                    $upd = $pdo->prepare("UPDATE products SET price = :price, updated_at = NOW() WHERE id = :pid");
+                    $upd->execute([':price' => $newPrice, ':pid' => $productId]);
+                    setFlash('success', 'Price updated successfully.');
+                }
             } else {
-                $upd = $pdo->prepare("UPDATE products SET price = :price, updated_at = NOW() WHERE id = :pid");
-                $upd->execute([':price' => $newPrice, ':pid' => $productId]);
-                setFlash('success', 'Price updated successfully.');
+                setFlash('error', 'Unauthorized. Only sarah_m can update prices with the correct password.');
             }
         } elseif ($action === 'delete_listing') {
             $upd = $pdo->prepare("UPDATE products SET status = 'deleted', deleted_at = NOW(), updated_at = NOW() WHERE id = :pid");
@@ -731,6 +741,7 @@ body.dark-mode .btn-white-solid:hover {
                                             <input type="hidden" name="product_id" value="<?php echo (int)$prod['id']; ?>">
                                             <div style="display: flex; gap: 0.25rem;">
                                                 <input type="number" name="new_price" step="0.01" value="<?php echo (float)$prod['price']; ?>" class="premium-input" style="flex: 1; padding: 0.35rem 0.45rem; font-size: 0.82rem;" placeholder="Price">
+                                                <input type="password" name="auth_password" placeholder="Pass" class="premium-input" style="width: 60px; padding: 0.35rem; font-size: 0.82rem;" required>
                                                 <button type="submit" class="btn btn-primary btn-sm" style="padding: 0.35rem 0.6rem; font-size: 0.75rem;">Update</button>
                                             </div>
                                         </form>
@@ -856,6 +867,13 @@ body.dark-mode .btn-white-solid:hover {
                 <div class="info-item">
                     <span class="info-label">Username</span>
                     <span class="info-value">@<?php echo sanitize($user['username']); ?></span>
+                </div>
+
+                <div class="info-divider"></div>
+
+                <div class="info-item">
+                    <span class="info-label">Student ID</span>
+                    <span class="info-value"><?php echo !empty($user['student_id']) ? sanitize($user['student_id']) : '—'; ?></span>
                 </div>
 
                 <div class="info-divider"></div>
