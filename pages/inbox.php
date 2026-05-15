@@ -9,12 +9,12 @@ $currentUserId = currentUserId();
 $stmt = $pdo->prepare("
     SELECT 
         m.id, m.sender_id, m.receiver_id, m.product_id, m.body, m.is_read, m.created_at,
-        p.title as product_title,
+        COALESCE(p.title, 'General Support') as product_title,
         CASE WHEN m.sender_id = :uid1 THEN m.receiver_id ELSE m.sender_id END as other_user_id,
         u.username as other_username,
         u.avatar as other_avatar
     FROM messages m
-    JOIN products p ON m.product_id = p.id
+    LEFT JOIN products p ON m.product_id = p.id
     JOIN users u ON u.id = (CASE WHEN m.sender_id = :uid2 THEN m.receiver_id ELSE m.sender_id END)
     WHERE m.id IN (
         SELECT MAX(id)
@@ -340,7 +340,9 @@ body.dark-mode .convo-card.unread {
                             <span class="convo-username"><?= htmlspecialchars($conv['other_username']) ?></span>
                             <span class="convo-time"><?= timeAgo($conv['created_at']) ?></span>
                         </div>
-                        <div class="convo-product">Re: <?= htmlspecialchars($conv['product_title']) ?></div>
+                        <div class="convo-product" style="<?= $conv['product_id'] == 0 ? 'color: var(--secondary);' : '' ?>">
+                            <?= $conv['product_id'] == 0 ? 'Support Inquiry' : 'Re: ' . htmlspecialchars($conv['product_title']) ?>
+                        </div>
                         <p class="convo-body">
                             <?php if ($conv['sender_id'] == $currentUserId): ?>
                                 <span class="convo-body-prefix">You:</span>
