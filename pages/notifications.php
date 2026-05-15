@@ -22,7 +22,7 @@ $stmt->execute([':uid' => $currentUserId]);
 $notifications = $stmt->fetchAll();
 
 // Now implicitly mark them as read in DB if they aren't
-$unreadIds = array_column(array_filter($notifications, fn($n) => $n['is_read'] == 0), 'id');
+$unreadIds = array_column(array_filter($notifications, fn($n) => empty($n['is_read'])), 'id');
 if (!empty($unreadIds)) {
     $placeholders = str_repeat('?,', count($unreadIds) - 1) . '?';
     $updateStmt = $pdo->prepare("UPDATE notifications SET is_read = TRUE WHERE id IN ($placeholders)");

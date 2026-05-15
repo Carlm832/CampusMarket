@@ -34,7 +34,7 @@ $stmt->execute([
 $conversations = $stmt->fetchAll();
 
 $unreadCount = array_reduce($conversations, function($carry, $item) use ($currentUserId) {
-    return $carry + ($item['receiver_id'] == $currentUserId && $item['is_read'] == 0 ? 1 : 0);
+    return $carry + ($item['receiver_id'] == $currentUserId && empty($item['is_read']) ? 1 : 0);
 }, 0);
 
 require_once __DIR__ . '/../includes/header.php';
@@ -296,7 +296,7 @@ body.dark-mode .convo-card.unread {
         <div class="convo-list">
             <?php foreach ($conversations as $conv): ?>
                 <?php
-                    $isUnread = ($conv['receiver_id'] == $currentUserId && $conv['is_read'] == 0);
+                    $isUnread = ($conv['receiver_id'] == $currentUserId && empty($conv['is_read']));
                     $initials = strtoupper(substr($conv['other_username'], 0, 2));
                     $hasAvatar = !empty($conv['other_avatar']);
                 ?>
