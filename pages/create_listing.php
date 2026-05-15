@@ -28,7 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $pdo->beginTransaction();
 
         // 1. Insert Product
-        $stmt = $pdo->prepare("INSERT INTO products (user_id, category_id, title, description, price, `condition`, status) VALUES (?, ?, ?, ?, ?, ?, 'active')");
+        $stmt = $pdo->prepare('INSERT INTO products (user_id, category_id, title, description, price, "condition", status) VALUES (?, ?, ?, ?, ?, ?, \'active\')');
         $stmt->execute([$userId, $categoryId, $title, $description, $price, $condition]);
         $productId = $pdo->lastInsertId();
 
