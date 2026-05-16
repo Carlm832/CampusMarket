@@ -26,7 +26,7 @@ $pageTitle = "My Wishlist";
 include '../includes/header.php';
 ?>
 
-<div class="container min-h-screen pt-12 pb-20 relative">
+<div class="container min-h-screen pt-24 pb-20 relative">
     <!-- Background Accents -->
 
     <div class="mb-10 text-center lg:text-left flex flex-col md:flex-row justify-between items-center gap-6">

@@ -61,7 +61,7 @@ if ($canCountView) {
     $product['views']++; 
 }
 
-$isOwner = isLoggedIn() && (int)currentUserId() === (int)$product['seller_id'];
+$isOwner = isLoggedIn() && ((int)currentUserId() === (int)$product['seller_id'] || isAdmin());
 
 // Handle Price Update
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $isOwner && isset($_POST['action']) && $_POST['action'] === 'update_price') {
@@ -118,11 +118,11 @@ $wishlistCount = (int)$stmtWish->fetchColumn();
 $viewCumPoints = [];
 $wishCumPoints = [];
 for ($d = 5; $d >= 0; $d--) {
-    $sv = $pdo->prepare("SELECT COUNT(*) FROM product_views WHERE product_id = ? AND viewed_at <= NOW() - (? * INTERVAL '1 day')");
+    $sv = $pdo->prepare("SELECT COUNT(*) FROM product_views WHERE product_id = ? AND viewed_at <= NOW() - (CAST(? AS text) || ' days')::interval");
     $sv->execute([$productId, $d]);
     $viewCumPoints[] = (int)$sv->fetchColumn();
 
-    $sw = $pdo->prepare("SELECT COUNT(*) FROM wishlists WHERE product_id = ? AND created_at <= NOW() - (? * INTERVAL '1 day')");
+    $sw = $pdo->prepare("SELECT COUNT(*) FROM wishlists WHERE product_id = ? AND created_at <= NOW() - (CAST(? AS text) || ' days')::interval");
     $sw->execute([$productId, $d]);
     $wishCumPoints[] = (int)$sw->fetchColumn();
 }
@@ -173,18 +173,8 @@ require_once __DIR__ . '/../includes/header.php';
     stroke-dashoffset: 200;
     animation: drawLine 1.4s ease-out 0.2s forwards;
 }
-@media (min-width: 1024px) {
-    .scc-wrapper {
-        width: min(1060px, 100%);
-        margin-left: auto;
-    }
-}
-
-@media (max-width: 1023.98px) {
-    .scc-wrapper {
-        width: 100%;
-        margin-left: 0;
-    }
+.scc-wrapper {
+    width: 100%;
 }
 
 .scc-seller-card {
@@ -236,7 +226,7 @@ require_once __DIR__ . '/../includes/header.php';
                     <p class="mb-0 opacity-90 small" style="color: white; font-weight: 500;">You are viewing your own listing. Only you can see these controls.</p>
                 </div>
             </div>
-            <a href="profile.php" class="btn btn-sm" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3);">Go to Dashboard</a>
+            <a href="<?php echo BASE_URL; ?>pages/profile.php" class="btn btn-sm" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3);">Go to Dashboard</a>
         </div>
     <?php endif; ?>
 
@@ -305,13 +295,10 @@ require_once __DIR__ . '/../includes/header.php';
                 </div>
             </div>
 
-            <!-- SELLER COMMAND CENTER -->
-            <?php if ($isOwner): ?>
-            <div class="scc-wrapper">
-                
-                <!-- TOP SELLER CARD -->
+            <!-- SELLER PROFILE CARD (Visible to Everyone) -->
+            <div class="scc-wrapper mt-8">
                 <div class="scc-seller-card" style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; border: 1px solid #dbe6f6; border-left: 4px solid #3b82f6; border-radius: 16px; padding: 1.2rem 1.4rem; background: #fff; margin-bottom: 1rem;">
-                    <div class="flex items-center" style="gap: 14px;">
+                    <a href="<?php echo BASE_URL; ?>pages/profile.php?id=<?php echo $product['seller_id']; ?>" class="flex items-center" style="gap: 14px; text-decoration: none;">
                         <img src="<?php echo avatarUrl($product['seller_avatar']); ?>" 
                              alt="<?php echo sanitize($product['seller_name']); ?>"
                              style="width: 74px; height: 74px; border-radius: 16px; object-fit: cover; box-shadow: 0 8px 18px rgba(0,0,0,0.08); border: 2px solid white;">
@@ -329,11 +316,16 @@ require_once __DIR__ . '/../includes/header.php';
                                 <div class="text-slate-700">Trust Score: <span class="font-bold"><?php echo (int)$trust['score']; ?>/100</span> <span style="opacity: 0.35; cursor: help;" title="<?php echo sanitize($trust['tier']); ?>">&#9432;</span></div>
                             </div>
                         </div>
-                    </div>
-                    <a href="profile.php" class="flex items-center gap-2 px-6 py-2.5 border border-slate-200 rounded-xl font-bold text-slate-600 text-sm hover:bg-slate-50 transition-all" style="min-width: 168px; justify-content: center;">
+                    </a>
+                    <a href="<?php echo BASE_URL; ?>pages/profile.php?id=<?php echo $product['seller_id']; ?>" class="flex items-center gap-2 px-6 py-2.5 border border-slate-200 rounded-xl font-bold text-slate-600 text-sm hover:bg-slate-50 transition-all" style="min-width: 168px; justify-content: center;">
                         View Profile <span style="opacity: 0.45; font-size: 0.8rem; margin-left: 4px;">&#10095;</span>
                     </a>
                 </div>
+            </div>
+
+            <!-- LISTING INSIGHTS CENTER -->
+            <?php if ($isOwner): ?>
+            <div class="scc-wrapper">
                 <!-- MAIN INSIGHTS BOX -->
                 <div class="bg-white scc-main-card scc-colorful-shell" style="padding: 2rem; margin-bottom: 2rem; margin-left: auto;">
                     <!-- Insights Header -->
@@ -347,7 +339,7 @@ require_once __DIR__ . '/../includes/header.php';
                                 <p class="m-0 text-slate-400 font-bold" style="font-size: 0.9rem;">Live Performance Center</p>
                             </div>
                         </div>
-                        <span style="font-size: 0.65rem; font-weight: 900; color: #94a3b8; background: #f8fafc; padding: 0.25rem 0.6rem; border-radius: 6px; letter-spacing: 0.05em; border: 1px solid #f1f5f9;">SELLER</span>
+                        <span style="font-size: 0.65rem; font-weight: 900; color: #94a3b8; background: #f8fafc; padding: 0.25rem 0.6rem; border-radius: 6px; letter-spacing: 0.05em; border: 1px solid #f1f5f9;"><?php echo $isOwner ? 'SELLER' : 'LIVE STATS'; ?></span>
                     </div>
 
                     <!-- Metrics Grid -->
@@ -465,7 +457,7 @@ require_once __DIR__ . '/../includes/header.php';
                     </div>
 
                     <!-- FOOTER NAVIGATION -->
-                    <a href="profile.php" class="inline-flex items-center gap-2 text-indigo-500 font-bold text-[1rem] mt-12 hover:translate-x-[-4px] transition-transform">
+                    <a href="<?php echo BASE_URL; ?>pages/profile.php" class="inline-flex items-center gap-2 text-indigo-500 font-bold text-[1rem] mt-12 hover:translate-x-[-4px] transition-transform">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="stroke-width: 3;"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
                         Return to Dashboard
                     </a>
@@ -485,15 +477,14 @@ require_once __DIR__ . '/../includes/header.php';
                         <?php echo nl2br(sanitize($product['description'])); ?>
                     </div>
                 </div>
-            </div>
 
-            <!-- Action Buttons for Buyer -->
             <?php if (!$isOwner): ?>
-                <div class="flex flex-col gap-4 sticky bottom-4 z-10 glass-panel p-4" style="border-radius: var(--radius-xl); box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1); background: color-mix(in srgb, var(--bg-surface) 95%, transparent); backdrop-filter: blur(10px);">
-                    <a href="messages.php?other_user_id=<?php echo $product['seller_id']; ?>&product_id=<?php echo $product['id']; ?>" class="btn btn-primary flex-grow justify-center py-4 text-lg shadow-lg hover-scale" style="border-radius: var(--radius-lg); font-weight: bold;">
-                        Message Seller
-                    </a>
-                </div>
+            <!-- Action Buttons for Buyer -->
+            <div class="flex flex-col gap-4 sticky bottom-4 z-10 glass-panel p-4" style="border-radius: var(--radius-xl); box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1); background: color-mix(in srgb, var(--bg-surface) 95%, transparent); backdrop-filter: blur(10px); margin-top: 2rem;">
+                <a href="messages.php?other_user_id=<?php echo $product['seller_id']; ?>&product_id=<?php echo $product['id']; ?>" class="btn btn-primary flex-grow justify-center py-4 text-lg shadow-lg hover-scale" style="border-radius: var(--radius-lg); font-weight: bold;">
+                    Message Seller
+                </a>
+            </div>
             <?php endif; ?>
         </div>
         </div>

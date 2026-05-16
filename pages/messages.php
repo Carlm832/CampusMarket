@@ -26,7 +26,7 @@ if ($productId === 0) {
 
 if ($productId > 0) {
     // Fetch context info
-    $stmt = $pdo->prepare("SELECT title, price, discount_percent, image_path FROM products WHERE id = :id");
+    $stmt = $pdo->prepare("SELECT p.title, p.price, p.discount_percent, i.image_path FROM products p LEFT JOIN product_images i ON p.id = i.product_id AND i.is_primary = TRUE WHERE p.id = :id");
     $stmt->execute([':id' => $productId]);
     $product = $stmt->fetch();
 
@@ -74,7 +74,7 @@ if ($productId > 0) {
 require_once __DIR__ . '/../includes/header.php';
 ?>
 
-<div class="container main-content mb-20" style="max-width: 900px; margin-top: 2rem;">
+<div class="container main-content mb-20" style="max-width: 900px; margin-top: 6rem;">
     <!-- Chat Header Context -->
     <div class="glass-panel mb-4 p-4 flex justify-between items-center" style="border-radius: var(--radius-lg); box-shadow: var(--shadow-md);">
         <div class="flex items-center gap-4">
@@ -98,7 +98,7 @@ require_once __DIR__ . '/../includes/header.php';
             <?php if ($productId > 0): ?>
                 <div>
                     <p class="mb-0 text-muted small uppercase tracking-wider font-bold" style="font-size: 0.65rem;">Regarding Item</p>
-                    <a href="<?= BASE_URL ?>/pages/product.php?id=<?= $productId ?>" class="font-bold text-main hover:text-primary transition-colors" style="text-decoration: none; font-size: 0.9rem; display: block; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                    <a href="<?= BASE_URL ?>/pages/product.php?id=<?= $productId ?>" class="font-bold text-main hover:text-primary transition-colors" style="text-decoration: none; font-size: 0.9rem; display: block; max-width: 350px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                         <?= htmlspecialchars($product['title']) ?>
                     </a>
                     <p class="text-primary font-bold mb-0" style="font-size: 0.9rem;"><?= renderProductPrice($product) ?></p>

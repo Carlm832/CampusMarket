@@ -43,6 +43,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors['email'] = 'Please enter a valid email address.';
     } elseif (!isAllowedUniversityEmail($email)) {
         $errors['email'] = 'Only university emails are allowed (' . allowedDomainsList() . ').';
+    } else {
+        $parts = explode('@', $email);
+        if ($parts[1] === 'std.neu.edu.tr' && !preg_match('/^\d+$/', $parts[0])) {
+            $errors['email'] = 'For std.neu.edu.tr, the email must start with your student number (e.g., 20227014@std.neu.edu.tr).';
+        }
     }
 
     // Validate phone (optional)
@@ -89,13 +94,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $pdo->beginTransaction();
         $token = '';
         try {
+            $studentId = null;
+            $parts = explode('@', $email);
+            if ($parts[1] === 'std.neu.edu.tr') {
+                $studentId = $parts[0];
+            }
+
             $ins = $pdo->prepare("
-                INSERT INTO users (username, email, password_hash, role, phone, is_verified)
-                VALUES (:u, :e, :h, 'user', :p, FALSE)
+                INSERT INTO users (username, email, student_id, password_hash, role, phone, is_verified)
+                VALUES (:u, :e, :s, :h, 'user', :p, FALSE)
             ");
             $ins->execute([
                 ':u' => $username,
                 ':e' => $email,
+                ':s' => $studentId,
                 ':h' => $hash,
                 ':p' => $phone !== '' ? $phone : null,
             ]);

@@ -70,7 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $categories = $pdo->query("SELECT * FROM categories ORDER BY name ASC")->fetchAll();
 ?>
 
-<div class="container relative mt-16 mb-20 flex justify-center">
+<div class="container relative mt-24 mb-20 flex justify-center">
     <!-- Decorative elements -->
 
 
