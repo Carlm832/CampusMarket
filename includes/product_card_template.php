@@ -10,14 +10,21 @@ global $pdo; // Ensure PDO is available if included inside a function scope
 ?>
 <?php
 $isOwner = isLoggedIn() && (int)currentUserId() === (int)$prod['user_id'];
-$cardBorder = $isOwner ? 'border: 2px solid var(--secondary);' : 'border: 1px solid var(--border-light);';
+$cardBorder = 'border: 2px solid var(--secondary);';
 ?>
 <div class="card card-hover flex flex-col h-full" style="position: relative; border-radius: var(--radius-lg); <?php echo $cardBorder; ?> background: var(--bg-surface); overflow: hidden; padding: 1.5rem; transition: var(--transition);">
+    
+    <div style="position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(to right, var(--primary), var(--secondary)); z-index: 20;"></div>
+    
     <?php if ($isOwner): ?>
-        <div style="position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(to right, var(--primary), var(--secondary)); z-index: 20;"></div>
         <div style="position: absolute; top: 1rem; right: 1rem; background: white; color: var(--primary); padding: 0.35rem 0.6rem; font-size: 0.6rem; font-weight: 800; text-transform: uppercase; border-radius: 8px; z-index: 10; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 1px solid var(--border-light); display: flex; align-items: center; gap: 1.5px;">
             <svg class="w-2 h-2" fill="currentColor" viewBox="0 0 20 20" style="width: 8px; height: 8px;"><path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/><path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/></svg>
             Your Listing
+        </div>
+    <?php elseif (!empty($prod['seller_name'])): ?>
+        <div style="position: absolute; top: 1rem; right: 1rem; background: white; color: var(--primary); padding: 0.35rem 0.6rem; font-size: 0.6rem; font-weight: 800; text-transform: uppercase; border-radius: 8px; z-index: 10; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 1px solid var(--border-light); display: flex; align-items: center; gap: 3px; backdrop-filter: blur(4px);">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 10px; height: 10px; opacity: 0.7;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+            @<?php echo sanitize($prod['seller_name']); ?>
         </div>
     <?php endif; ?>
     <!-- Main Product Link -->
