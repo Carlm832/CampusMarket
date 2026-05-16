@@ -32,7 +32,7 @@ if (!empty($unreadIds)) {
 require_once __DIR__ . '/../includes/header.php';
 ?>
 
-<div class="container main-content mb-20" style="max-width: 800px; margin-top: 3rem;">
+<div class="container main-content mb-20" style="max-width: 800px; margin-top: 6rem;">
     <div class="glass-panel" style="border-radius: var(--radius-lg); overflow: hidden; border: 1px solid rgba(0,0,0,0.05); box-shadow: var(--shadow-lg);">
         <!-- Inbox Tabs -->
         <div class="flex gap-4 mb-8" style="border-bottom: 1px solid var(--border-light); padding-bottom: 0.5rem; padding: 0 2rem;">

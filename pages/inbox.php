@@ -44,7 +44,7 @@ require_once __DIR__ . '/../includes/header.php';
 /* ── Inbox Styles ─────────────────────────────────────── */
 .inbox-wrap {
     max-width: 820px;
-    margin: 2.5rem auto 5rem;
+    margin: 6rem auto 5rem;
     padding: 0 1.25rem;
 }
 
@@ -148,6 +148,8 @@ require_once __DIR__ . '/../includes/header.php';
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    flex: 1;
+    min-width: 0;
 }
 
 .convo-card.unread .convo-username {

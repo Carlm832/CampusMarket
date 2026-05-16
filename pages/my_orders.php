@@ -59,7 +59,7 @@ $pageTitle = "My Transactions";
 require_once __DIR__ . '/../includes/header.php';
 ?>
 
-<div class="container mt-12 mb-20 relative">
+<div class="container mt-24 mb-20 relative">
     <div class="text-center mb-12">
         <h1 class="gradient-text mb-2" style="font-size: 2.75rem;">Transaction Hub</h1>
         <p class="text-muted text-lg">Track your purchases and manage your sales</p>

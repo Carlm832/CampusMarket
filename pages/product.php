@@ -226,7 +226,7 @@ require_once __DIR__ . '/../includes/header.php';
                     <p class="mb-0 opacity-90 small" style="color: white; font-weight: 500;">You are viewing your own listing. Only you can see these controls.</p>
                 </div>
             </div>
-            <a href="profile.php" class="btn btn-sm" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3);">Go to Dashboard</a>
+            <a href="<?php echo BASE_URL; ?>pages/profile.php" class="btn btn-sm" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3);">Go to Dashboard</a>
         </div>
     <?php endif; ?>
 
@@ -298,7 +298,7 @@ require_once __DIR__ . '/../includes/header.php';
             <!-- SELLER PROFILE CARD (Visible to Everyone) -->
             <div class="scc-wrapper mt-8">
                 <div class="scc-seller-card" style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; border: 1px solid #dbe6f6; border-left: 4px solid #3b82f6; border-radius: 16px; padding: 1.2rem 1.4rem; background: #fff; margin-bottom: 1rem;">
-                    <a href="profile.php?id=<?php echo $product['seller_id']; ?>" class="flex items-center" style="gap: 14px; text-decoration: none;">
+                    <a href="<?php echo BASE_URL; ?>pages/profile.php?id=<?php echo $product['seller_id']; ?>" class="flex items-center" style="gap: 14px; text-decoration: none;">
                         <img src="<?php echo avatarUrl($product['seller_avatar']); ?>" 
                              alt="<?php echo sanitize($product['seller_name']); ?>"
                              style="width: 74px; height: 74px; border-radius: 16px; object-fit: cover; box-shadow: 0 8px 18px rgba(0,0,0,0.08); border: 2px solid white;">
@@ -317,7 +317,7 @@ require_once __DIR__ . '/../includes/header.php';
                             </div>
                         </div>
                     </a>
-                    <a href="profile.php?id=<?php echo $product['seller_id']; ?>" class="flex items-center gap-2 px-6 py-2.5 border border-slate-200 rounded-xl font-bold text-slate-600 text-sm hover:bg-slate-50 transition-all" style="min-width: 168px; justify-content: center;">
+                    <a href="<?php echo BASE_URL; ?>pages/profile.php?id=<?php echo $product['seller_id']; ?>" class="flex items-center gap-2 px-6 py-2.5 border border-slate-200 rounded-xl font-bold text-slate-600 text-sm hover:bg-slate-50 transition-all" style="min-width: 168px; justify-content: center;">
                         View Profile <span style="opacity: 0.45; font-size: 0.8rem; margin-left: 4px;">&#10095;</span>
                     </a>
                 </div>
@@ -457,7 +457,7 @@ require_once __DIR__ . '/../includes/header.php';
                     </div>
 
                     <!-- FOOTER NAVIGATION -->
-                    <a href="profile.php" class="inline-flex items-center gap-2 text-indigo-500 font-bold text-[1rem] mt-12 hover:translate-x-[-4px] transition-transform">
+                    <a href="<?php echo BASE_URL; ?>pages/profile.php" class="inline-flex items-center gap-2 text-indigo-500 font-bold text-[1rem] mt-12 hover:translate-x-[-4px] transition-transform">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="stroke-width: 3;"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
                         Return to Dashboard
                     </a>
