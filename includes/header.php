@@ -23,9 +23,16 @@ $navCategories = $pdo->query("SELECT id, name FROM categories ORDER BY name ASC"
     <meta name="supabase-url" content="<?php echo htmlspecialchars(supabaseUrl(), ENT_QUOTES, 'UTF-8'); ?>">
     <meta name="supabase-anon-key" content="<?php echo htmlspecialchars(supabaseAnonKey(), ENT_QUOTES, 'UTF-8'); ?>">
     <?php endif; ?>
+    <?php if (isLoggedIn()): ?>
+    <meta name="user-id" content="<?php echo currentUserId(); ?>">
+    <?php endif; ?>
     
     <!-- Member 5: Design System -->
-    <link rel="stylesheet" href="<?php echo BASE_URL; ?>public/css/style.css?v=<?php echo filemtime(__DIR__ . '/../public/css/style.css'); ?>">
+    <?php 
+        $cssPath = __DIR__ . '/../public/css/style.css';
+        $cssVer = file_exists($cssPath) ? filemtime($cssPath) : '1';
+    ?>
+    <link rel="stylesheet" href="<?php echo BASE_URL; ?>public/css/style.css?v=<?php echo $cssVer; ?>">
     <?php if (isAdmin()): ?>
     <link rel="stylesheet" href="<?php echo BASE_URL; ?>public/css/admin.css">
     <?php endif; ?>
@@ -44,6 +51,14 @@ $navCategories = $pdo->query("SELECT id, name FROM categories ORDER BY name ASC"
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="<?php echo BASE_URL; ?>public/js/supabase-client.js"></script>
     <?php endif; ?>
+    
+    <!-- Vercel Web Analytics -->
+    <script defer src="https://cdn.vercel-insights.com/v1/script.js"></script>
+    <!-- Vercel Speed Insights -->
+    <script>
+        window.si = window.si || function () { (window.siq = window.siq || []).push(arguments); };
+    </script>
+    <script defer src="/_vercel/speed-insights/script.js"></script>
     
 </head>
 <body>
@@ -86,9 +101,16 @@ $navCategories = $pdo->query("SELECT id, name FROM categories ORDER BY name ASC"
                 <a href="<?php echo BASE_URL; ?>admin/index.php">Admin Panel</a>
                 <a href="<?php echo BASE_URL; ?>pages/logout.php" style="color: var(--error);">Logout</a>
             <?php elseif (isLoggedIn()): ?>
-                <?php $unreadMessages = countUnreadMessages($pdo, currentUserId()); ?>
-                <a href="<?php echo BASE_URL; ?>/pages/inbox.php" class="flex items-center gap-1">
-                    Inbox <?php if ($unreadMessages > 0): ?><span class="badge" style="background: var(--accent); color: white; padding: 0.1rem 0.4rem; font-size: 0.7rem; border-radius: var(--radius-lg);"><?php echo $unreadMessages; ?></span><?php endif; ?>
+                <?php 
+                    $unreadMessages = countUnreadMessages($pdo, currentUserId()); 
+                    $unreadNotifs = countUnreadNotifications($pdo, currentUserId());
+                ?>
+                <a href="<?php echo BASE_URL; ?>/pages/inbox.php" class="flex items-center gap-1" title="Messages">
+                    Inbox <?php if ($unreadMessages > 0): ?><span class="badge badge-primary"><?php echo $unreadMessages; ?></span><?php endif; ?>
+                </a>
+                <a href="<?php echo BASE_URL; ?>/pages/notifications.php" class="flex items-center gap-1" title="Notifications">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 18px; height: 18px;"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                    <?php if ($unreadNotifs > 0): ?><span class="badge badge-accent"><?php echo $unreadNotifs; ?></span><?php endif; ?>
                 </a>
                 <a href="<?php echo BASE_URL; ?>pages/create_listing.php" style="font-weight: 600; color: var(--primary);">Sell Item</a>
                 
@@ -103,6 +125,8 @@ $navCategories = $pdo->query("SELECT id, name FROM categories ORDER BY name ASC"
                         <a href="<?php echo BASE_URL; ?>pages/wishlist.php">Wishlist</a>
                         <a href="<?php echo BASE_URL; ?>pages/promotions.php">Promotions</a>
                         <a href="<?php echo BASE_URL; ?>pages/profile.php">My Profile</a>
+                        <a href="<?php echo BASE_URL; ?>pages/recycle_bin.php">Recycle Bin</a>
+                        <a href="<?php echo BASE_URL; ?>pages/messages.php?other_user_id=1&product_id=0" style="color: var(--secondary); font-weight: bold;">Contact Support</a>
                         <div style="border-top: 1px solid var(--border-light); margin: 0.5rem 0;"></div>
                         <a href="<?php echo BASE_URL; ?>pages/logout.php" style="color: var(--error);">Logout</a>
                     </div>
@@ -124,9 +148,17 @@ $navCategories = $pdo->query("SELECT id, name FROM categories ORDER BY name ASC"
     </div>
 </nav>
 
-<script src="<?php echo BASE_URL; ?>public/js/theme.js?v=<?php echo filemtime(__DIR__ . '/../public/js/theme.js'); ?>"></script>
-<script src="<?php echo BASE_URL; ?>public/js/mobile-menu.js?v=<?php echo filemtime(__DIR__ . '/../public/js/mobile-menu.js'); ?>"></script>
-
+<?php
+    $themeJsPath = __DIR__ . '/../public/js/theme.js';
+    $themeJsVer = file_exists($themeJsPath) ? filemtime($themeJsPath) : '1';
+    $menuJsPath = __DIR__ . '/../public/js/mobile-menu.js';
+    $menuJsVer = file_exists($menuJsPath) ? filemtime($menuJsPath) : '1';
+?>
+<script src="<?php echo BASE_URL; ?>public/js/theme.js?v=<?php echo $themeJsVer; ?>"></script>
+<script src="<?php echo BASE_URL; ?>public/js/mobile-menu.js?v=<?php echo $menuJsVer; ?>"></script>
+<?php if (isLoggedIn()): ?>
+<script src="<?php echo BASE_URL; ?>public/js/notifications-realtime.js"></script>
+<?php endif; ?>
 <div class="container">
     <?php if ($flash = getFlash()): ?>
         <div class="mt-4 flex items-center flash flash-<?php echo sanitize($flash['type']); ?>">

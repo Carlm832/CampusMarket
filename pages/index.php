@@ -8,7 +8,7 @@ $stmt = $pdo->prepare("
     FROM products p
     JOIN categories c ON p.category_id = c.id
     JOIN users u ON p.user_id = u.id
-    LEFT JOIN product_images i ON p.id = i.product_id AND i.is_primary = 1
+    LEFT JOIN product_images i ON p.id = i.product_id AND i.is_primary = TRUE
     WHERE p.status = 'active'
     ORDER BY p.created_at DESC
     LIMIT 6
@@ -16,13 +16,12 @@ $stmt = $pdo->prepare("
 $stmt->execute();
 $latest_products = $stmt->fetchAll();
 
-// Fetch popular categories
+// Fetch popular categories (PostgreSQL-compatible)
 $categories = $pdo->query("
     SELECT c.*, COUNT(p.id) as product_count
     FROM categories c
     LEFT JOIN products p ON c.id = p.category_id AND p.status = 'active'
     GROUP BY c.id
-    HAVING product_count > 0
     ORDER BY product_count DESC
     LIMIT 4
 ")->fetchAll();
@@ -34,7 +33,7 @@ foreach ($categories as &$cat) {
         FROM products p
         JOIN categories c ON p.category_id = c.id
         JOIN users u ON p.user_id = u.id
-        LEFT JOIN product_images i ON p.id = i.product_id AND i.is_primary = 1
+        LEFT JOIN product_images i ON p.id = i.product_id AND i.is_primary = TRUE
         WHERE p.status = 'active' AND p.category_id = ?
         ORDER BY p.created_at DESC
         LIMIT 5
@@ -106,4 +105,8 @@ require_once __DIR__ . '/../includes/header.php';
       </div>
     <?php endforeach; ?>
   </div>
+</div>
+</div>
+
+</div>
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>

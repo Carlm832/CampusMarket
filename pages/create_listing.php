@@ -28,7 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $pdo->beginTransaction();
 
         // 1. Insert Product
-        $stmt = $pdo->prepare("INSERT INTO products (user_id, category_id, title, description, price, `condition`, status) VALUES (?, ?, ?, ?, ?, ?, 'active')");
+        $stmt = $pdo->prepare('INSERT INTO products (user_id, category_id, title, description, price, "condition", status) VALUES (?, ?, ?, ?, ?, ?, \'active\')');
         $stmt->execute([$userId, $categoryId, $title, $description, $price, $condition]);
         $productId = $pdo->lastInsertId();
 
@@ -48,7 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 $upload = handleUpload($fileData, 'products/');
                 if ($upload['success']) {
-                    $isPrimary = ($i === 0) ? 1 : 0;
+                    $isPrimary = ($i === 0);
                     $stmtImg = $pdo->prepare("INSERT INTO product_images (product_id, image_path, is_primary) VALUES (?, ?, ?)");
                     $stmtImg->execute([$productId, $upload['path'], $isPrimary]);
                 }

@@ -15,7 +15,7 @@ $sql = "SELECT p.*, c.name as category_name, u.username as seller_name, i.image_
         FROM products p 
         JOIN categories c ON p.category_id = c.id 
         JOIN users u ON p.user_id = u.id 
-        LEFT JOIN product_images i ON p.id = i.product_id AND i.is_primary = 1
+        LEFT JOIN product_images i ON p.id = i.product_id AND i.is_primary = TRUE
         WHERE p.status = 'active'";
 
 if ($search !== '') {
@@ -65,7 +65,7 @@ $pageTitle = "Browse Marketplace";
 include '../includes/header.php';
 ?>
 
-<div class="min-h-screen pt-8 pb-16 relative">
+<div class="min-h-screen pt-24 pb-16 relative">
 
     <div class="container">
         <!-- Browse Header -->
@@ -76,7 +76,7 @@ include '../includes/header.php';
             </div>
             
             <div class="flex items-center gap-2 text-muted font-medium">
-                <span class="w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
+                <span class="w-2.5 h-2.5 rounded-sm bg-secondary animate-pulse"></span>
                 Live Marketplace
             </div>
         </div>

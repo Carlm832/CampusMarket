@@ -50,7 +50,12 @@
     </div>
 </footer>
 
-<script src="<?php echo BASE_URL; ?>public/js/pwa.js"></script>
+<script>const PWA_SW_URL = "<?php echo BASE_URL; ?>sw.js";</script>
+<?php
+    $pwaJsPath = __DIR__ . '/../public/js/pwa.js';
+    $pwaJsVer = file_exists($pwaJsPath) ? filemtime($pwaJsPath) : '1';
+?>
+<script src="<?php echo BASE_URL; ?>public/js/pwa.js?v=<?php echo $pwaJsVer; ?>"></script>
 
 </body>
 </html>
