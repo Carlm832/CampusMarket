@@ -42,15 +42,15 @@
       "headers": {
         "cache-control": "public, max-age=31536000, immutable"
       },
-      "dest": "/public/$1"
+      "dest": "/api/index.php"
     },
     {
       "src": "/favicon\\.(ico|png)",
-      "dest": "/public/images/logo.png"
+      "dest": "/api/index.php"
     },
     {
       "src": "/(manifest\\.webmanifest|sw\\.js|robots\\.txt)",
-      "dest": "/$1"
+      "dest": "/api/index.php"
     },
     {
       "src": "/((?!public/|manifest\\.webmanifest|sw\\.js|favicon\\.|robots\\.txt).*)$",
