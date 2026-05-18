@@ -156,13 +156,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $dbErr = strtolower($e->getMessage());
             error_log('[register] DB error: ' . $e->getMessage());
             if (str_contains($dbErr, 'duplicate key') || str_contains($dbErr, 'unique') || str_contains($dbErr, 'already exists')) {
-                if (str_contains($dbErr, 'username')) {
-                    $errors['username'] = 'That username is already taken.';
-                } elseif (str_contains($dbErr, 'email')) {
-                    $errors['email'] = 'An account with that email already exists.';
-                } else {
-                    $errors['form'] = 'Account exists already. Try logging in or using a different email/username.';
-                }
+                // Supabase signup already succeeded; duplicate local insert can happen
+                // due to retries/race conditions. Continue with verification flow.
+                setFlash('success', 'Account created. Check your inbox at ' . sanitize($email) . ' to verify your email before logging in.');
+                redirect(BASE_URL . 'pages/login.php');
             } else {
                 $errors['form'] = 'Could not create account right now. Please try again.';
             }
