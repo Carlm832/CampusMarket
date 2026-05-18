@@ -7,6 +7,7 @@ $currentUserId = currentUserId();
 
 // Handle specific actions like marking single/all as read
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    verifyCsrfToken();
     if (isset($_POST['action']) && $_POST['action'] === 'mark_all') {
         $stmt = $pdo->prepare("UPDATE notifications SET is_read = TRUE WHERE user_id = :uid");
         $stmt->execute([':uid' => $currentUserId]);
@@ -61,6 +62,7 @@ require_once __DIR__ . '/../includes/header.php';
                 <h1 class="mb-0 text-main font-bold" style="letter-spacing: -0.5px; font-size: 2rem;">Activity <span class="gradient-text" style="background: linear-gradient(135deg, #ef4444, #f43f5e); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Updates</span></h1>
                 <?php if (!empty($notifications)): ?>
                     <form method="post" class="m-0">
+                        <?php echo csrfTokenField(); ?>
                         <button type="submit" name="action" value="mark_all" class="btn btn-secondary btn-sm hover-scale shadow-sm" style="border-radius: var(--radius-lg); padding: 0.5rem 1rem; border: 1px solid var(--border-focus);"><svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>Mark All Read</button>
                     </form>
                 <?php endif; ?>

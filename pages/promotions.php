@@ -23,6 +23,7 @@ if (!$promoPaymentsTableExists) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    verifyCsrfToken();
     $action = sanitize($_POST['action'] ?? '');
 
     if ($action === 'submit_payment') {
@@ -150,6 +151,7 @@ require_once __DIR__ . '/../includes/header.php';
 
                 <!-- Stripe Call to Action -->
                 <form action="create_stripe_session.php" method="POST" id="stripe-form">
+                    <?php echo csrfTokenField(); ?>
                     <input type="hidden" name="payment_type" value="promotion">
                     <input type="hidden" name="product_id" id="stripe_product_id">
                     <input type="hidden" name="amount" id="stripe_amount" value="50.00">
@@ -220,6 +222,7 @@ require_once __DIR__ . '/../includes/header.php';
         <p class="text-muted mb-6" style="font-size: 0.9rem;">Submit your transaction details for admin review. This may take up to 24 hours.</p>
         
         <form method="post">
+            <?php echo csrfTokenField(); ?>
             <input type="hidden" name="action" value="submit_payment">
             <input type="hidden" name="payment_type" value="promotion">
             <input type="hidden" name="product_id" id="manual_product_id">

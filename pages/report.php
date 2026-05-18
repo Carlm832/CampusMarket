@@ -5,6 +5,7 @@ require_once __DIR__ . '/../includes/header.php';
 
 $message = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    verifyCsrfToken();
     $issueType = sanitize($_POST['issue_type'] ?? '');
     $link = sanitize($_POST['link'] ?? '');
     $description = sanitize($_POST['description'] ?? '');
@@ -59,6 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?= $message ?>
 
         <form action="report.php" method="POST">
+            <?php echo csrfTokenField(); ?>
             <div class="mb-3">
                 <label for="issue_type" class="form-label" style="font-weight: 600; color: var(--text-main);">Issue Type</label>
                 <select name="issue_type" id="issue_type" class="form-control premium-input" required style="border-radius: var(--radius-md); padding: 0.75rem; border: 1px solid var(--border-light); width: 100%;">

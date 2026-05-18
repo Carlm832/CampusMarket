@@ -154,6 +154,7 @@ require_once __DIR__ . '/../includes/header.php';
                     </div>
                 </div>
                 <form action="api_messages.php" method="POST" class="m-0">
+                    <?php echo csrfTokenField(); ?>
                     <input type="hidden" name="action" value="propose">
                     <input type="hidden" name="product_id" value="<?= $productId ?>">
                     <button type="button" class="btn btn-primary btn-sm shadow-md font-bold uppercase tracking-wider hover-scale" 
@@ -335,6 +336,7 @@ chatForm.addEventListener('submit', (e) => {
     formData.append('product_id', productId);
     formData.append('receiver_id', otherUserId);
     formData.append('body', text);
+    formData.append('csrf_token', window.__csrfToken || '');
     
     chatInput.value = '';
     chatInput.focus();
@@ -502,6 +504,7 @@ function confirmDeal() {
     formData.append('action', 'confirm_deal');
     formData.append('product_id', productId);
     formData.append('other_user_id', otherUserId);
+    formData.append('csrf_token', window.__csrfToken || '');
 
     fetch('api_messages.php', { method: 'POST', body: formData })
         .then(res => res.json())

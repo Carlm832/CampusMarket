@@ -19,10 +19,6 @@ $navCategories = $pdo->query("SELECT id, name FROM categories ORDER BY name ASC"
     <link rel="manifest" href="<?php echo BASE_URL; ?>manifest.webmanifest">
     <link rel="icon" type="image/png" href="<?php echo BASE_URL; ?>public/images/logo.png">
     <link rel="apple-touch-icon" href="<?php echo BASE_URL; ?>public/images/logo.png">
-    <?php if (isSupabaseConfigured()): ?>
-    <meta name="supabase-url" content="<?php echo htmlspecialchars(supabaseUrl(), ENT_QUOTES, 'UTF-8'); ?>">
-    <meta name="supabase-anon-key" content="<?php echo htmlspecialchars(supabaseAnonKey(), ENT_QUOTES, 'UTF-8'); ?>">
-    <?php endif; ?>
     <?php if (isLoggedIn()): ?>
     <meta name="user-id" content="<?php echo currentUserId(); ?>">
     <?php endif; ?>
@@ -48,9 +44,16 @@ $navCategories = $pdo->query("SELECT id, name FROM categories ORDER BY name ASC"
         })();
     </script>
     <?php if (isSupabaseConfigured()): ?>
+    <script>
+        window.__env = {
+            SUPABASE_URL: <?php echo json_encode(supabaseUrl()); ?>,
+            SUPABASE_ANON_KEY: <?php echo json_encode(supabaseAnonKey()); ?>
+        };
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="<?php echo BASE_URL; ?>public/js/supabase-client.js"></script>
     <?php endif; ?>
+    <script>window.__csrfToken = <?php echo json_encode($_SESSION['csrf_token'] ?? ''); ?>;</script>
     
     <!-- Vercel Web Analytics -->
     <script defer src="https://cdn.vercel-insights.com/v1/script.js"></script>

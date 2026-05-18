@@ -43,6 +43,7 @@ $effectivePrice = getDiscountedPrice($product);
 
 $error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    verifyCsrfToken();
     $meetingPoint = sanitize($_POST['meeting_point'] ?? '');
     $notes = sanitize($_POST['notes'] ?? '');
     
@@ -134,6 +135,7 @@ require_once __DIR__ . '/../includes/header.php';
                 <?php endif; ?>
 
                 <form method="POST" class="auth-form">
+                    <?php echo csrfTokenField(); ?>
                     <div class="form-row mb-6">
                 <label class="form-label" for="meeting_point">Proposed Meeting Point *</label>
                         <input type="text" name="meeting_point" id="meeting_point" class="w-full premium-input bg-gray-50 text-lg" style="padding: 1rem; border-radius: var(--radius-lg);" placeholder="e.g. Student Union Level 1, Main Library" required>

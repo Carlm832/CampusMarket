@@ -18,6 +18,8 @@ $old    = ['username' => '', 'email' => '', 'phone' => ''];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
+    verifyCsrfToken();
+
     // Gather + normalize
     $username = trim($_POST['username'] ?? '');
     $email    = trim(strtolower($_POST['email'] ?? ''));
@@ -170,6 +172,7 @@ require_once '../includes/header.php';
   <?php endif; ?>
 
   <form method="post" novalidate>
+    <?php echo csrfTokenField(); ?>
     <div class="form-row mb-5">
       <label for="username" class="form-label">Username</label>
       <input type="text" id="username" name="username"

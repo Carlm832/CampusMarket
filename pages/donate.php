@@ -30,6 +30,7 @@ require_once __DIR__ . '/../includes/header.php';
                 <h3 class="mb-6 font-bold text-main uppercase tracking-widest text-center" style="font-size: 0.8rem; letter-spacing: 0.15em;">Select Your Amount</h3>
                 
                 <form action="create_stripe_session.php" method="POST" id="donation-form" style="width: 100%;">
+                    <?php echo csrfTokenField(); ?>
                     <input type="hidden" name="payment_type" value="donation">
                     
                     <div class="grid grid-cols-3 gap-6 mb-8">

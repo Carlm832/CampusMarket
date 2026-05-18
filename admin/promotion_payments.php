@@ -22,6 +22,7 @@ if (!$promoPaymentsTableExists) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['payment_id'], $_POST['action'])) {
+    verifyCsrfToken();
     $paymentId = (int)$_POST['payment_id'];
     $action = sanitize($_POST['action']);
     $adminNote = sanitize($_POST['admin_note'] ?? '');
@@ -136,6 +137,7 @@ $rows = $pdo->query('
                         <td class="p-4 text-right" style="border-bottom: 1px solid var(--border-light); min-width: 260px;">
                             <?php if ($row['status'] === 'pending'): ?>
                                 <form method="post" class="m-0" style="display:flex; gap:0.4rem; justify-content:flex-end; align-items:center;">
+                                    <?php echo csrfTokenField(); ?>
                                     <input type="hidden" name="payment_id" value="<?php echo (int)$row['id']; ?>">
                                     <input type="text" name="admin_note" class="premium-input" placeholder="Admin note" style="max-width: 130px; padding: 0.35rem 0.5rem; font-size: 0.8rem;">
                                     <button type="submit" name="action" value="approve" class="btn btn-primary btn-sm">Approve</button>
