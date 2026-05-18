@@ -57,7 +57,7 @@ function supabaseAuthRequest(string $method, string $path, ?array $payload = nul
     return [
         'ok' => false,
         'status' => $status,
-        'error' => $curlErr !== '' ? $curlErr : (is_array($decoded) ? ($decoded['msg'] ?? $decoded['error_description'] ?? $decoded['error'] ?? 'Supabase auth request failed') : (string) $body),
+        'error' => $curlErr !== '' ? $curlErr : (is_array($decoded) ? ($decoded['msg'] ?? $decoded['message'] ?? $decoded['error_description'] ?? $decoded['error'] ?? $decoded['code'] ?? 'Supabase auth request failed') : (string) $body),
         'data' => is_array($decoded) ? $decoded : [],
     ];
 }
