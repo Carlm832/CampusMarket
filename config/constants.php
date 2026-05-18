@@ -13,8 +13,8 @@ $envBaseUrl = getenv('BASE_URL');
 
 if ($envBaseUrl) {
     $base_url = rtrim($envBaseUrl, '/');
-    // Guard against misconfigured BASE_URL values like .../pages or .../api.
-    $base_url = preg_replace('#/(pages|admin|actions|api)$#i', '', $base_url) ?: $base_url;
+    // Guard against misconfigured BASE_URL values like .../pages or .../api (with/without trailing slash).
+    $base_url = preg_replace('#/(pages|admin|actions|api)/?$#i', '', $base_url) ?: $base_url;
 } else {
     $isLocalHost = in_array(strtolower($host), ['localhost', '127.0.0.1'], true)
         || str_starts_with(strtolower($host), 'localhost:')
