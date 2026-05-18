@@ -1,7 +1,6 @@
 <?php
-// pages/verify_email.php — Member 2
-// Consumes the ?token=... param from the email, marks the user verified,
-// and deletes the token. All cases redirect to login with a flash message.
+// pages/verify_email.php
+// Handles Supabase email confirmation callback and keeps a legacy token fallback.
 
 require_once '../config/constants.php';
 require_once '../includes/bootstrap.php';
@@ -31,10 +30,6 @@ if (($_GET['source'] ?? '') === 'supabase') {
     if ($verifiedEmail !== '') {
         $upd = $pdo->prepare('UPDATE users SET is_verified = TRUE WHERE LOWER(email) = LOWER(:e)');
         $upd->execute([':e' => $verifiedEmail]);
-    }
-
-    if (!empty($_SESSION['pending_verify_email']) && strtolower((string)$_SESSION['pending_verify_email']) === $verifiedEmail) {
-        unset($_SESSION['pending_verify_email']);
     }
 
     ?>
@@ -124,3 +119,5 @@ try {
 
 setFlash('success', 'Email verified! You can now log in.');
 redirect(BASE_URL . 'pages/login.php');
+
+

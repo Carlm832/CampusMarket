@@ -1,7 +1,7 @@
 <?php
 // pages/register.php — Member 2
 // Create a CampusMarket account with university-email allowlist
-// and email verification via Resend. No auto-login: user must verify
+// and email verification via Supabase Auth. No auto-login: user must verify
 // before they can sign in.
 
 require_once '../config/constants.php';
@@ -14,50 +14,10 @@ if (isLoggedIn()) {
 
 $errors = [];
 $old    = ['username' => '', 'email' => '', 'phone' => ''];
-$pendingVerifyEmail = $_SESSION['pending_verify_email'] ?? '';
-$showVerifyStep = (($_GET['step'] ?? '') === 'verify') && is_string($pendingVerifyEmail) && $pendingVerifyEmail !== '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     verifyCsrfToken();
-
-    if (($_POST['action'] ?? '') === 'check_verified') {
-        $email = trim((string)($_SESSION['pending_verify_email'] ?? ''));
-        $password = $_POST['password_check'] ?? '';
-
-        if ($email === '') {
-            $errors['form'] = 'Verification session expired. Please register again.';
-            $showVerifyStep = false;
-        } elseif ($password === '') {
-            $errors['password_check'] = 'Please enter your password to confirm verification.';
-            $showVerifyStep = true;
-        } else {
-            $auth = supabaseAuthRequest('POST', 'token?grant_type=password', [
-                'email' => $email,
-                'password' => $password,
-            ]);
-
-            if (!$auth['ok']) {
-                $msg = strtolower((string)($auth['error'] ?? ''));
-                if (strpos($msg, 'email not confirmed') !== false) {
-                    $errors['form'] = 'Your email is not verified yet. Please check your inbox and click the verification link.';
-                } else {
-                    $errors['form'] = 'Verification check failed. Make sure your password is correct and try again.';
-                }
-                $showVerifyStep = true;
-            } else {
-                $authUser = $auth['data']['user'] ?? [];
-                if (empty($authUser['email_confirmed_at'])) {
-                    $errors['form'] = 'Your email is not verified yet. Please check your inbox and click the verification link.';
-                    $showVerifyStep = true;
-                } else {
-                    unset($_SESSION['pending_verify_email']);
-                    setFlash('success', 'Email verified. You can now log in.');
-                    redirect(BASE_URL . 'pages/login.php');
-                }
-            }
-        }
-    } else {
     // Gather + normalize
     $username = trim($_POST['username'] ?? '');
     $email    = trim(strtolower($_POST['email'] ?? ''));
@@ -174,14 +134,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ]);
 
             $pdo->commit();
-            $_SESSION['pending_verify_email'] = $email;
-            redirect(BASE_URL . 'pages/register.php?step=verify');
+            setFlash('success', 'Account created. Check your inbox at ' . sanitize($email) . ' to verify your email before logging in.');
+            redirect(BASE_URL . 'pages/login.php');
         } catch (Throwable $e) {
             $pdo->rollBack();
             error_log('[register] DB error: ' . $e->getMessage());
             $errors['form'] = 'Could not create account. Please try again.';
         }
-    }
     }
 }
 
@@ -192,58 +151,6 @@ require_once '../includes/header.php';
 
 <div class="auth-page">
   <div class="auth-card">
-  <?php if ($showVerifyStep): ?>
-  <div class="auth-head text-center mb-8">
-    <h1>Verify your email</h1>
-    <p>We sent a verification link to <strong><?php echo sanitize($pendingVerifyEmail); ?></strong>.</p>
-  </div>
-
-  <?php if (!empty($errors['form'])): ?>
-    <div class="flash flash-error"><?php echo sanitize($errors['form']); ?></div>
-  <?php endif; ?>
-
-  <form method="post" novalidate>
-    <?php echo csrfTokenField(); ?>
-    <input type="hidden" name="action" value="check_verified">
-    <div class="form-row mb-5">
-      <label for="password_check" class="form-label">Confirm your password</label>
-      <div class="input-with-toggle">
-        <input type="password" id="password_check" name="password_check"
-               placeholder="Enter your account password"
-               required autocomplete="current-password"
-               class="premium-input <?php echo isset($errors['password_check']) ? 'input-invalid' : ''; ?>">
-        <button type="button" class="password-toggle" data-target="password_check" aria-label="Show password">
-          <svg class="icon-show" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-               fill="none" stroke="currentColor" stroke-width="2"
-               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/>
-            <circle cx="12" cy="12" r="3"/>
-          </svg>
-          <svg class="icon-hide" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-               fill="none" stroke="currentColor" stroke-width="2"
-               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-6.5 0-10-7-10-7a19.8 19.8 0 0 1 5.06-5.94"/>
-            <path d="M9.9 4.24A10.94 10.94 0 0 1 12 4c6.5 0 10 7 10 7a19.9 19.9 0 0 1-3.17 4.19"/>
-            <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/>
-            <path d="M1 1l22 22"/>
-          </svg>
-        </button>
-      </div>
-      <?php if (isset($errors['password_check'])): ?>
-        <div class="error"><?php echo sanitize($errors['password_check']); ?></div>
-      <?php endif; ?>
-    </div>
-
-    <button type="submit" class="btn btn-primary w-full py-4 shadow-sm" style="border-radius: var(--radius-md); font-weight: 600; font-size: 1.1rem; letter-spacing: 0.01em;">
-      I have verified
-    </button>
-  </form>
-
-  <p class="auth-foot mt-10">
-    Already verified?
-    <a href="<?php echo BASE_URL; ?>pages/login.php" style="font-weight: 600;">Go to login</a>
-  </p>
-  <?php else: ?>
   <div class="auth-head text-center mb-8">
     <h1>Create your account</h1>
     <p>University email required. We'll send you a link to verify it.</p>
@@ -372,7 +279,6 @@ require_once '../includes/header.php';
     Already have an account?
     <a href="<?php echo BASE_URL; ?>pages/login.php" style="font-weight: 600;">Log in</a>
   </p>
-  <?php endif; ?>
 </div>
 </div>
 
