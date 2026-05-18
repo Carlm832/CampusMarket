@@ -35,6 +35,7 @@ $pageTitle = sanitize($user['username']) . "'s Profile";
 $activeTab = ($_GET['tab'] ?? 'listings') === 'about' ? 'about' : 'listings';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $isSelf && isset($_POST['action'], $_POST['product_id'])) {
+    verifyCsrfToken();
     $action = sanitize($_POST['action']);
     $productId = (int)($_POST['product_id'] ?? 0);
 
@@ -849,6 +850,7 @@ body.dark-mode .btn-white-solid:hover {
                                     <div class="mt-4" style="border-top: 1px solid var(--border-light); padding-top: 0.75rem; display: flex; flex-direction: column; gap: 0.5rem;">
                                         <!-- Price Update Form -->
                                         <form method="post" style="margin: 0;">
+                                            <?php echo csrfTokenField(); ?>
                                             <input type="hidden" name="action" value="update_price">
                                             <input type="hidden" name="product_id" value="<?php echo (int)$prod['id']; ?>">
                                             <div style="display: flex; gap: 0.25rem;">
@@ -860,6 +862,7 @@ body.dark-mode .btn-white-solid:hover {
                                         <!-- Discount Form -->
                                         <?php if (isDiscountEligible($prod)): ?>
                                             <form method="post" class="discount-form">
+                                                <?php echo csrfTokenField(); ?>
                                                 <input type="hidden" name="action" value="set_discount">
                                                 <input type="hidden" name="product_id" value="<?php echo (int)$prod['id']; ?>">
                                                 <div style="display: flex; gap: 0.25rem;">
@@ -877,6 +880,7 @@ body.dark-mode .btn-white-solid:hover {
 
                                         <!-- Delete Form (Move to Bin) -->
                                         <form method="post" onsubmit="return confirm('Move to Recycle Bin?')">
+                                            <?php echo csrfTokenField(); ?>
                                             <input type="hidden" name="action" value="delete_listing">
                                             <input type="hidden" name="product_id" value="<?php echo (int)$prod['id']; ?>">
                                             <button type="submit" class="btn btn-danger btn-sm w-full" style="padding: 0.35rem 0.6rem; font-size: 0.75rem; background: #fee2e2; color: #ef4444; border: none; font-weight: 700;">Delete Listing</button>

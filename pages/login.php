@@ -17,6 +17,8 @@ $unverified = false;   // true → render "check your inbox" message instead of 
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
+    verifyCsrfToken();
+
     $identity = trim($_POST['identity'] ?? '');
     $password = $_POST['password'] ?? '';
 
@@ -95,6 +97,7 @@ require_once '../includes/header.php';
         <?php endif; ?>
 
         <form method="post" novalidate>
+            <?php echo csrfTokenField(); ?>
             <div class="form-row mb-6">
                 <label for="identity" class="form-label">Email or username</label>
                 <input type="text" id="identity" name="identity"

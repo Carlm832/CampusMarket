@@ -7,6 +7,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     redirect(BASE_URL . 'pages/promotions.php');
 }
 
+verifyCsrfToken();
+
 $paymentType = sanitize($_POST['payment_type'] ?? '');
 $productId   = (int)($_POST['product_id'] ?? 0);
 $amount      = (float)($_POST['amount'] ?? 0);

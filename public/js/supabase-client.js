@@ -1,14 +1,10 @@
 (function () {
-  var urlMeta = document.querySelector('meta[name="supabase-url"]');
-  var keyMeta = document.querySelector('meta[name="supabase-anon-key"]');
+  // Read Supabase config from window.__env (injected by PHP), NOT from meta tags.
+  var env = window.__env || {};
+  var url = (env.SUPABASE_URL || "").trim();
+  var anonKey = (env.SUPABASE_ANON_KEY || "").trim();
 
-  if (!urlMeta || !keyMeta || !window.supabase || !window.supabase.createClient) {
-    return;
-  }
-
-  var url = (urlMeta.content || "").trim();
-  var anonKey = (keyMeta.content || "").trim();
-  if (!url || !anonKey) {
+  if (!url || !anonKey || !window.supabase || !window.supabase.createClient) {
     return;
   }
 

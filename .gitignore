@@ -26,3 +26,8 @@ node_modules/
 test-results/
 playwright-report/
 playwright/.cache/
+
+# Debug & test artifacts (never commit)
+test-*.php
+*-debug.php
+

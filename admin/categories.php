@@ -10,6 +10,7 @@ $pageTitle = "Manage Categories";
 
 // Handle Add Category
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_category'])) {
+    verifyCsrfToken();
     $name = sanitize($_POST['name']);
     $slug = sanitize(strtolower(str_replace(' ', '-', $name)));
 
@@ -85,6 +86,7 @@ require_once '../includes/header.php';
                 </div>
                 <div class="card-body">
                     <form method="POST">
+                        <?php echo csrfTokenField(); ?>
                         <div class="form-group">
                             <label class="form-label">Category Name</label>
                             <input type="text" name="name" class="form-control" placeholder="e.g. Electronics, Books" required>

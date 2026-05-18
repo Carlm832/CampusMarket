@@ -10,6 +10,7 @@ $pageTitle = "Manage Tags";
 
 // Handle Add Tag
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_tag'])) {
+    verifyCsrfToken();
     $name = sanitize($_POST['name']);
     $slug = sanitize(strtolower(str_replace(' ', '-', $name)));
 
@@ -87,6 +88,7 @@ require_once '../includes/header.php';
                 </div>
                 <div class="card-body">
                     <form method="POST">
+                        <?php echo csrfTokenField(); ?>
                         <div class="form-group">
                             <label class="form-label">Tag Name</label>
                             <input type="text" name="name" class="form-control" placeholder="e.g. Vintage, Study, Tech" required>

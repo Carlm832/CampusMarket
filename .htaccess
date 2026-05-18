@@ -1,3 +1,9 @@
+# ============================================================
+# WARNING: This file has NO EFFECT on Vercel (serverless).
+# Route guards are enforced in vercel.json instead.
+# This file only applies to local Apache/XAMPP development.
+# ============================================================
+
 # Deny direct directory listing
 Options -Indexes
 

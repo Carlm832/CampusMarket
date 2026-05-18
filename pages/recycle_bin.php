@@ -17,6 +17,7 @@ $cleanup->execute();
 
 // Handle actions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    verifyCsrfToken();
     $productId = (int)($_POST['product_id'] ?? 0);
     $action = $_POST['action'] ?? '';
 
@@ -107,6 +108,7 @@ require_once '../includes/header.php';
                             
                             <div class="flex items-center gap-3">
                                 <form method="post" style="flex: 1;">
+                                    <?php echo csrfTokenField(); ?>
                                     <input type="hidden" name="product_id" value="<?php echo $prod['id']; ?>">
                                     <input type="hidden" name="action" value="restore">
                                     <button type="submit" class="btn btn-outline w-full py-3 hover-scale" style="border-radius: 14px; font-weight: 800; border-color: var(--primary); color: var(--primary); font-size: 0.9rem; background: transparent;">
@@ -114,6 +116,7 @@ require_once '../includes/header.php';
                                     </button>
                                 </form>
                                 <form method="post" onsubmit="return confirm('Delete this listing forever? This action cannot be undone.')">
+                                    <?php echo csrfTokenField(); ?>
                                     <input type="hidden" name="product_id" value="<?php echo $prod['id']; ?>">
                                     <input type="hidden" name="action" value="delete_permanent">
                                     <button type="submit" class="btn btn-danger py-3 px-5 hover-scale shadow-sm" style="border-radius: 14px; background: var(--error); color: #fff; border: none; display: flex; align-items: center; justify-content: center;">

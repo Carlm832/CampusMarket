@@ -558,3 +558,44 @@ function formatJoinDate(string $timestamp): string {
     $ts = strtotime($timestamp);
     return $ts ? date('M Y', $ts) : 'Unknown';
 }
+
+/* ─── CSRF Protection ─────────────────────────────────────── */
+
+/**
+ * Return a hidden <input> containing the current CSRF token.
+ * Drop this inside every <form method="post">.
+ */
+function csrfTokenField(): string {
+    return '<input type="hidden" name="csrf_token" value="'
+        . htmlspecialchars($_SESSION['csrf_token'] ?? '', ENT_QUOTES, 'UTF-8')
+        . '">';
+}
+
+/**
+ * Abort with 403 if the submitted csrf_token does not match the session.
+ * Call at the top of every POST handler.
+ * Checks both POST field and X-CSRF-Token header (for AJAX).
+ */
+function verifyCsrfToken(): void {
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') return;
+    $token = $_POST['csrf_token']
+        ?? ($_SERVER['HTTP_X_CSRF_TOKEN'] ?? '');
+    if (!hash_equals($_SESSION['csrf_token'] ?? '', $token)) {
+        http_response_code(403);
+        die('403 Forbidden — Invalid or missing CSRF token.');
+    }
+}
+
+/**
+ * Same as verifyCsrfToken but returns a JSON error for API endpoints.
+ */
+function verifyCsrfTokenJson(): void {
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') return;
+    $token = $_POST['csrf_token']
+        ?? ($_SERVER['HTTP_X_CSRF_TOKEN'] ?? '');
+    if (!hash_equals($_SESSION['csrf_token'] ?? '', $token)) {
+        http_response_code(403);
+        echo json_encode(['error' => 'Invalid or missing CSRF token.']);
+        exit;
+    }
+}
