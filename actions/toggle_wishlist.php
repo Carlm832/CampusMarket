@@ -8,6 +8,8 @@ if (!isLoggedIn()) {
     redirect(BASE_URL . 'pages/login.php');
 }
 
+verifyCsrfToken();
+
 $user_id = currentUserId();
 $product_id = $_POST['product_id'] ?? null;
 

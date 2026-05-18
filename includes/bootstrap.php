@@ -5,8 +5,19 @@
 
 require_once __DIR__ . '/../config/constants.php';
 if (session_status() === PHP_SESSION_NONE) {
+    // Security: harden session cookies
+    ini_set('session.cookie_httponly', 1);
+    ini_set('session.cookie_secure', 1);
+    ini_set('session.cookie_samesite', 'Lax');
+    ini_set('session.use_strict_mode', 1);
+
     session_name(SESSION_NAME);
     session_start();
+}
+
+// CSRF token — generated once per session, validated on every POST
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
 
 // Simple .env parser for local development

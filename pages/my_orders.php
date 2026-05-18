@@ -13,6 +13,7 @@ $currentUserId = currentUserId();
 
 // Handle status updates
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'], $_POST['order_id'])) {
+    verifyCsrfToken();
     $action = sanitize($_POST['action']);
     $orderId = (int) $_POST['order_id'];
     
@@ -104,6 +105,7 @@ require_once __DIR__ . '/../includes/header.php';
                             </div>
                             <?php if ($order['status'] === 'pending'): ?>
                                 <form method="post" class="ml-2 m-0">
+                                    <?php echo csrfTokenField(); ?>
                                     <input type="hidden" name="order_id" value="<?php echo $order['id']; ?>">
                                     <button type="submit" name="action" value="cancel" class="btn btn-danger btn-sm shadow-sm hover-scale" style="border-radius: var(--radius-lg); width: 35px; height: 35px; padding: 0; display: flex; align-items: center; justify-content: center;" title="Cancel Order" onclick="return confirm('Cancel this purchase request?')">✕</button>
                                 </form>
@@ -156,10 +158,12 @@ require_once __DIR__ . '/../includes/header.php';
                                 <hr style="border: none; border-top: 1px solid rgba(0,0,0,0.05); margin: 1rem 0;">
                                 <div class="flex gap-3 mt-4">
                                     <form method="post" class="flex-grow m-0">
+                                        <?php echo csrfTokenField(); ?>
                                         <input type="hidden" name="order_id" value="<?php echo $order['id']; ?>">
                                         <button type="submit" name="action" value="confirm" class="btn btn-primary w-full py-2 hover-scale shadow-sm font-bold" style="border-radius: var(--radius-md);">Accept & Confirm Sold</button>
                                     </form>
                                     <form method="post" class="m-0">
+                                        <?php echo csrfTokenField(); ?>
                                         <input type="hidden" name="order_id" value="<?php echo $order['id']; ?>">
                                         <button type="submit" name="action" value="cancel" class="btn btn-secondary py-2 hover-scale shadow-sm" style="border-radius: var(--radius-md);">Reject</button>
                                     </form>

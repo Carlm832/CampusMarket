@@ -32,6 +32,8 @@ $errors = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
+    verifyCsrfToken();
+
     $username = trim($_POST['username'] ?? '');
     $phone    = trim($_POST['phone'] ?? '');
 
@@ -125,6 +127,7 @@ require_once '../includes/header.php';
 
       <div style="padding: 2.5rem;">
         <form method="post" enctype="multipart/form-data" novalidate>
+            <?php echo csrfTokenField(); ?>
             <!-- Avatar Section -->
             <div class="flex items-center gap-6 mb-8 p-4" style="background: rgba(255,255,255,0.5); border-radius: var(--radius-md); border: 1px dashed var(--border-focus);">
                 <img src="<?php echo sanitize(avatarUrl($user['avatar'])); ?>" alt="Avatar" class="shadow-sm" style="width: 90px; height: 90px; border-radius: var(--radius-xl); object-fit: cover; border: 3px solid white;">

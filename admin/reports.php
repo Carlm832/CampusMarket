@@ -13,6 +13,7 @@ $pageTitle = "Moderation Queue";
 
 // Handle Actions
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'], $_POST['report_id'])) {
+    verifyCsrfToken();
     $action   = sanitize($_POST['action']);
     $reportId = (int)$_POST['report_id'];
 
@@ -93,6 +94,7 @@ $reports = $stmt->fetchAll();
                             </td>
                             <td class="p-4 text-right" style="border-bottom: 1px solid var(--border-light);">
                                 <form method="POST" class="flex justify-end gap-2 m-0">
+                                    <?php echo csrfTokenField(); ?>
                                     <input type="hidden" name="report_id" value="<?php echo $r['id']; ?>">
                                     <button type="submit" name="action" value="dismiss" class="btn btn-secondary btn-sm hover-scale shadow-sm" style="border-radius: var(--radius-lg);">Keep & Dismiss</button>
                                     <button type="submit" name="action" value="flag" class="btn btn-danger btn-sm hover-scale shadow-sm" style="border-radius: var(--radius-lg);" onclick="return confirm('Flag this item and hide it from the marketplace?')">Flag & Remove</button>

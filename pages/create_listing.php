@@ -17,6 +17,7 @@ $error = '';
 
 // Handle Form Submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    verifyCsrfToken();
     $title       = sanitize($_POST['title']);
     $categoryId  = (int)$_POST['category_id'];
     $price       = (float)$_POST['price'];
@@ -89,6 +90,7 @@ $categories = $pdo->query("SELECT * FROM categories ORDER BY name ASC")->fetchAl
 
         <div class="glass-panel" style="padding: 2.5rem; border-radius: var(--radius-xl); box-shadow: var(--shadow-xl); z-index: 10;">
             <form action="create_listing.php" method="POST" enctype="multipart/form-data" class="grid gap-6">
+                <?php echo csrfTokenField(); ?>
                 
                 <div class="form-group">
                     <label class="font-bold mb-2 block" style="color: var(--text-main);">What are you selling? *</label>

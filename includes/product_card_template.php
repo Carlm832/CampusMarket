@@ -76,6 +76,7 @@ $cardBorder = 'border: 2px solid var(--secondary);';
     <!-- Save for Later Button (Wishlist) -->
     <div style="position: absolute; bottom: 1.5rem; right: 1.5rem; z-index: 20;">
         <form action="<?php echo BASE_URL; ?>actions/toggle_wishlist.php" method="POST" style="margin: 0;">
+            <?php echo csrfTokenField(); ?>
             <input type="hidden" name="product_id" value="<?php echo $prod['id']; ?>">
             <?php 
                 $isSaved = false;

@@ -123,6 +123,7 @@ if ($action === 'fetch') {
 }
 
 if ($action === 'send') {
+    verifyCsrfTokenJson();
     $productId = (int)($_POST['product_id'] ?? 0);
     $receiverId = (int)($_POST['receiver_id'] ?? 0);
     $body = sanitize($_POST['body'] ?? '');
@@ -164,6 +165,7 @@ if ($action === 'send') {
 }
 
 if ($action === 'propose') {
+    verifyCsrfTokenJson();
     $productId = (int)($_POST['product_id'] ?? 0);
     
     if (!$productId) {
@@ -336,6 +338,7 @@ if ($action === 'check_deal_status') {
 
 // ─── Deal Handshake: Confirm Deal ────────────────────────
 if ($action === 'confirm_deal') {
+    verifyCsrfTokenJson();
     $productId = (int)($_POST['product_id'] ?? 0);
     $otherUserId = (int)($_POST['other_user_id'] ?? 0);
 

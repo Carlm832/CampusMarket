@@ -65,6 +65,7 @@ $isOwner = isLoggedIn() && ((int)currentUserId() === (int)$product['seller_id'] 
 
 // Handle Price Update
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $isOwner && isset($_POST['action']) && $_POST['action'] === 'update_price') {
+    verifyCsrfToken();
     $newPrice = (float)($_POST['new_price'] ?? 0);
     if ($newPrice > 0) {
         $stmtUp = $pdo->prepare("UPDATE products SET price = :price, updated_at = NOW() WHERE id = :id");
@@ -78,6 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $isOwner && isset($_POST['action'])
 
 // Handle Mark as Sold (Now moves to bin too)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $isOwner && isset($_POST['action']) && $_POST['action'] === 'mark_sold') {
+    verifyCsrfToken();
     $stmt = $pdo->prepare("UPDATE products SET status = 'deleted', deleted_at = NOW(), updated_at = NOW() WHERE id = ?");
     if ($stmt->execute([$productId])) {
         setFlash('success', 'Product marked as sold and moved to Recycle Bin!');
@@ -87,6 +89,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $isOwner && isset($_POST['action'])
 
 // Handle Delete Listing (Move to Recycle Bin)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $isOwner && isset($_POST['action']) && $_POST['action'] === 'delete_listing') {
+    verifyCsrfToken();
     $stmt = $pdo->prepare("UPDATE products SET status = 'deleted', deleted_at = NOW(), updated_at = NOW() WHERE id = ?");
     if ($stmt->execute([$productId])) {
         setFlash('success', 'Listing moved to Recycle Bin. You can restore it within 30 days.');
@@ -281,6 +284,7 @@ require_once __DIR__ . '/../includes/header.php';
                     <span style="font-size: 2.1rem; font-weight: 800; color: var(--primary); font-family: 'Inter', sans-serif; letter-spacing: -1px;"><?php echo renderProductPrice($product); ?></span>
                     
                     <form action="../actions/toggle_wishlist.php" method="POST" style="display: inline-block;">
+                        <?php echo csrfTokenField(); ?>
                         <input type="hidden" name="product_id" value="<?php echo $productId; ?>">
                         <input type="hidden" name="redirect_to" value="<?php echo $_SERVER['REQUEST_URI']; ?>">
                         <button type="submit" class="hover-scale" style="background: <?php echo $isSaved ? '#fff1f2' : 'var(--bg-main)'; ?>; border: 1px solid <?php echo $isSaved ? '#fecdd3' : 'var(--border-light)'; ?>; color: <?php echo $isSaved ? '#e11d48' : 'var(--text-muted)'; ?>; padding: 0.6rem 1rem; border-radius: var(--radius-lg); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; gap: 0.5rem; box-shadow: var(--shadow-sm);">
@@ -425,6 +429,7 @@ require_once __DIR__ . '/../includes/header.php';
                     <div class="mb-8">
                         <h4 class="font-bold text-slate-800 mb-4" style="font-size: 1.15rem;">Current Pricing Strategy</h4>
                         <form method="post" class="flex flex-wrap items-center gap-4">
+                            <?php echo csrfTokenField(); ?>
                             <input type="hidden" name="action" value="update_price">
                             <div class="flex items-center bg-white border border-slate-200 px-4" style="border-radius: 10px; height: 38px; min-width: 120px;">
                                 <span class="text-slate-400 font-bold mr-1" style="font-size: 0.8rem;">&#8377;</span>
@@ -440,6 +445,7 @@ require_once __DIR__ . '/../includes/header.php';
 
                     <div class="flex flex-wrap items-center gap-4">
                         <form method="post" onsubmit="return confirm('Mark as sold?')">
+                            <?php echo csrfTokenField(); ?>
                             <input type="hidden" name="action" value="mark_sold">
                             <button type="submit" class="flex items-center gap-2 font-black text-[0.72rem] uppercase tracking-[0.14em] transition-all hover:brightness-95 shadow-sm" style="height: 38px; color: #059669; background: linear-gradient(180deg, #ecfdf5 0%, #d1fae5 100%); border: 1px solid #a7f3d0; padding: 0 1rem; border-radius: 10px; cursor: pointer;">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
@@ -448,6 +454,7 @@ require_once __DIR__ . '/../includes/header.php';
                         </form>
                         
                         <form method="post" onsubmit="return confirm('Delete listing?')">
+                            <?php echo csrfTokenField(); ?>
                             <input type="hidden" name="action" value="delete_listing">
                             <button type="submit" class="flex items-center gap-2 font-black text-[0.72rem] uppercase tracking-[0.14em] transition-all hover:brightness-95" style="height: 38px; color: #e11d48; background: linear-gradient(180deg, #fff1f2 0%, #ffe4e6 100%); border: 1px solid #fecdd3; padding: 0 0.75rem; border-radius: 10px; cursor: pointer;">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
