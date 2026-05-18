@@ -6,6 +6,65 @@
 require_once '../config/constants.php';
 require_once '../includes/bootstrap.php';
 
+if (($_GET['source'] ?? '') === 'supabase') {
+    $tokenHash = trim((string)($_GET['token_hash'] ?? ''));
+    $type = trim((string)($_GET['type'] ?? 'email'));
+
+    if ($tokenHash === '') {
+        setFlash('error', 'Invalid verification link.');
+        redirect(BASE_URL . 'pages/login.php');
+    }
+
+    $verify = supabaseAuthRequest('POST', 'verify', [
+        'token_hash' => $tokenHash,
+        'type' => $type,
+    ]);
+
+    if (!$verify['ok']) {
+        setFlash('error', 'Verification failed or link expired. Please request a new verification email.');
+        redirect(BASE_URL . 'pages/login.php');
+    }
+
+    $supabaseUser = $verify['data']['user'] ?? [];
+    $verifiedEmail = strtolower(trim((string)($supabaseUser['email'] ?? '')));
+
+    if ($verifiedEmail !== '') {
+        $upd = $pdo->prepare('UPDATE users SET is_verified = TRUE WHERE LOWER(email) = LOWER(:e)');
+        $upd->execute([':e' => $verifiedEmail]);
+    }
+
+    if (!empty($_SESSION['pending_verify_email']) && strtolower((string)$_SESSION['pending_verify_email']) === $verifiedEmail) {
+        unset($_SESSION['pending_verify_email']);
+    }
+
+    ?>
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Email Verified - CampusMarket</title>
+        <style>
+            body { font-family: -apple-system, Segoe UI, Roboto, sans-serif; background: #f8fafc; margin: 0; padding: 24px; color: #0f172a; }
+            .card { max-width: 520px; margin: 40px auto; background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 28px; }
+            h1 { margin: 0 0 12px 0; font-size: 24px; }
+            p { margin: 0 0 16px 0; color: #334155; line-height: 1.55; }
+            a { display: inline-block; margin-top: 8px; background: #0f172a; color: #fff; text-decoration: none; padding: 10px 16px; border-radius: 8px; }
+        </style>
+    </head>
+    <body>
+        <div class="card">
+            <h1>Email verified</h1>
+            <p>Your email is confirmed. You can close this page and go back to CampusMarket.</p>
+            <p>If you prefer, you can continue directly to login now.</p>
+            <a href="<?php echo BASE_URL; ?>pages/login.php">Go to login</a>
+        </div>
+    </body>
+    </html>
+    <?php
+    exit;
+}
+
 $token = trim($_GET['token'] ?? '');
 
 // Reject obviously malformed tokens before touching the DB.
