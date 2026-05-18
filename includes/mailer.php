@@ -59,7 +59,9 @@ if (!function_exists('sendEmail')) {
         $body   = curl_exec($ch);
         $status = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
         $err    = curl_error($ch);
-        curl_close($ch);
+        if (PHP_VERSION_ID < 80500) {
+            curl_close($ch);
+        }
 
         if ($status >= 200 && $status < 300) {
             return ['ok' => true, 'response' => json_decode($body, true)];

@@ -43,7 +43,9 @@ function supabaseAuthRequest(string $method, string $path, ?array $payload = nul
     $body = curl_exec($ch);
     $status = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
     $curlErr = curl_error($ch);
-    curl_close($ch);
+    if (PHP_VERSION_ID < 80500) {
+        curl_close($ch);
+    }
 
     $decoded = json_decode((string) $body, true);
     $isOk = $status >= 200 && $status < 300;

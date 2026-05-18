@@ -48,7 +48,9 @@ function getSupabaseUser(string $jwt): ?array {
     $body = curl_exec($ch);
     $status = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
     $err = curl_error($ch);
-    curl_close($ch);
+    if (PHP_VERSION_ID < 80500) {
+        curl_close($ch);
+    }
 
     if ($status < 200 || $status >= 300) {
         error_log("[api_resend_supabase] auth failed status={$status} err={$err} body={$body}");
