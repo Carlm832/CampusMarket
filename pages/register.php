@@ -132,7 +132,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } elseif (str_contains($rawErr, 'email') && str_contains($rawErr, 'invalid')) {
                 $errors['email'] = 'Please enter a valid email address.';
             } else {
-                $errors['form'] = 'Could not create account right now. Please try again.';
+                $errors['form'] = 'Supabase Error: ' . $rawErr . ' (Code: ' . $status . ')';
             }
         }
     }
@@ -176,7 +176,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 setFlash('success', 'Account created. Check your inbox at ' . sanitize($email) . ' to verify your email before logging in.');
                 redirect(BASE_URL . 'pages/login.php');
             } else {
-                $errors['form'] = 'Could not create account right now. Please try again.';
+                $errors['form'] = 'DB Error: ' . $dbErr;
             }
         }
     }
