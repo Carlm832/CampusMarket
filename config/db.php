@@ -43,8 +43,8 @@ try {
      $pdo = new PDO($dsn, $user, $pass, $options);
 } catch (\PDOException $e) {
      // Always log full error details internally, never expose them to users.
-     error_log("DB Connection Error: " . $e->getMessage());
-     throw new Exception("Database connection failed. Please try again later.");
+     error_log("DB Connection Error: " . $e->getMessage() . " DSN: " . $dsn);
+     throw new Exception("Database connection failed. Details: " . $e->getMessage() . " DSN: " . $dsn);
 }
 
 // Global accessor for the database
