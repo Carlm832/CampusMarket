@@ -228,6 +228,7 @@ function handleUpload(array $file, string $subfolder = 'products/'): array {
     $supabaseUrl = supabaseUrl();
     $supabaseKey = supabaseAnonKey();
     $supabaseServiceKey = function_exists('supabaseServiceRoleKey') ? supabaseServiceRoleKey() : '';
+    error_log("handleUpload debug: URL='" . $supabaseUrl . "', KeyLen=" . strlen($supabaseKey) . ", ServiceKeyLen=" . strlen($supabaseServiceKey));
 
     if (empty($supabaseUrl) || empty($supabaseKey)) {
         // Local upload fallback if Supabase not configured
@@ -268,6 +269,7 @@ function handleUpload(array $file, string $subfolder = 'products/'): array {
         $publicUrl = rtrim($supabaseUrl, '/') . '/storage/v1/object/public/' . $bucket . '/' . $objectName;
         return ['success' => true, 'path' => $publicUrl];
     } else {
+        error_log("Supabase storage upload failed. URL='" . $url . "', Code=" . $httpCode . ", Response='" . $response . "'");
         // Resilient fallback: if cloud upload fails, still allow local upload path.
         $relPath = 'uploads/' . $objectName;
         $absPath = __DIR__ . '/../public/' . $relPath;
