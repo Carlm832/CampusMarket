@@ -252,12 +252,15 @@ $navCategories = $pdo->query("SELECT id, name FROM categories ORDER BY name ASC"
 </nav>
 
 <!-- Mobile Search Row (Visible only on mobile, pushed below the fixed navbar) -->
-<div class="lg-hidden" style="margin-top: 62px; background: var(--bg-surface); padding: 0.75rem 1rem; border-bottom: 1px solid var(--border-light);">
-    <form action="<?php echo BASE_URL; ?>pages/search.php" method="GET" class="search-bar" style="width: 88%; max-width: 500px; margin: 0 auto;">
-        <input type="text" name="q" value="<?php echo sanitize($_GET['q'] ?? ''); ?>" placeholder="<?= __('nav.search_placeholder') ?>" class="search-input" style="padding: 0.6rem 1rem; font-size: 0.95rem;">
-        <button type="submit" class="search-btn" style="padding: 0.6rem 1.25rem;">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-        </button>
+<div class="lg-hidden" style="margin-top: 76px; background: var(--bg-surface); padding: 0.75rem 1rem; border-bottom: 1px solid var(--border-light);">
+    <form action="<?php echo BASE_URL; ?>pages/search.php" method="GET" class="search-bar" style="max-width: 500px; margin: 0 auto;">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <?php $placeholder = (isLoggedIn() && isAdmin()) ? __('nav.search_placeholder_admin') : __('nav.search_placeholder'); ?>
+        <input type="text" name="q" value="<?php echo sanitize($_GET['q'] ?? ''); ?>" placeholder="<?php echo $placeholder; ?>" class="search-input">
+        <button type="submit" class="search-btn"><?= __('nav.search_btn') ?></button>
     </form>
 </div>
 
