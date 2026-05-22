@@ -19,9 +19,19 @@ $sql = "SELECT p.*, c.name as category_name, u.username as seller_name, i.image_
         WHERE p.status = 'active'";
 
 if ($search !== '') {
-    $sql .= " AND (p.title LIKE ? OR p.description LIKE ?)";
-    $params[] = "%$search%";
-    $params[] = "%$search%";
+    $sql .= " AND (
+        LOWER(p.title) LIKE ?
+        OR LOWER(p.description) LIKE ?
+        OR EXISTS (
+            SELECT 1 FROM product_tags pt
+            JOIN tags t ON pt.tag_id = t.id
+            WHERE pt.product_id = p.id AND LOWER(t.name) LIKE ?
+        )
+    )";
+    $lowerSearch = mb_strtolower($search);
+    $params[] = "%$lowerSearch%";
+    $params[] = "%$lowerSearch%";
+    $params[] = "%$lowerSearch%";
 }
 if ($category) {
     $sql .= " AND p.category_id = ?";
@@ -221,7 +231,7 @@ include '../includes/header.php';
 
                     <!-- Search Bar (In Between) -->
                     <form method="GET" action="" class="search-bar search-form-el mb-0" style="height: 46px; position: relative; z-index: 50;">
-                        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18">
                             <circle cx="11" cy="11" r="8"></circle>
                             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                         </svg>
@@ -233,7 +243,7 @@ include '../includes/header.php';
                         <?php if($sort): ?><input type="hidden" name="sort" value="<?php echo sanitize($sort); ?>"><?php endif; ?>
                         
                         <input type="text" name="q" value="<?php echo sanitize($search); ?>" placeholder="<?= addslashes(__('browse.search_placeholder')) ?>" class="search-input">
-                        <button type="submit" class="search-btn" style="height: 34px; padding: 0 1.25rem;"><?= __('browse.find') ?></button>
+                        <button type="submit" class="search-btn"><?= __('browse.find') ?></button>
                     </form>
 
                     <!-- Sort Dropdown -->
