@@ -9,11 +9,9 @@ if (isAdmin()) {
     redirect(BASE_URL . 'admin/index.php');
 }
 
-$pageTitle = "Create New Listing";
-include '../includes/header.php';
-
 $success = false;
 $error = '';
+$createdProductId = 0;
 
 // Handle Form Submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -29,7 +27,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $pdo->beginTransaction();
 
         // 1. Insert Product
-        $stmt = $pdo->prepare('INSERT INTO products (user_id, category_id, title, description, price, "condition", status) VALUES (?, ?, ?, ?, ?, ?, \'active\')');
+        $driver = $pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
+        $conditionQuote = ($driver === 'mysql') ? '`condition`' : '"condition"';
+        $stmt = $pdo->prepare("INSERT INTO products (user_id, category_id, title, description, price, {$conditionQuote}, status) VALUES (?, ?, ?, ?, ?, ?, 'active')");
         $stmt->execute([$userId, $categoryId, $title, $description, $price, $condition]);
         $productId = $pdo->lastInsertId();
 
@@ -50,26 +50,52 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $upload = handleUpload($fileData, 'products/');
                 if ($upload['success']) {
                     $isPrimary = ($i === 0);
-                    $stmtImg = $pdo->prepare("INSERT INTO product_images (product_id, image_path, is_primary) VALUES (?, ?, ?)");
-                    $stmtImg->execute([$productId, $upload['path'], $isPrimary]);
+                    $stmtImg = $pdo->prepare("INSERT INTO product_images (product_id, image_path, is_primary) VALUES (:pid, :path, :primary)");
+                    $stmtImg->bindValue(':pid', $productId, PDO::PARAM_INT);
+                    $stmtImg->bindValue(':path', $upload['path'], PDO::PARAM_STR);
+                    $stmtImg->bindValue(':primary', $isPrimary, PDO::PARAM_BOOL);
+                    $stmtImg->execute();
+                } else {
+                    throw new Exception("Image upload failed: " . $upload['error']);
                 }
             }
         }
 
         $pdo->commit();
         $success = true;
-        setFlash('success', 'Your listing is live!');
-        redirect('browse.php');
+        $createdProductId = (int)$productId;
 
     } catch (Exception $e) {
         $pdo->rollBack();
-        $error = "Failed to create listing: " . $e->getMessage();
+        $error = __('create_listing.error_msg', ['error' => $e->getMessage()]);
     }
 }
 
 // Fetch Categories
 $categories = $pdo->query("SELECT * FROM categories ORDER BY name ASC")->fetchAll();
+
+$pageTitle = __('create_listing.page_title');
+include '../includes/header.php';
 ?>
+
+<?php if ($success && $createdProductId > 0): ?>
+<div class="container mt-24 mb-20">
+    <div class="glass-panel" style="max-width: 760px; margin: 0 auto; padding: 2rem; border-radius: var(--radius-xl); text-align: center;">
+        <h1 class="mb-2" style="font-size: 2rem;"><?= __('create_listing.success_msg') ?></h1>
+        <p class="text-muted mb-6">Would you like to promote this listing now?</p>
+        <div class="flex justify-center gap-4 flex-wrap">
+            <a class="btn btn-primary" href="promotions.php?product_id=<?= (int)$createdProductId ?>&new_listing=1" style="padding: 0.8rem 1.4rem; border-radius: var(--radius-lg);">
+                Yes, promote it
+            </a>
+            <a class="btn btn-secondary" href="product.php?id=<?= (int)$createdProductId ?>" style="padding: 0.8rem 1.4rem; border-radius: var(--radius-lg);">
+                No, view my listing
+            </a>
+        </div>
+    </div>
+</div>
+<?php require_once __DIR__ . '/../includes/footer.php'; ?>
+<?php return; ?>
+<?php endif; ?>
 
 <div class="container relative mt-24 mb-20 flex justify-center">
     <!-- Decorative elements -->
@@ -78,8 +104,8 @@ $categories = $pdo->query("SELECT * FROM categories ORDER BY name ASC")->fetchAl
 
     <div class="w-full max-w-3xl">
         <div class="text-center mb-8">
-            <h1 class="mb-2" style="font-size: 2.75rem;">List an Item</h1>
-            <p class="text-muted text-lg">Reach thousands of students instantly</p>
+            <h1 class="mb-2" style="font-size: 2.75rem;"><?= __('create_listing.title') ?></h1>
+            <p class="text-muted text-lg"><?= __('create_listing.subtitle') ?></p>
         </div>
 
         <?php if ($error): ?>
@@ -91,24 +117,23 @@ $categories = $pdo->query("SELECT * FROM categories ORDER BY name ASC")->fetchAl
         <div class="glass-panel" style="padding: 2.5rem; border-radius: var(--radius-xl); box-shadow: var(--shadow-xl); z-index: 10;">
             <form action="create_listing.php" method="POST" enctype="multipart/form-data" class="grid gap-6">
                 <?php echo csrfTokenField(); ?>
-                
-                <div class="form-group">
-                    <label class="font-bold mb-2 block" style="color: var(--text-main);">What are you selling? *</label>
-                    <input type="text" name="title" placeholder="e.g. Macbeth Textbook, 10th Edition" class="w-full premium-input" style="padding: 0.8rem 1rem;" required>
+                                <div class="form-group">
+                    <label class="font-bold mb-2 block" style="color: var(--text-main);"><?= __('create_listing.sell_label') ?></label>
+                    <input type="text" name="title" placeholder="<?= addslashes(__('create_listing.title_placeholder')) ?>" class="w-full premium-input" style="padding: 0.8rem 1rem;" required>
                 </div>
-
+ 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="form-group">
-                        <label class="font-bold mb-2 block" style="color: var(--text-main);">Category *</label>
+                        <label class="font-bold mb-2 block" style="color: var(--text-main);"><?= __('create_listing.category_label') ?></label>
                         <select name="category_id" class="w-full premium-input" style="padding: 0.8rem 1rem;" required>
-                            <option value="">Select Category</option>
+                            <option value=""><?= __('create_listing.select_category') ?></option>
                             <?php foreach ($categories as $cat): ?>
-                                <option value="<?php echo $cat['id']; ?>"><?php echo sanitize($cat['name']); ?></option>
+                                <option value="<?php echo $cat['id']; ?>"><?php echo sanitize(translateCategory($cat['name'])); ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label class="font-bold mb-2 block" style="color: var(--text-main);">Price (<?php echo APP_CURRENCY; ?>) *</label>
+                        <label class="font-bold mb-2 block" style="color: var(--text-main);"><?= __('create_listing.price_label', ['currency' => APP_CURRENCY]) ?></label>
                         <div class="relative">
                             <input type="number" name="price" step="0.01" placeholder="0.00" class="w-full premium-input" style="padding: 0.8rem 1rem;" required>
                         </div>
@@ -116,13 +141,13 @@ $categories = $pdo->query("SELECT * FROM categories ORDER BY name ASC")->fetchAl
                 </div>
 
                 <div class="form-group">
-                    <label class="font-bold mb-2 block" style="color: var(--text-main);">Condition *</label>
+                    <label class="font-bold mb-2 block" style="color: var(--text-main);"><?= __('create_listing.condition_label') ?></label>
                     <div class="flex flex-wrap gap-6">
                         <?php 
                         $opts = [
-                            'new' => 'New',
-                            'like_new' => 'Like New',
-                            'used' => 'Used'
+                            'new' => __('create_listing.cond_new'),
+                            'like_new' => __('create_listing.cond_like_new'),
+                            'used' => __('create_listing.cond_used')
                         ];
                         $default = 'used';
                         foreach($opts as $val => $label):
@@ -135,20 +160,19 @@ $categories = $pdo->query("SELECT * FROM categories ORDER BY name ASC")->fetchAl
                         <?php endforeach; ?>
                     </div>
                 </div>
-
                 <div class="form-group">
-                    <label class="font-bold mb-2 block" style="color: var(--text-main);">Description *</label>
-                    <textarea name="description" rows="5" placeholder="Mention age, defects, or why you're selling..." class="w-full premium-input" style="padding: 1rem; border-radius: var(--radius-lg);" required></textarea>
+                    <label class="font-bold mb-2 block" style="color: var(--text-main);"><?= __('create_listing.description_label') ?></label>
+                    <textarea name="description" rows="5" placeholder="<?= addslashes(__('create_listing.desc_placeholder')) ?>" class="w-full premium-input" style="padding: 1rem; border-radius: var(--radius-lg);" required></textarea>
                 </div>
-
+ 
                 <div class="form-group">
-                    <label class="font-bold mb-2 block" style="color: var(--text-main);">Photos (Max 5)</label>
+                    <label class="font-bold mb-2 block" style="color: var(--text-main);"><?= __('create_listing.photos_label') ?></label>
                     <div class="border-2 border-dashed rounded-lg text-center cursor-pointer transition-colors" style="border-color: rgba(99,102,241,0.3); background: rgba(99,102,241,0.03); padding: 3rem 2rem; min-height: 180px; display: flex; flex-direction: column; align-items: center; justify-content: center;" onclick="document.getElementById('imgInput').click()" onmouseover="this.style.background='rgba(99,102,241,0.06)'" onmouseout="this.style.background='rgba(99,102,241,0.03)'">
                         <div class="mb-3 flex justify-center text-primary opacity-80">
                             <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                         </div>
-                        <p class="font-bold mb-1" style="color: var(--primary); font-size: 1.05rem;">Click to Upload Images</p>
-                        <p class="text-muted small">PNG, JPG up to 5MB &nbsp;·&nbsp; Max 5 photos</p>
+                        <p class="font-bold mb-1" style="color: var(--primary); font-size: 1.05rem;"><?= __('create_listing.upload_click') ?></p>
+                        <p id="uploadHelp" class="text-muted small"><?= __('create_listing.upload_desc') ?></p>
                         <input type="file" id="imgInput" name="images[]" multiple accept="image/*" class="hidden">
                     </div>
                     <div id="preview" class="flex flex-wrap gap-4 mt-5"></div>
@@ -157,8 +181,13 @@ $categories = $pdo->query("SELECT * FROM categories ORDER BY name ASC")->fetchAl
                 <hr style="border-color: rgba(0,0,0,0.05); margin: 1rem 0;">
 
                 <div class="flex justify-between items-center">
-                    <a href="browse.php" class="text-muted font-medium hover:text-main transition-colors">Cancel</a>
-                    <button type="submit" class="btn btn-primary px-8 py-3 hover-scale shadow-lg" style="border-radius: var(--radius-lg); font-weight: bold; font-size: 1.1rem;">Publish Listing</button>
+                    <a href="browse.php" class="btn btn-secondary hover-scale shadow-sm flex items-center gap-2" style="padding: 0.75rem 1.5rem; border-radius: var(--radius-lg); font-weight: bold; font-size: 1.1rem;">
+                        <svg xmlns="http://www.w3.org/2000/svg" style="width: 18px; height: 18px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+                        </svg>
+                        <?= __('create_listing.cancel') ?>
+                    </a>
+                    <button type="submit" id="submitBtn" class="btn btn-primary px-8 py-3 hover-scale shadow-lg" style="border-radius: var(--radius-lg); font-weight: bold; font-size: 1.1rem;"><?= __('create_listing.publish') ?></button>
                 </div>
 
             </form>
@@ -218,20 +247,157 @@ $categories = $pdo->query("SELECT * FROM categories ORDER BY name ASC")->fetchAl
 </style>
 
 <script>
-document.getElementById('imgInput').addEventListener('change', function(e) {
+let uploadedFiles = [];
+const maxFiles = 5;
+const createListingI18n = {
+    processing: <?= json_encode(__('create_listing.processing_images')) ?>,
+    compressing: <?= json_encode(__('create_listing.compressing_images')) ?>,
+    maxFilesAlert: <?= json_encode(__('create_listing.max_files_alert', ['max' => MAX_IMAGES])) ?>,
+    publishLabel: <?= json_encode(__('create_listing.publish')) ?>,
+    uploadHelp: <?= json_encode(__('create_listing.upload_desc')) ?>
+};
+
+function updateFileInput() {
+    const dt = new DataTransfer();
+    uploadedFiles.forEach(file => dt.items.add(file));
+    document.getElementById('imgInput').files = dt.files;
+}
+
+function renderPreviews() {
     const preview = document.getElementById('preview');
     preview.innerHTML = '';
-    [...e.target.files].forEach(file => {
+    
+    uploadedFiles.forEach((file, index) => {
         const reader = new FileReader();
         reader.onload = (re) => {
             const div = document.createElement('div');
-            div.style = "width:120px; height:120px; border-radius: var(--radius-md); overflow:hidden; border: 2px solid var(--primaryLight); box-shadow: var(--shadow-sm); flex-shrink: 0;";
-            div.innerHTML = `<img src="${re.target.result}" style="width:100%; height:100%; object-fit:cover;">`;
+            div.style = "position: relative; width:120px; height:120px; border-radius: var(--radius-md); overflow:hidden; border: 2px solid var(--primaryLight); box-shadow: var(--shadow-sm); flex-shrink: 0;";
+            
+            const img = document.createElement('img');
+            img.src = re.target.result;
+            img.style = "width:100%; height:100%; object-fit:cover;";
+            
+            const removeBtn = document.createElement('button');
+            removeBtn.type = "button";
+            removeBtn.innerHTML = "&times;";
+            removeBtn.style = "position: absolute; top: 4px; right: 4px; background: rgba(0,0,0,0.6); color: white; border: none; border-radius: 50%; width: 24px; height: 24px; font-size: 16px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10;";
+            removeBtn.onclick = function(e) {
+                e.stopPropagation();
+                e.preventDefault();
+                uploadedFiles.splice(index, 1);
+                updateFileInput();
+                renderPreviews();
+            };
+            
+            div.appendChild(img);
+            div.appendChild(removeBtn);
             preview.appendChild(div);
         }
         reader.readAsDataURL(file);
     });
+}
+
+function compressImageAsync(file, maxWidth = 1200, maxHeight = 1200, quality = 0.8) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            const img = new Image();
+            img.onload = function () {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+
+                if (width > height) {
+                    if (width > maxWidth) {
+                        height *= maxWidth / width;
+                        width = maxWidth;
+                    }
+                } else {
+                    if (height > maxHeight) {
+                        width *= maxHeight / height;
+                        height = maxHeight;
+                    }
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+
+                canvas.toBlob(function (blob) {
+                    if (!blob) {
+                        reject(new Error('Canvas to Blob failed'));
+                        return;
+                    }
+                    const compressedFile = new File([blob], file.name.substring(0, file.name.lastIndexOf('.')) + '.jpg', {
+                        type: 'image/jpeg',
+                        lastModified: Date.now()
+                    });
+                    resolve(compressedFile);
+                }, 'image/jpeg', quality);
+            };
+            img.onerror = reject;
+            img.src = e.target.result;
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+}
+
+document.getElementById('imgInput').addEventListener('change', async function(e) {
+    const newFiles = [...e.target.files];
+    const submitBtn = document.getElementById('submitBtn');
+    const uploadHelp = document.getElementById('uploadHelp');
+    
+    if (newFiles.length === 0) {
+        updateFileInput();
+        return;
+    }
+    
+    // Check if new selection was just the internal update
+    if (newFiles.length === uploadedFiles.length) {
+        let same = true;
+        for (let i = 0; i < newFiles.length; i++) {
+            if (newFiles[i] !== uploadedFiles[i]) {
+                same = false; break;
+            }
+        }
+        if (same) return;
+    }
+    
+    submitBtn.disabled = true;
+    submitBtn.innerText = createListingI18n.processing;
+    uploadHelp.innerText = createListingI18n.compressing;
+    uploadHelp.style.color = "var(--primary)";
+    
+    for (let i = 0; i < newFiles.length; i++) {
+        // Skip if already in array
+        if (uploadedFiles.some(f => f.name === newFiles[i].name && f.size === newFiles[i].size)) continue;
+        
+        if (uploadedFiles.length < maxFiles) {
+            try {
+                const compressed = await compressImageAsync(newFiles[i]);
+                uploadedFiles.push(compressed);
+            } catch (err) {
+                console.error('Compression failed, using original file', err);
+                uploadedFiles.push(newFiles[i]);
+            }
+        } else {
+            alert(createListingI18n.maxFilesAlert);
+            break;
+        }
+    }
+    
+    updateFileInput();
+    renderPreviews();
+    
+    submitBtn.disabled = false;
+    submitBtn.innerText = createListingI18n.publishLabel;
+    uploadHelp.innerText = createListingI18n.uploadHelp;
+    uploadHelp.style.color = "";
 });
 </script>
 
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>
+

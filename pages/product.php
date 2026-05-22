@@ -20,9 +20,9 @@ $stmt->execute([':id' => $productId]);
 $product = $stmt->fetch();
 
 if (!$product) {
-    $pageTitle = "Product Not Found";
+    $pageTitle = __('product.not_found_title');
     require_once __DIR__ . '/../includes/header.php';
-    echo '<div class="container mt-16 mb-20 text-center"><div class="glass-panel p-16" style="border-radius: var(--radius-xl);"><div class="text-6xl mb-4 opacity-50">🔍</div><h2 class="mb-2 font-bold text-main">Product not found</h2><p class="text-muted text-lg mb-6">This item may have been sold or removed.</p><a href="browse.php" class="btn btn-primary hover-scale" style="border-radius: var(--radius-lg);">Back to Browse</a></div></div>';
+    echo '<div class="container mt-16 mb-20 text-center"><div class="glass-panel p-16" style="border-radius: var(--radius-xl);"><div class="text-6xl mb-4 opacity-50">🔍</div><h2 class="mb-2 font-bold text-main">' . __('product.not_found') . '</h2><p class="text-muted text-lg mb-6">' . __('product.not_found_desc') . '</p><a href="browse.php" class="btn btn-primary hover-scale" style="border-radius: var(--radius-lg);">' . __('product.back_to_browse') . '</a></div></div>';
     include __DIR__ . '/../includes/footer.php';
     exit;
 }
@@ -30,8 +30,15 @@ if (!$product) {
 // Increment View Count (Unique per student)
 $canCountView = false;
 $currentUid = isLoggedIn() ? (int)currentUserId() : null;
+$hasProductViewsTable = true;
 
-if ($currentUid) {
+try {
+    $pdo->query("SELECT 1 FROM product_views LIMIT 1");
+} catch (PDOException $e) {
+    $hasProductViewsTable = false;
+}
+
+if ($hasProductViewsTable && $currentUid) {
     // Check if this student has already viewed this product
     $viewCheck = $pdo->prepare("SELECT 1 FROM product_views WHERE product_id = ? AND user_id = ?");
     $viewCheck->execute([$productId, $currentUid]);
@@ -41,7 +48,7 @@ if ($currentUid) {
         $insView->execute([$productId, $currentUid]);
         $canCountView = true;
     }
-} else {
+} elseif ($hasProductViewsTable) {
     // For guests, use a persistent cookie to track views (survives logout/login)
     $guestViews = [];
     if (isset($_COOKIE['cm_pv'])) {
@@ -70,10 +77,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $isOwner && isset($_POST['action'])
     if ($newPrice > 0) {
         $stmtUp = $pdo->prepare("UPDATE products SET price = :price, updated_at = NOW() WHERE id = :id");
         $stmtUp->execute([':price' => $newPrice, ':id' => $productId]);
-        setFlash('success', 'Price updated successfully!');
+        setFlash('success', __('product.price_updated'));
         redirect(BASE_URL . 'pages/product.php?id=' . $productId);
     } else {
-        setFlash('error', 'Price must be greater than zero.');
+        setFlash('error', __('product.price_error'));
+        redirect(BASE_URL . 'pages/product.php?id=' . $productId);
+    }
+}
+
+// Handle Discount Update
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $isOwner && isset($_POST['action']) && $_POST['action'] === 'set_discount') {
+    verifyCsrfToken();
+    $discountPercent = (int)($_POST['discount_percent'] ?? 0);
+    if ($discountPercent < 0 || $discountPercent > LISTING_DISCOUNT_MAX_PERCENT) {
+        setFlash('error', __('product.discount_range_error', ['max' => LISTING_DISCOUNT_MAX_PERCENT]));
+    } else {
+        $stmtUp = $pdo->prepare("UPDATE products SET discount_percent = :dp, discount_set_at = NOW() WHERE id = :id");
+        $stmtUp->execute([':dp' => $discountPercent, ':id' => $productId]);
+        setFlash('success', $discountPercent > 0 ? __('product.discount_applied') : __('product.discount_removed'));
+        redirect(BASE_URL . 'pages/product.php?id=' . $productId);
     }
 }
 
@@ -82,7 +104,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $isOwner && isset($_POST['action'])
     verifyCsrfToken();
     $stmt = $pdo->prepare("UPDATE products SET status = 'deleted', deleted_at = NOW(), updated_at = NOW() WHERE id = ?");
     if ($stmt->execute([$productId])) {
-        setFlash('success', 'Product marked as sold and moved to Recycle Bin!');
+        setFlash('success', __('product.marked_sold_success'));
         redirect(BASE_URL . 'pages/recycle_bin.php');
     }
 }
@@ -92,9 +114,140 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $isOwner && isset($_POST['action'])
     verifyCsrfToken();
     $stmt = $pdo->prepare("UPDATE products SET status = 'deleted', deleted_at = NOW(), updated_at = NOW() WHERE id = ?");
     if ($stmt->execute([$productId])) {
-        setFlash('success', 'Listing moved to Recycle Bin. You can restore it within 30 days.');
+        setFlash('success', __('product.deleted_success'));
         redirect(BASE_URL . 'pages/recycle_bin.php');
     }
+}
+
+// Handle Add Images
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $isOwner && isset($_POST['action']) && $_POST['action'] === 'add_images') {
+    verifyCsrfToken();
+    
+    // Count current images
+    $stmtCount = $pdo->prepare("SELECT COUNT(*) FROM product_images WHERE product_id = ?");
+    $stmtCount->execute([$productId]);
+    $currentCount = (int)$stmtCount->fetchColumn();
+    
+    if ($currentCount >= 5) {
+        setFlash('error', __('product.max_images_error'));
+        redirect(BASE_URL . 'pages/product.php?id=' . $productId);
+    }
+    
+    if (!empty($_FILES['images']['name'][0])) {
+        $files = $_FILES['images'];
+        $uploaded = 0;
+        
+        for ($i = 0; $i < count($files['name']); $i++) {
+            if ($currentCount + $uploaded >= 5) break;
+            
+            $fileData = [
+                'name'     => $files['name'][$i],
+                'type'     => $files['type'][$i],
+                'tmp_name' => $files['tmp_name'][$i],
+                'error'    => $files['error'][$i],
+                'size'     => $files['size'][$i]
+            ];
+            
+            $upload = handleUpload($fileData, 'products/');
+            if ($upload['success']) {
+                $isPrimary = ($currentCount === 0 && $uploaded === 0);
+                $stmtImg = $pdo->prepare("INSERT INTO product_images (product_id, image_path, is_primary) VALUES (:pid, :path, :primary)");
+                $stmtImg->bindValue(':pid', $productId, PDO::PARAM_INT);
+                $stmtImg->bindValue(':path', $upload['path'], PDO::PARAM_STR);
+                $stmtImg->bindValue(':primary', $isPrimary, PDO::PARAM_BOOL);
+                $stmtImg->execute();
+                $uploaded++;
+            } else {
+                setFlash('error', __('product.upload_failed', ['error' => $upload['error']]));
+                redirect(BASE_URL . 'pages/product.php?id=' . $productId);
+            }
+        }
+        
+        if ($uploaded > 0) {
+            setFlash('success', __('product.photos_uploaded', ['count' => $uploaded]));
+        }
+    } else {
+        setFlash('error', __('product.no_images_selected'));
+    }
+    redirect(BASE_URL . 'pages/product.php?id=' . $productId);
+}
+
+// Handle Set Primary Image
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $isOwner && isset($_POST['action']) && $_POST['action'] === 'set_primary') {
+    verifyCsrfToken();
+    $imageId = (int)($_POST['image_id'] ?? 0);
+    
+    // Verify image belongs to this product
+    $check = $pdo->prepare("SELECT 1 FROM product_images WHERE id = ? AND product_id = ?");
+    $check->execute([$imageId, $productId]);
+    if ($check->fetch()) {
+        $pdo->beginTransaction();
+        try {
+            // Set all to false
+            $stmt1 = $pdo->prepare("UPDATE product_images SET is_primary = FALSE WHERE product_id = ?");
+            $stmt1->execute([$productId]);
+            // Set target to true
+            $stmt2 = $pdo->prepare("UPDATE product_images SET is_primary = TRUE WHERE id = ?");
+            $stmt2->execute([$imageId]);
+            $pdo->commit();
+            setFlash('success', __('product.primary_image_updated'));
+        } catch (Exception $e) {
+            $pdo->rollBack();
+            setFlash('error', __('product.db_error'));
+        }
+    } else {
+        setFlash('error', __('product.invalid_image_selection'));
+    }
+    redirect(BASE_URL . 'pages/product.php?id=' . $productId);
+}
+
+// Handle Delete Image
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $isOwner && isset($_POST['action']) && $_POST['action'] === 'delete_image') {
+    verifyCsrfToken();
+    $imageId = (int)($_POST['image_id'] ?? 0);
+    
+    // Get image details
+    $stmtGet = $pdo->prepare("SELECT image_path, is_primary FROM product_images WHERE id = ? AND product_id = ?");
+    $stmtGet->execute([$imageId, $productId]);
+    $img = $stmtGet->fetch();
+    
+    if ($img) {
+        $pdo->beginTransaction();
+        try {
+            // Delete DB row
+            $stmtDel = $pdo->prepare("DELETE FROM product_images WHERE id = ?");
+            $stmtDel->execute([$imageId]);
+            
+            // Delete file if local
+            $path = $img['image_path'];
+            if (strpos($path, 'http') !== 0) {
+                $absPath = __DIR__ . '/../public/' . ltrim($path, '/');
+                if (file_exists($absPath)) {
+                    @unlink($absPath);
+                }
+            }
+            
+            // If it was primary, assign a new primary
+            if ($img['is_primary']) {
+                $stmtNext = $pdo->prepare("SELECT id FROM product_images WHERE product_id = ? LIMIT 1");
+                $stmtNext->execute([$productId]);
+                $nextId = $stmtNext->fetchColumn();
+                if ($nextId) {
+                    $stmtSetNext = $pdo->prepare("UPDATE product_images SET is_primary = TRUE WHERE id = ?");
+                    $stmtSetNext->execute([$nextId]);
+                }
+            }
+            
+            $pdo->commit();
+            setFlash('success', __('product.image_deleted'));
+        } catch (Exception $e) {
+            $pdo->rollBack();
+            setFlash('error', __('product.delete_image_failed'));
+        }
+    } else {
+        setFlash('error', __('product.image_not_found'));
+    }
+    redirect(BASE_URL . 'pages/product.php?id=' . $productId);
 }
 
 // Fetch Images
@@ -106,10 +259,14 @@ $images = $stmt->fetchAll();
 $rating = getSellerRating($pdo, (int)$product['seller_id']);
 $trust  = getSellerTrustScore($pdo, (int)$product['seller_id']);
 
-// Fetch REAL unique view count from product_views table
-$stmtViews = $pdo->prepare("SELECT COUNT(*) FROM product_views WHERE product_id = ?");
-$stmtViews->execute([$productId]);
-$uniqueViewCount = (int)$stmtViews->fetchColumn();
+// Fetch REAL unique view count from product_views table (fallback when table is missing locally)
+if ($hasProductViewsTable) {
+    $stmtViews = $pdo->prepare("SELECT COUNT(*) FROM product_views WHERE product_id = ?");
+    $stmtViews->execute([$productId]);
+    $uniqueViewCount = (int)$stmtViews->fetchColumn();
+} else {
+    $uniqueViewCount = (int)($product['views'] ?? 0);
+}
 
 // Fetch Wishlist count
 $stmtWish = $pdo->prepare("SELECT COUNT(*) FROM wishlists WHERE product_id = ?");
@@ -130,9 +287,13 @@ $wishSql = $driver === 'pgsql'
     : "SELECT COUNT(*) FROM wishlists WHERE product_id = ? AND created_at <= DATE_SUB(NOW(), INTERVAL ? DAY)";
 
 for ($d = 5; $d >= 0; $d--) {
-    $sv = $pdo->prepare($viewSql);
-    $sv->execute([$productId, $d]);
-    $viewCumPoints[] = (int)$sv->fetchColumn();
+    if ($hasProductViewsTable) {
+        $sv = $pdo->prepare($viewSql);
+        $sv->execute([$productId, $d]);
+        $viewCumPoints[] = (int)$sv->fetchColumn();
+    } else {
+        $viewCumPoints[] = 0;
+    }
 
     $sw = $pdo->prepare($wishSql);
     $sw->execute([$productId, $d]);
@@ -236,21 +397,21 @@ require_once __DIR__ . '/../includes/header.php';
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                 </div>
                 <div>
-                    <h4 class="mb-0 font-bold" style="line-height: 1.2; font-size: 1.25rem; color: white;">Management Mode</h4>
-                    <p class="mb-0 opacity-90 small" style="color: white; font-weight: 500;">You are viewing your own listing. Only you can see these controls.</p>
+                    <h4 class="mb-0 font-bold" style="line-height: 1.2; font-size: 1.25rem; color: white;"><?= __('product.mgmt_mode') ?></h4>
+                    <p class="mb-0 opacity-90 small" style="color: white; font-weight: 500;"><?= __('product.mgmt_mode_desc') ?></p>
                 </div>
             </div>
-            <a href="<?php echo BASE_URL; ?>pages/profile.php" class="btn btn-sm" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3);">Go to Dashboard</a>
+            <a href="<?php echo BASE_URL; ?>pages/profile.php" class="btn btn-sm" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3);"><?= __('product.go_to_dashboard') ?></a>
         </div>
     <?php endif; ?>
 
     <!-- Breadcrumb -->
     <div class="flex items-center gap-2 text-muted small mb-6 font-medium inline-flex px-4 py-2 rounded-xl backdrop-blur-md" style="background: color-mix(in srgb, var(--bg-surface) 70%, transparent); border: 1px solid var(--border-light);">
-        <a href="<?php echo BASE_URL; ?>/" class="hover:text-primary transition-colors">Home</a>
+        <a href="<?php echo BASE_URL; ?>/" class="hover:text-primary transition-colors"><?= __('product.home') ?></a>
         <span class="opacity-50">/</span>
-        <a href="<?php echo BASE_URL; ?>/pages/browse.php" class="hover:text-primary transition-colors">Browse</a>
+        <a href="<?php echo BASE_URL; ?>/pages/browse.php" class="hover:text-primary transition-colors"><?= __('product.browse') ?></a>
         <span class="opacity-50">/</span>
-        <a href="<?php echo BASE_URL; ?>/pages/browse.php?category=<?php echo $product['category_id']; ?>" class="hover:text-primary transition-colors"><?php echo sanitize($product['category_name']); ?></a>
+        <a href="<?php echo BASE_URL; ?>/pages/browse.php?category=<?php echo $product['category_id']; ?>" class="hover:text-primary transition-colors"><?php echo sanitize(translateCategory($product['category_name'])); ?></a>
     </div>
 
     <div class="grid grid-cols-1 lg-grid-cols-2 gap-12 lg-gap-16">
@@ -263,7 +424,7 @@ require_once __DIR__ . '/../includes/header.php';
                 <?php else: ?>
                     <div class="flex flex-col items-center justify-center text-muted">
                         <svg class="w-24 h-24 mb-4 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                        <span class="text-xl font-medium opacity-50">No Image Available</span>
+                        <span class="text-xl font-medium opacity-50"><?= __('product.no_image') ?></span>
                     </div>
                 <?php endif; ?>
                 
@@ -289,7 +450,7 @@ require_once __DIR__ . '/../includes/header.php';
         <!-- Info -->
         <div class="flex flex-col">
             <div class="mb-6 border-b border-gray-100 pb-6">
-                <p class="text-primary font-bold tracking-widest uppercase small mb-2" style="font-size: 0.8rem;"><?php echo sanitize($product['category_name']); ?></p>
+                <p class="text-primary font-bold tracking-widest uppercase small mb-2" style="font-size: 0.8rem;"><?php echo sanitize(translateCategory($product['category_name'])); ?></p>
                 <h1 class="mb-4 text-main font-bold" style="font-size: 2.75rem; line-height: 1.2; letter-spacing: -0.5px;"><?php echo sanitize($product['title']); ?></h1>
                 <div class="flex items-center gap-4">
                     <span style="font-size: 2.1rem; font-weight: 700; color: var(--text-main); font-family: 'Inter', sans-serif; letter-spacing: -1px;"><?php echo renderProductPrice($product); ?></span>
@@ -302,11 +463,11 @@ require_once __DIR__ . '/../includes/header.php';
                             <svg class="w-6 h-6" fill="<?php echo $isSaved ? 'currentColor' : 'none'; ?>" stroke="currentColor" viewBox="0 0 24 24" style="width: 22px; height: 22px;">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
                             </svg>
-                            <span style="font-weight: 700; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.05em;"><?php echo $isSaved ? 'Saved' : 'Save'; ?></span>
+                            <span style="font-weight: 700; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.05em;"><?= $isSaved ? __('product.saved') : __('product.save') ?></span>
                         </button>
                     </form>
 
-                    <span class="text-muted small px-3 py-1 rounded-lg font-medium" style="background: var(--bg-main); border: 1px solid var(--border-light);">Listed <?php echo timeAgo($product['created_at']); ?></span>
+                    <span class="text-muted small px-3 py-1 rounded-lg font-medium" style="background: var(--bg-main); border: 1px solid var(--border-light);"><?= __('product.listed_time', ['time' => timeAgo($product['created_at'])]) ?></span>
                 </div>
             </div>
 
@@ -323,17 +484,17 @@ require_once __DIR__ . '/../includes/header.php';
                                 <div class="flex items-center gap-1">
                                     <span style="color: #f59e0b;">&#9733;</span>
                                     <span class="text-slate-800"><?php echo number_format($rating['avg'], 1); ?></span>
-                                    <span class="text-slate-400 font-medium">(<?php echo $rating['count']; ?> review<?php echo $rating['count'] !== 1 ? 's' : ''; ?>)</span>
+                                    <span class="text-slate-400 font-medium">(<?php echo $rating['count']; ?> <?= $rating['count'] === 1 ? __('product.review') : __('product.reviews') ?>)</span>
                                 </div>
                                 <span style="background: var(--bg-surface); border: 1px solid var(--border-light); color: var(--text-main); padding: 0.2rem 0.75rem; border-radius: var(--radius-sm); font-size: 0.78rem;">
-                                    <?php echo $rating['count'] > 5 ? 'Trusted Seller' : 'New Seller'; ?>
+                                    <?= $rating['count'] > 5 ? __('product.trusted_seller') : __('product.new_seller') ?>
                                 </span>
-                                <div class="text-slate-700">Trust Score: <span class="font-bold"><?php echo (int)$trust['score']; ?>/100</span> <span style="opacity: 0.35; cursor: help;" title="<?php echo sanitize($trust['tier']); ?>">&#9432;</span></div>
+                                <div class="text-slate-700"><?= __('product.trust_score') ?> <span class="font-bold"><?php echo (int)$trust['score']; ?>/100</span> <span style="opacity: 0.35; cursor: help;" title="<?php echo sanitize($trust['tier']); ?>">&#9432;</span></div>
                             </div>
                         </div>
                     </a>
                     <a href="<?php echo BASE_URL; ?>pages/profile.php?id=<?php echo $product['seller_id']; ?>" class="flex items-center gap-2 px-6 py-2.5 border border-slate-200 rounded-xl font-bold text-slate-600 text-sm hover:bg-slate-50 transition-all" style="min-width: 168px; justify-content: center;">
-                        View Profile <span style="opacity: 0.45; font-size: 0.8rem; margin-left: 4px;">&#10095;</span>
+                        <?= __('product.view_profile') ?> <span style="opacity: 0.45; font-size: 0.8rem; margin-left: 4px;">&#10095;</span>
                     </a>
                 </div>
             </div>
@@ -350,11 +511,11 @@ require_once __DIR__ . '/../includes/header.php';
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
                             </div>
                             <div>
-                                <h3 class="m-0 font-black text-slate-800" style="font-size: 1.4rem;">Listing Insights</h3>
-                                <p class="m-0 text-slate-400 font-bold" style="font-size: 0.9rem;">Live Performance Center</p>
+                                <h3 class="m-0 font-black text-slate-800" style="font-size: 1.4rem;"><?= __('product.listing_insights') ?></h3>
+                                <p class="m-0 text-slate-400 font-bold" style="font-size: 0.9rem;"><?= __('product.live_performance') ?></p>
                             </div>
                         </div>
-                        <span style="font-size: 0.65rem; font-weight: 900; color: #94a3b8; background: #f8fafc; padding: 0.25rem 0.6rem; border-radius: 6px; letter-spacing: 0.05em; border: 1px solid #f1f5f9;"><?php echo $isOwner ? 'SELLER' : 'LIVE STATS'; ?></span>
+                        <span style="font-size: 0.65rem; font-weight: 900; color: #94a3b8; background: #f8fafc; padding: 0.25rem 0.6rem; border-radius: 6px; letter-spacing: 0.05em; border: 1px solid #f1f5f9;"><?php echo $isOwner ? __('product.seller_badge') : __('product.livestats_badge'); ?></span>
                     </div>
 
                     <!-- Metrics Grid -->
@@ -366,12 +527,12 @@ require_once __DIR__ . '/../includes/header.php';
                                     <div class="flex items-center justify-center text-indigo-600 shadow-sm" style="width: 48px; height: 48px; border-radius: var(--radius-xl); background: var(--bg-main);">
                                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                                     </div>
-                                    <span class="text-[0.95rem] font-bold text-slate-600">Total Reach</span>
+                                    <span class="text-[0.95rem] font-bold text-slate-600"><?= __('product.total_reach') ?></span>
                                 </div>
                                 <div class="flex items-center gap-3">
                                     <h2 class="text-4xl font-black text-slate-800 m-0 count-up" data-value="<?php echo $uniqueViewCount; ?>">0</h2>
                                 </div>
-                                <p class="text-[0.75rem] font-bold text-slate-400 m-0 mt-1">Unique student views</p>
+                                <p class="text-[0.75rem] font-bold text-slate-400 m-0 mt-1"><?= __('product.unique_views') ?></p>
                             </div>
                             <?php
                                 // Build SVG path from real daily data
@@ -403,16 +564,16 @@ require_once __DIR__ . '/../includes/header.php';
                                     <div class="w-12 h-12 rounded-full bg-purple-50 flex items-center justify-center text-purple-600 shadow-sm">
                                         <svg class="w-6 h-6" fill="<?php echo $wishlistCount > 0 ? 'currentColor' : 'none'; ?>" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
                                     </div>
-                                    <span class="text-[0.95rem] font-bold text-slate-600">Student Interest</span>
+                                    <span class="text-[0.95rem] font-bold text-slate-600"><?= __('product.student_interest') ?></span>
                                 </div>
                                 <div class="flex items-center gap-3">
                                     <h2 class="text-4xl font-black text-slate-800 m-0 count-up" data-value="<?php echo $wishlistCount; ?>">0</h2>
                                     <span class="text-emerald-500 font-black text-[0.8rem] flex items-center gap-1">
                                         <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                                        LIVE
+                                        <?= __('product.live_label') ?>
                                     </span>
                                 </div>
-                                <p class="text-[0.75rem] font-bold text-slate-400 m-0 mt-1">Students who saved this</p>
+                                <p class="text-[0.75rem] font-bold text-slate-400 m-0 mt-1"><?= __('product.saved_by') ?></p>
                             </div>
                             <?php
                                 // Build SVG path from real daily wishlist data
@@ -438,7 +599,7 @@ require_once __DIR__ . '/../includes/header.php';
 
                     <!-- PRICING STRATEGY -->
                     <div class="mb-8">
-                        <h4 class="font-bold text-slate-800 mb-4" style="font-size: 1.15rem;">Current Pricing Strategy</h4>
+                        <h4 class="font-bold text-slate-800 mb-4" style="font-size: 1.15rem;"><?= __('product.pricing_strategy') ?></h4>
                         <form method="post" class="flex flex-wrap items-center gap-4">
                             <?php echo csrfTokenField(); ?>
                             <input type="hidden" name="action" value="update_price">
@@ -449,35 +610,134 @@ require_once __DIR__ . '/../includes/header.php';
                             </div>
                             <button type="submit" class="flex items-center gap-2 font-black text-[0.72rem] uppercase tracking-[0.14em] transition-all hover:brightness-95 shadow-sm" style="height: 38px; color: var(--primary); background: var(--bg-surface); border: 1px solid var(--border-light); padding: 0 1rem; border-radius: 10px; cursor: pointer;">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                UPDATE PRICE
+                                <?= __('product.update_price') ?>
+                            </button>
+                        </form>
+                        
+                        <!-- Set Discount Form -->
+                        <form method="post" class="flex flex-wrap items-center gap-4 mt-4">
+                            <?php echo csrfTokenField(); ?>
+                            <input type="hidden" name="action" value="set_discount">
+                            <div class="flex items-center bg-white border border-slate-200 px-4" style="border-radius: 10px; height: 38px; min-width: 120px;">
+                                <select name="discount_percent" style="width: 100%; background: transparent; border: none; font-size: 0.95rem; font-weight: 800; color: #1e293b; outline: none; cursor: pointer;">
+                                    <?php foreach ([0, 5, 10, 15, 20, 25, 30, 40, 50] as $d): ?>
+                                        <option value="<?php echo $d; ?>" <?php echo ((int)($product['discount_percent'] ?? 0) === $d) ? 'selected' : ''; ?>>
+                                            <?php echo $d === 0 ? __('product.no_discount') : ('-' . $d . '%'); ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <button type="submit" class="flex items-center gap-2 font-black text-[0.72rem] uppercase tracking-[0.14em] transition-all hover:brightness-95 shadow-sm" style="height: 38px; color: white; background: #ef4444; border: 1px solid #dc2626; padding: 0 1rem; border-radius: 10px; cursor: pointer;">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                                <?= __('product.apply_discount') ?>
                             </button>
                         </form>
                     </div>
 
                     <div class="flex flex-wrap items-center gap-4">
-                        <form method="post" onsubmit="return confirm('Mark as sold?')">
+                        <form method="post" onsubmit="return confirm('<?= addslashes(__('product.confirm_mark_sold')) ?>')">
                             <?php echo csrfTokenField(); ?>
                             <input type="hidden" name="action" value="mark_sold">
                             <button type="submit" class="flex items-center gap-2 font-bold text-[0.75rem] uppercase tracking-wider transition-all hover-scale" style="height: 38px; color: var(--primary); background: var(--bg-surface); border: 1px solid var(--border-light); padding: 0 1rem; border-radius: var(--radius-sm); cursor: pointer;">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                                MARK AS SOLD
+                                <?= __('product.mark_sold_btn') ?>
                             </button>
                         </form>
                         
-                        <form method="post" onsubmit="return confirm('Delete listing?')">
+                        <form method="post" onsubmit="return confirm('<?= addslashes(__('product.confirm_delete')) ?>')">
                             <?php echo csrfTokenField(); ?>
                             <input type="hidden" name="action" value="delete_listing">
                             <button type="submit" class="flex items-center gap-2 font-bold text-[0.75rem] uppercase tracking-wider transition-all hover-scale" style="height: 38px; color: #ef4444; background: var(--bg-surface); border: 1px solid var(--border-light); padding: 0 0.75rem; border-radius: var(--radius-sm); cursor: pointer;">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                DELETE LISTING
+                                <?= __('product.delete_listing_btn') ?>
                             </button>
                         </form>
+                    </div>
+
+                    <!-- GALLERY MANAGEMENT -->
+                    <div class="mb-8 border-t border-slate-100 pt-6 mt-6">
+                        <h4 class="font-bold text-slate-800 mb-4" style="font-size: 1.15rem;"><?= __('product.manage_gallery') ?></h4>
+                        
+                        <!-- Thumbnail Grid -->
+                        <div class="grid grid-cols-5 gap-3 mb-6">
+                            <?php foreach ($images as $img): ?>
+                                <div class="relative group rounded-lg overflow-hidden border border-slate-200 aspect-square bg-slate-50" style="width: 100%;">
+                                    <img src="<?php echo getProductImage($img['image_path']); ?>" alt="Gallery Image" class="w-full h-full object-cover">
+                                    
+                                    <!-- Badges & Controls Overlay -->
+                                    <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-1.5">
+                                        <div class="flex justify-between items-start">
+                                            <?php if ($img['is_primary']): ?>
+                                                <span class="bg-indigo-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded shadow"><?= __('product.primary') ?></span>
+                                            <?php else: ?>
+                                                <form method="post" style="display:inline;">
+                                                    <?php echo csrfTokenField(); ?>
+                                                    <input type="hidden" name="action" value="set_primary">
+                                                    <input type="hidden" name="image_id" value="<?php echo $img['id']; ?>">
+                                                    <button type="submit" class="bg-white/90 hover:bg-white text-indigo-600 p-1 rounded shadow transition-colors" title="<?= addslashes(__('product.set_primary')) ?>" style="border:none; cursor:pointer;">
+                                                        <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                                                    </button>
+                                                </form>
+                                            <?php endif; ?>
+                                            
+                                            <!-- Delete Button -->
+                                            <?php if (count($images) > 1): ?>
+                                                <form method="post" onsubmit="return confirm('<?= addslashes(__('product.confirm_delete_image')) ?>')" style="display:inline;">
+                                                    <?php echo csrfTokenField(); ?>
+                                                    <input type="hidden" name="action" value="delete_image">
+                                                    <input type="hidden" name="image_id" value="<?php echo $img['id']; ?>">
+                                                    <button type="submit" class="bg-red-600/90 hover:bg-red-600 text-white p-1 rounded shadow transition-colors ml-auto" title="<?= addslashes(__('product.delete_image_btn')) ?>" style="border:none; cursor:pointer;">
+                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                                    </button>
+                                                </form>
+                                            <?php endif; ?>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Fallback Indicator for Primary on non-hover -->
+                                    <?php if ($img['is_primary']): ?>
+                                        <div class="absolute bottom-1 right-1 bg-indigo-600 text-white p-0.5 rounded-full shadow" style="pointer-events: none;">
+                                            <svg class="w-2.5 h-2.5" style="width: 10px; height: 10px; display: block;" fill="currentColor" viewBox="0 0 20 20"><path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"/><path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"/></svg>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+                            <?php endforeach; ?>
+                            
+                            <!-- Empty Slots if < 5 -->
+                            <?php for ($i = count($images); $i < 5; $i++): ?>
+                                <div class="border border-dashed border-slate-200 rounded-lg flex items-center justify-center aspect-square text-slate-300">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                </div>
+                            <?php endfor; ?>
+                        </div>
+
+                        <!-- Add Images Form -->
+                        <?php if (count($images) < 5): ?>
+                            <form method="post" enctype="multipart/form-data" class="mt-4">
+                                <?php echo csrfTokenField(); ?>
+                                <input type="hidden" name="action" value="add_images">
+                                
+                                <div class="flex items-center gap-3">
+                                    <label class="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 bg-white hover:bg-slate-50 transition-colors shadow-sm cursor-pointer" style="margin-bottom:0;">
+                                        <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                        <?= __('product.select_files') ?>
+                                        <input type="file" id="mgmtImgInput" name="images[]" multiple accept="image/*" class="hidden">
+                                    </label>
+                                    <span id="mgmtUploadHelp" class="text-xs text-slate-400"><?= __('product.more_photos_help', ['count' => (5 - count($images))]) ?></span>
+                                    
+                                    <button type="submit" id="mgmtSubmitBtn" class="btn btn-primary btn-sm px-4 py-2 ml-auto" style="height:38px; display:none; font-weight:bold;">
+                                        <?= __('product.upload_btn') ?>
+                                    </button>
+                                </div>
+                                <div id="mgmtPreview" class="flex flex-wrap gap-2 mt-3"></div>
+                            </form>
+                        <?php endif; ?>
                     </div>
 
                     <!-- FOOTER NAVIGATION -->
                     <a href="<?php echo BASE_URL; ?>pages/profile.php" class="inline-flex items-center gap-2 font-bold text-[1rem] mt-12 hover-scale" style="color: var(--primary);">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="stroke-width: 2;"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
-                        Return to Dashboard
+                        <?= __('product.return_dashboard') ?>
                     </a>
                 </div>
             </div>
@@ -489,7 +749,7 @@ require_once __DIR__ . '/../includes/header.php';
                         <div class="w-10 h-10 flex items-center justify-center" style="border-radius: var(--radius-md); background: var(--bg-main); color: var(--primary);">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                         </div>
-                        <h3 class="m-0 font-bold text-slate-800" style="font-size: 1.4rem;">Product Description</h3>
+                        <h3 class="m-0 font-bold text-slate-800" style="font-size: 1.4rem;"><?= __('product.description_title') ?></h3>
                     </div>
                     <div style="line-height: 2; color: #64748b; font-size: 1.15rem;">
                         <?php echo nl2br(sanitize($product['description'])); ?>
@@ -500,7 +760,7 @@ require_once __DIR__ . '/../includes/header.php';
             <!-- Action Buttons for Buyer -->
             <div class="flex flex-col gap-4 sticky bottom-4 z-10 p-4 mt-8" style="border-radius: var(--radius-lg); border: 1px solid var(--border-light); background: color-mix(in srgb, var(--bg-card) 95%, transparent); backdrop-filter: blur(10px);">
                 <a href="messages.php?other_user_id=<?php echo $product['seller_id']; ?>&product_id=<?php echo $product['id']; ?>" class="btn btn-primary flex-grow justify-center py-4 text-lg hover-scale">
-                    Message Seller
+                    <?= __('product.message_seller') ?>
                 </a>
             </div>
             <?php endif; ?>
@@ -546,6 +806,158 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 30);
     });
 });
+
+// Gallery Management client-side logic
+const mgmtImgInput = document.getElementById('mgmtImgInput');
+if (mgmtImgInput) {
+    let mgmtUploadedFiles = [];
+    const mgmtMaxFiles = <?php echo isset($images) ? (5 - count($images)) : 5; ?>;
+
+    function compressImageAsync(file, maxWidth = 1200, maxHeight = 1200, quality = 0.8) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const img = new Image();
+                img.onload = function () {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > height) {
+                        if (width > maxWidth) {
+                            height *= maxWidth / width;
+                            width = maxWidth;
+                        }
+                    } else {
+                        if (height > maxHeight) {
+                            width *= maxHeight / height;
+                            height = maxHeight;
+                        }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    canvas.toBlob(function (blob) {
+                        if (!blob) {
+                            reject(new Error('Canvas to Blob failed'));
+                            return;
+                        }
+                        const compressedFile = new File([blob], file.name.substring(0, file.name.lastIndexOf('.')) + '.jpg', {
+                            type: 'image/jpeg',
+                            lastModified: Date.now()
+                        });
+                        resolve(compressedFile);
+                    }, 'image/jpeg', quality);
+                };
+                img.onerror = reject;
+                img.src = e.target.result;
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
+    }
+
+    function updateMgmtFileInput() {
+        const dt = new DataTransfer();
+        mgmtUploadedFiles.forEach(file => dt.items.add(file));
+        mgmtImgInput.files = dt.files;
+    }
+
+    function renderMgmtPreviews() {
+        const preview = document.getElementById('mgmtPreview');
+        const submitBtn = document.getElementById('mgmtSubmitBtn');
+        preview.innerHTML = '';
+        
+        if (mgmtUploadedFiles.length > 0) {
+            submitBtn.style.display = 'inline-block';
+        } else {
+            submitBtn.style.display = 'none';
+        }
+        
+        mgmtUploadedFiles.forEach((file, index) => {
+            const reader = new FileReader();
+            reader.onload = (re) => {
+                const div = document.createElement('div');
+                div.style = "position: relative; width:70px; height:70px; border-radius: var(--radius-md); overflow:hidden; border: 1px solid var(--border-light); flex-shrink: 0;";
+                
+                const img = document.createElement('img');
+                img.src = re.target.result;
+                img.style = "width:100%; height:100%; object-fit:cover;";
+                
+                const removeBtn = document.createElement('button');
+                removeBtn.type = "button";
+                removeBtn.innerHTML = "&times;";
+                removeBtn.style = "position: absolute; top: 2px; right: 2px; background: rgba(0,0,0,0.6); color: white; border: none; border-radius: 50%; width: 18px; height: 18px; font-size: 12px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10;";
+                removeBtn.onclick = function(e) {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    mgmtUploadedFiles.splice(index, 1);
+                    updateMgmtFileInput();
+                    renderMgmtPreviews();
+                };
+                
+                div.appendChild(img);
+                div.appendChild(removeBtn);
+                preview.appendChild(div);
+            }
+            reader.readAsDataURL(file);
+        });
+    }
+
+    mgmtImgInput.addEventListener('change', async function(e) {
+        const newFiles = [...e.target.files];
+        const submitBtn = document.getElementById('mgmtSubmitBtn');
+        const uploadHelp = document.getElementById('mgmtUploadHelp');
+        if (newFiles.length === 0) {
+            updateMgmtFileInput();
+            return;
+        }
+        // Check if new selection was just the internal update
+        if (newFiles.length === mgmtUploadedFiles.length) {
+            let same = true;
+            for (let i = 0; i < newFiles.length; i++) {
+                if (newFiles[i] !== mgmtUploadedFiles[i]) {
+                    same = false; break;
+                }
+            }
+            if (same) return;
+        }
+        
+        submitBtn.disabled = true;
+        submitBtn.innerText = "Processing...";
+        uploadHelp.innerText = "Compressing images...";
+        uploadHelp.style.color = "var(--primary)";
+        
+        for (let i = 0; i < newFiles.length; i++) {
+            if (mgmtUploadedFiles.some(f => f.name === newFiles[i].name && f.size === newFiles[i].size)) continue;
+            
+            if (mgmtUploadedFiles.length < mgmtMaxFiles) {
+                try {
+                    const compressed = await compressImageAsync(newFiles[i]);
+                    mgmtUploadedFiles.push(compressed);
+                } catch (err) {
+                    console.error('Compression failed', err);
+                    mgmtUploadedFiles.push(newFiles[i]);
+                }
+            } else {
+                alert('You can only upload up to ' + mgmtMaxFiles + ' additional images.');
+                break;
+            }
+        }
+        
+        updateMgmtFileInput();
+        renderMgmtPreviews();
+        
+        submitBtn.disabled = false;
+        submitBtn.innerText = "Upload";
+        uploadHelp.innerText = "Ready to upload";
+        uploadHelp.style.color = "";
+    });
+}
 </script>
 
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>

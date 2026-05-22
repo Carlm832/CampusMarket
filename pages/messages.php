@@ -76,6 +76,11 @@ require_once __DIR__ . '/../includes/header.php';
     <!-- Chat Header Context -->
     <div class="glass-panel mb-4 p-4 flex justify-between items-center" style="border-radius: var(--radius-lg); box-shadow: var(--shadow-md);">
         <div class="flex items-center gap-4">
+            <button onclick="goBackOrInbox()" class="flex items-center justify-center cursor-pointer hover-scale transition-all duration-200" style="width: 40px; height: 40px; border-radius: var(--radius-md); border: 1px solid var(--border-light); background: var(--bg-surface); color: var(--text-main); margin-right: 0.25rem;" title="Go Back">
+                <svg xmlns="http://www.w3.org/2000/svg" style="width: 20px; height: 20px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+                </svg>
+            </button>
             <div style="width: 50px; height: 50px; flex-shrink: 0;">
                 <?php if (!empty($otherUser['avatar'])): ?>
                     <img src="<?= avatarUrl($otherUser['avatar']) ?>" alt="<?= htmlspecialchars($otherUser['username']) ?>" style="width: 100%; height: 100%; object-fit: cover; border-radius: var(--radius-lg); border: 1px solid var(--border-light);">
@@ -88,14 +93,20 @@ require_once __DIR__ . '/../includes/header.php';
             <div>
                 <h3 class="mb-0 font-bold" style="line-height: 1.2;">@<?= htmlspecialchars($otherUser['username']) ?></h3>
                 <p class="text-muted small mb-0 flex items-center gap-1">
-                    <span style="display: inline-block; width: 8px; height: 8px; background: #10b981; border-radius: 2px;"></span> Active recently
+                    <span style="display: inline-block; width: 8px; height: 8px; background: #10b981; border-radius: 2px;"></span> <?= __('chat.active_recently') ?>
                 </p>
             </div>
         </div>
         <div class="flex items-center gap-3 text-right hidden sm:flex">
+            <button id="clear-chat-btn" type="button" class="btn btn-sm btn-danger" style="border-radius: var(--radius-md); font-size: 0.75rem; padding: 0.35rem 0.75rem; border: none;" onclick="clearChat()">
+                <?= __('chat.clear_chat') ?>
+            </button>
+            <button id="translate-toggle" type="button" class="btn btn-sm btn-secondary" style="border-radius: var(--radius-md); font-size: 0.75rem; padding: 0.35rem 0.75rem;">
+                Translate: Off
+            </button>
             <?php if ($productId > 0): ?>
                 <div>
-                    <p class="mb-0 text-muted small uppercase tracking-wider font-bold" style="font-size: 0.65rem;">Regarding Item</p>
+                    <p class="mb-0 text-muted small uppercase tracking-wider font-bold" style="font-size: 0.65rem;"><?= __('chat.regarding_item') ?></p>
                     <a href="<?= BASE_URL ?>/pages/product.php?id=<?= $productId ?>" class="font-bold text-main hover:text-primary transition-colors" style="text-decoration: none; font-size: 0.9rem; display: block; max-width: 350px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                         <?= htmlspecialchars($product['title']) ?>
                     </a>
@@ -106,9 +117,9 @@ require_once __DIR__ . '/../includes/header.php';
                 </div>
             <?php else: ?>
                 <div>
-                    <p class="mb-0 text-muted small uppercase tracking-wider font-bold" style="font-size: 0.65rem;">Conversation</p>
+                    <p class="mb-0 text-muted small uppercase tracking-wider font-bold" style="font-size: 0.65rem;"><?= __('chat.conversation_label') ?></p>
                     <span class="font-bold text-main" style="font-size: 0.9rem;"><?= htmlspecialchars($product['title']) ?></span>
-                    <p class="text-secondary font-bold mb-0" style="font-size: 0.9rem;"><?= $product['title'] === 'CampusMarket Support' ? 'Official Help' : 'Private DM' ?></p>
+                    <p class="text-secondary font-bold mb-0" style="font-size: 0.9rem;"><?= $product['title'] === 'CampusMarket Support' ? __('chat.official_help') : __('chat.private_dm') ?></p>
                 </div>
                 <div style="width: 48px; height: 48px; flex-shrink: 0; border-radius: var(--radius-md); overflow: hidden; border: 1px solid var(--border-light); background: var(--secondary-light); display: flex; align-items: center; justify-content: center; color: var(--secondary);">
                     <?php if ($product['title'] === 'CampusMarket Support'): ?>
@@ -126,14 +137,10 @@ require_once __DIR__ . '/../includes/header.php';
     </div>
     
     <!-- Chat Container -->
-    <div class="glass-panel" style="border-radius: var(--radius-xl); overflow: hidden; box-shadow: var(--shadow-lg); background: var(--bg-surface);">
+    <div class="glass-panel" style="position: relative; border-radius: var(--radius-xl); overflow: hidden; box-shadow: var(--shadow-lg); background: var(--bg-surface);">
         
         <!-- Messages Area -->
         <div id="chat-box" style="height: 400px; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: 1rem; background: var(--bg-main); scroll-behavior: smooth;">
-            <!-- Loading Indicator -->
-            <div class="flex justify-center items-center h-full text-muted" id="chat-loading">
-                <svg class="animate-spin h-8 w-8 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-            </div>
             <!-- Messages will be loaded here via JS -->
         </div>
         
@@ -153,8 +160,8 @@ require_once __DIR__ . '/../includes/header.php';
                         </svg>
                     </div>
                     <div>
-                        <h4 class="text-sm font-bold text-main mb-0" style="line-height: 1.2;">Ready to buy?</h4>
-                        <p class="text-xs text-muted mb-0">Send a formal purchase request to the seller.</p>
+                        <h4 class="text-sm font-bold text-main mb-0" style="line-height: 1.2;"><?= __('chat.ready_to_buy') ?></h4>
+                        <p class="text-xs text-muted mb-0"><?= __('chat.send_purchase_request') ?></p>
                     </div>
                 </div>
                 <form action="api_messages.php" method="POST" class="m-0">
@@ -164,7 +171,7 @@ require_once __DIR__ . '/../includes/header.php';
                     <button type="button" class="btn btn-primary btn-sm shadow-md font-bold uppercase tracking-wider hover-scale" 
                             style="font-size: 0.7rem; padding: 0.5rem 1.25rem; border-radius: var(--radius-lg); letter-spacing: 0.05em;" 
                             onclick="proposeOrder()">
-                        Propose Order
+                        <?= __('chat.propose_order') ?>
                     </button>
                 </form>
             </div>
@@ -185,11 +192,11 @@ require_once __DIR__ . '/../includes/header.php';
                     </div>
                     <div>
                         <?php if ($isSupport): ?>
-                        <h4 class="text-sm font-bold text-main mb-0" style="line-height: 1.2;">CampusMarket Support</h4>
-                        <p class="text-xs text-muted mb-0">Our team usually responds within 24 hours.</p>
+                        <h4 class="text-sm font-bold text-main mb-0" style="line-height: 1.2;"><?= __('chat.support_title') ?></h4>
+                        <p class="text-xs text-muted mb-0"><?= __('chat.support_desc') ?></p>
                         <?php else: ?>
-                        <h4 class="text-sm font-bold text-main mb-0" style="line-height: 1.2;">Direct Message</h4>
-                        <p class="text-xs text-muted mb-0">Private conversation with @<?= htmlspecialchars($otherUser['username']) ?></p>
+                        <h4 class="text-sm font-bold text-main mb-0" style="line-height: 1.2;"><?= __('chat.dm_title') ?></h4>
+                        <p class="text-xs text-muted mb-0"><?= __('chat.dm_desc', ['username' => htmlspecialchars($otherUser['username'])]) ?></p>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -199,8 +206,8 @@ require_once __DIR__ . '/../includes/header.php';
         <!-- Input Area -->
         <div style="background: var(--bg-surface); border-top: 1px solid var(--border-light); padding: 0.75rem;">
             <form id="chat-form" class="flex gap-3 relative m-0">
-                <input type="text" id="chat-input" class="premium-input" style="background: var(--bg-surface); color: var(--text-main); padding: 0.75rem 1.25rem; border-radius: var(--radius-lg); border: 1px solid var(--border-light); font-size: 1rem; flex-grow: 1;" placeholder="Type your message..." required autocomplete="off">
-                <button type="submit" class="btn btn-primary hover-scale shadow-md" style="border-radius: var(--radius-lg); width: 54px; height: 54px; padding: 0; display: flex; align-items: center; justify-content: center; flex-shrink: 0;" title="Send">
+                <input type="text" id="chat-input" class="premium-input" style="background: var(--bg-surface); color: var(--text-main); padding: 0.75rem 1.25rem; border-radius: var(--radius-lg); border: 1px solid var(--border-light); font-size: 1rem; flex-grow: 1;" placeholder="<?= htmlspecialchars(__('chat.placeholder')) ?>" required autocomplete="off">
+                <button type="submit" class="btn btn-primary hover-scale shadow-md" style="border-radius: var(--radius-lg); width: 54px; height: 54px; padding: 0; display: flex; align-items: center; justify-content: center; flex-shrink: 0;" title="<?= htmlspecialchars(__('chat.send')) ?>">
                     <svg style="width: 24px; height: 24px; transform: translateX(2px);" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
                 </button>
             </form>
@@ -214,22 +221,82 @@ require_once __DIR__ . '/../includes/header.php';
 #chat-box::-webkit-scrollbar-track { background: transparent; }
 #chat-box::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
 #chat-box::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+/* Delete message button */
+.message-bubble .btn-delete-msg {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    background: none;
+    border: none;
+    padding: 4px;
+    cursor: pointer;
+    color: inherit;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    z-index: 2;
+}
+.message-bubble .btn-delete-msg:hover {
+    background: rgba(0,0,0,0.12);
+}
+.message-bubble:hover .btn-delete-msg {
+    opacity: 0.6;
+}
+.message-bubble:hover .btn-delete-msg:hover {
+    opacity: 1;
+}
 </style>
 
 <script>
+function goBackOrInbox() {
+    if (document.referrer && document.referrer.indexOf(window.location.host) !== -1) {
+        const ref = document.referrer;
+        if (ref.includes('login.php') || ref.includes('register.php') || ref.includes('messages.php')) {
+            window.location.href = 'inbox.php';
+        } else {
+            window.history.back();
+        }
+    } else {
+        window.location.href = 'inbox.php';
+    }
+}
+
 const productId = <?= $productId ?>;
 const otherUserId = <?= $otherUserId ?>;
+const isAdmin = <?= isAdmin() ? 'true' : 'false' ?>;
 const chatBox = document.getElementById('chat-box');
 const chatForm = document.getElementById('chat-form');
 const chatInput = document.getElementById('chat-input');
+const translateToggleBtn = document.getElementById('translate-toggle');
 let loadingDiv = document.getElementById('chat-loading');
 const realtimeRoom = `chat:${productId}:${[<?= $currentUserId ?>, otherUserId].sort((a, b) => a - b).join(':')}`;
 let realtimeChannel = null;
 let pollIntervalId = null;
+let translateEnabled = localStorage.getItem('cm_translate_messages') === '1';
+
+function updateTranslateToggleUi() {
+    if (!translateToggleBtn) return;
+    translateToggleBtn.textContent = `Translate: ${translateEnabled ? 'On' : 'Off'}`;
+}
+
+if (translateToggleBtn) {
+    updateTranslateToggleUi();
+    translateToggleBtn.addEventListener('click', () => {
+        translateEnabled = !translateEnabled;
+        localStorage.setItem('cm_translate_messages', translateEnabled ? '1' : '0');
+        updateTranslateToggleUi();
+        fetchMessages();
+    });
+}
 
 function fetchMessages() {
     const cacheBuster = Date.now();
-    fetch(`api_messages.php?action=fetch&product_id=${productId}&other_user_id=${otherUserId}&_=${cacheBuster}`, {
+    const translateParam = translateEnabled ? 1 : 0;
+    fetch(`api_messages.php?action=fetch&product_id=${productId}&other_user_id=${otherUserId}&translate=${translateParam}&_=${cacheBuster}`, {
         cache: 'no-store'
     })
         .then(res => {
@@ -265,7 +332,7 @@ function renderMessages(messages) {
         chatBox.innerHTML = `
             <div class="text-center text-muted my-auto flex flex-col items-center justify-center opacity-50">
                 <div class="text-5xl mb-2">👋</div>
-                <p>Say hello to start the conversation!</p>
+                <p>${__('chat.say_hello')}</p>
             </div>
         `;
         return;
@@ -286,6 +353,7 @@ function renderMessages(messages) {
         }
 
         const msgDiv = document.createElement('div');
+        msgDiv.className = 'message-bubble';
         msgDiv.style.maxWidth = '75%';
         msgDiv.style.padding = '0.875rem 1.25rem';
         msgDiv.style.boxShadow = 'none';
@@ -308,10 +376,34 @@ function renderMessages(messages) {
             msgDiv.style.marginRight = 'auto';
         }
         
+        const canDelete = msg.is_mine || isAdmin;
+        if (canDelete) {
+            msgDiv.style.paddingRight = '2.25rem';
+        }
+        
         let timeStr = new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
 
+        let bodyHtml = `<div class="message-text-content" style="font-size: 1rem;">${msg.body}</div>`;
+        if (!msg.is_mine && msg.is_translated) {
+            const langName = CampusMarketI18n.getLangName(msg.source_lang);
+            const translatedLabel = __('chat.translated_from', { lang: langName });
+            const viewOriginalText = __('chat.view_original');
+            
+            bodyHtml = `
+                <div class="message-text-content translated-text" style="font-size: 1rem;">${msg.body}</div>
+                <div class="message-text-content original-text" style="font-size: 1rem; display: none; opacity: 0.85; font-style: italic;">${msg.original_text}</div>
+                <div class="translation-meta" style="font-size: 0.7rem; opacity: 0.7; margin-top: 6px; display: flex; align-items: center; gap: 6px; border-top: 1px dashed var(--border-light); padding-top: 4px;">
+                    <span>🌐 ${translatedLabel}</span>
+                    <button type="button" class="btn-toggle-translation" onclick="toggleOriginalText(this)" style="background: none; border: none; padding: 0; margin: 0; color: var(--primary); font-size: 0.7rem; cursor: pointer; text-decoration: underline; font-weight: bold;">${viewOriginalText}</button>
+                </div>
+            `;
+        }
+
         msgDiv.innerHTML = `
-            <div style="font-size: 1rem;">${msg.body}</div>
+            ${canDelete ? `<button class="btn-delete-msg" onclick="deleteMessage(${msg.id})" title="${__('chat.delete_msg')}" aria-label="${__('chat.delete_msg')}">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            </button>` : ''}
+            ${bodyHtml}
             <div style="font-size: 0.65rem; text-align: right; margin-top: 4px; opacity: ${msg.is_mine ? '0.8' : '0.5'};">
                 ${timeStr}
             </div>
@@ -323,6 +415,22 @@ function renderMessages(messages) {
         chatBox.scrollTop = chatBox.scrollHeight;
     }
 }
+
+window.toggleOriginalText = function(btn) {
+    const bubble = btn.closest('.message-bubble');
+    const translatedEl = bubble.querySelector('.translated-text');
+    const originalEl = bubble.querySelector('.original-text');
+    
+    if (translatedEl.style.display === 'none') {
+        translatedEl.style.display = 'block';
+        originalEl.style.display = 'none';
+        btn.textContent = __('chat.view_original');
+    } else {
+        translatedEl.style.display = 'none';
+        originalEl.style.display = 'block';
+        btn.textContent = __('chat.hide_original');
+    }
+};
 
 chatForm.addEventListener('submit', (e) => {
     e.preventDefault();
@@ -342,7 +450,7 @@ chatForm.addEventListener('submit', (e) => {
     msgDiv.style.lineHeight = '1.6';
     msgDiv.style.wordWrap = 'break-word';
     msgDiv.style.opacity = '0.7'; // Indicate sending
-    msgDiv.innerHTML = `<div style="font-size: 1rem;">${text}</div><div style="font-size: 0.65rem; text-align: right; margin-top: 4px;">Sending...</div>`;
+    msgDiv.innerHTML = `<div style="font-size: 1rem;">${text}</div><div style="font-size: 0.65rem; text-align: right; margin-top: 4px;">${__('chat.sending')}</div>`;
     chatBox.appendChild(msgDiv);
     chatBox.scrollTop = chatBox.scrollHeight;
 
@@ -377,14 +485,14 @@ chatForm.addEventListener('submit', (e) => {
             }
             fetchMessages();
         } else {
-            alert('Error sending message: ' + data.error);
+            alert(__('chat.error_send') + data.error);
             msgDiv.remove();
             chatInput.value = text;
         }
     })
     .catch(err => {
         console.error('Send failed:', err);
-        alert('Failed to send message. Please try again.');
+        alert(__('chat.failed_send'));
         msgDiv.remove();
         chatInput.value = text;
     });
@@ -401,6 +509,45 @@ function proposeOrder() {
             alert('Error: ' + data.error);
         }
     });
+}
+
+function deleteMessage(msgId) {
+    if (!confirm(__('chat.confirm_delete_msg'))) return;
+    const formData = new FormData();
+    formData.append('action', 'delete_message');
+    formData.append('message_id', msgId);
+    formData.append('csrf_token', window.__csrfToken || '');
+
+    fetch('api_messages.php', { method: 'POST', body: formData })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                fetchMessages();
+            } else {
+                alert(data.error || 'Error deleting message');
+            }
+        })
+        .catch(err => console.error('Delete failed:', err));
+}
+
+function clearChat() {
+    if (!confirm(__('chat.confirm_clear_chat'))) return;
+    const formData = new FormData();
+    formData.append('action', 'clear_chat');
+    formData.append('product_id', productId);
+    formData.append('other_user_id', otherUserId);
+    formData.append('csrf_token', window.__csrfToken || '');
+
+    fetch('api_messages.php', { method: 'POST', body: formData })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                fetchMessages();
+            } else {
+                alert(data.error || 'Error clearing chat');
+            }
+        })
+        .catch(err => console.error('Clear chat failed:', err));
 }
 
 // ─── Deal Handshake Logic ──────────────────────────────
@@ -424,7 +571,29 @@ function checkDealStatus() {
         });
 }
 
+window.currentDeal = null;
+window.handshakeCollapsed = false;
+window.handshakeTimeout = null;
+
+function collapseHandshake() {
+    window.handshakeCollapsed = true;
+    renderHandshakeBar(window.currentDeal);
+    
+    if (window.handshakeTimeout) clearTimeout(window.handshakeTimeout);
+    window.handshakeTimeout = setTimeout(() => {
+        window.handshakeCollapsed = false;
+        renderHandshakeBar(window.currentDeal);
+    }, 60000);
+}
+
+function expandHandshake() {
+    window.handshakeCollapsed = false;
+    if (window.handshakeTimeout) clearTimeout(window.handshakeTimeout);
+    renderHandshakeBar(window.currentDeal);
+}
+
 function renderHandshakeBar(deal) {
+    window.currentDeal = deal;
     const status = deal.status;
     const isSeller = deal.is_seller;
     const buyerName = deal.buyer_username || 'Buyer';
@@ -433,7 +602,52 @@ function renderHandshakeBar(deal) {
     let html = '';
     let borderStyle = '';
 
-    if (status === 'pending') {
+    if (window.handshakeCollapsed) {
+        handshakeBar.setAttribute('style', `display:block; position:absolute; right: 0; top: 1rem; padding: 0.5rem 1rem; background: var(--primary); color: white; border-radius: 20px 0 0 20px; cursor: pointer; z-index: 100; box-shadow: -2px 2px 10px rgba(0,0,0,0.1); transition: all 0.2s ease;`);
+        handshakeBar.innerHTML = `
+            <div onclick="expandHandshake()" style="display: flex; align-items: center; gap: 0.5rem;">
+                <svg xmlns="http://www.w3.org/2000/svg" style="width: 16px; height: 16px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+                <span style="font-size: 0.8rem; font-weight: 600;">${__('deal.deal_info')}</span>
+            </div>
+        `;
+        return;
+    }
+
+    if (status === 'choose_product') {
+        borderStyle = 'border-left: 4px solid var(--primary); background: var(--bg-surface); opacity: 0.95;';
+        html = `
+            <div id="choose-product-initial" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem;">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <div class="flex items-center justify-center rounded-lg w-10 h-10 shadow-sm" style="background: var(--bg-surface); color: var(--primary); border: 1px solid var(--border-light);">
+                        <svg xmlns="http://www.w3.org/2000/svg" style="width: 20px; height: 20px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <div style="font-weight: 700; font-size: 0.9rem; color: var(--text-main); line-height: 1.2;">${__('deal.did_transaction')}</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.2rem;">${__('deal.select_item')}</div>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 0.5rem; flex-shrink: 0;">
+                    <button onclick="openProductSelector()" class="btn btn-primary btn-sm" style="font-size: 0.8rem; border-radius: var(--radius-lg); padding: 0.4rem 1rem;">${__('deal.yes')}</button>
+                    <button onclick="collapseHandshake()" class="btn btn-secondary btn-sm" style="font-size: 0.8rem; border-radius: var(--radius-lg); padding: 0.4rem 1rem; opacity: 0.7;">${__('deal.no')}</button>
+                </div>
+            </div>
+            <div id="choose-product-selector" style="display: none; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem; width: 100%;">
+                <div style="flex-grow: 1;">
+                    <select id="deal-product-select" class="premium-input" style="width: 100%; padding: 0.5rem; border-radius: var(--radius-md); border: 1px solid var(--border-light); background: var(--bg-surface); color: var(--text-main);">
+                        <option value="">${__('deal.loading_items')}</option>
+                    </select>
+                </div>
+                <div style="display: flex; gap: 0.5rem; flex-shrink: 0;">
+                    <button onclick="submitChosenProduct()" class="btn btn-primary btn-sm" style="font-size: 0.8rem; border-radius: var(--radius-lg); padding: 0.4rem 1rem;">${__('deal.confirm')}</button>
+                    <button onclick="cancelChooseProduct()" class="btn btn-secondary btn-sm" style="font-size: 0.8rem; border-radius: var(--radius-lg); padding: 0.4rem 1rem;">${__('deal.cancel')}</button>
+                </div>
+            </div>
+        `;
+    } else if (status === 'pending') {
         borderStyle = 'border-left: 4px solid var(--primary); background: var(--bg-surface); opacity: 0.95;';
         html = `
             <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem;">
@@ -444,13 +658,13 @@ function renderHandshakeBar(deal) {
                         </svg>
                     </div>
                     <div>
-                        <div style="font-weight: 700; font-size: 0.9rem; color: var(--text-main); line-height: 1.2;">Did this deal happen?</div>
-                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.2rem;">Confirming marks this item as sold and removes it from listings.</div>
+                        <div style="font-weight: 700; font-size: 0.9rem; color: var(--text-main); line-height: 1.2;">${__('deal.did_deal_happen')}</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.2rem;">${__('deal.confirm_marks_sold')}</div>
                     </div>
                 </div>
                 <div style="display: flex; gap: 0.5rem; flex-shrink: 0;">
-                    <button onclick="confirmDeal()" class="btn btn-primary btn-sm" style="font-size: 0.8rem; border-radius: var(--radius-lg); padding: 0.4rem 1rem;">Yes, deal is done!</button>
-                    <button class="btn btn-secondary btn-sm" style="font-size: 0.8rem; border-radius: var(--radius-lg); padding: 0.4rem 1rem; opacity: 0.7; cursor: default;">Not yet</button>
+                    <button onclick="confirmDeal(${deal.product_id || 'null'})" class="btn btn-primary btn-sm" style="font-size: 0.8rem; border-radius: var(--radius-lg); padding: 0.4rem 1rem;">${__('deal.yes_done')}</button>
+                    <button onclick="collapseHandshake()" class="btn btn-secondary btn-sm" style="font-size: 0.8rem; border-radius: var(--radius-lg); padding: 0.4rem 1rem; opacity: 0.7;">${__('deal.not_yet')}</button>
                 </div>
             </div>
         `;
@@ -464,8 +678,8 @@ function renderHandshakeBar(deal) {
                     </svg>
                 </div>
                 <div>
-                    <div style="font-weight: 700; font-size: 0.9rem; color: var(--text-main); line-height: 1.2;">Awaiting Confirmation</div>
-                    <div style="font-weight: 500; font-size: 0.75rem; color: var(--text-muted);">You confirmed this deal. Waiting for the seller to confirm...</div>
+                    <div style="font-weight: 700; font-size: 0.9rem; color: var(--text-main); line-height: 1.2;">${__('deal.awaiting_confirmation')}</div>
+                    <div style="font-weight: 500; font-size: 0.75rem; color: var(--text-muted);">${__('deal.you_confirmed_waiting')}</div>
                 </div>
             </div>
         `;
@@ -480,13 +694,13 @@ function renderHandshakeBar(deal) {
                         </svg>
                     </div>
                     <div>
-                        <div style="font-weight: 700; font-size: 0.9rem; color: var(--text-main); line-height: 1.2;">@${buyerName} says the deal is done!</div>
-                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.2rem;">Confirm below to mark &ldquo;${productTitle}&rdquo; as sold.</div>
+                        <div style="font-weight: 700; font-size: 0.9rem; color: var(--text-main); line-height: 1.2;">${__('deal.says_done', {buyer: buyerName})}</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.2rem;">${__('deal.confirm_to_mark', {product: productTitle})}</div>
                     </div>
                 </div>
                 <div style="display: flex; gap: 0.5rem; flex-shrink: 0;">
-                    <button onclick="confirmDeal()" class="btn btn-primary btn-sm" style="font-size: 0.8rem; border-radius: var(--radius-lg); padding: 0.4rem 1rem; background: var(--secondary); border-color: var(--secondary);">Confirm & Delist Item</button>
-                    <button class="btn btn-secondary btn-sm" style="font-size: 0.8rem; border-radius: var(--radius-lg); padding: 0.4rem 1rem; opacity: 0.7; cursor: default;">Not done yet</button>
+                    <button onclick="confirmDeal(${deal.product_id || 'null'})" class="btn btn-primary btn-sm" style="font-size: 0.8rem; border-radius: var(--radius-lg); padding: 0.4rem 1rem; background: var(--secondary); border-color: var(--secondary);">${__('deal.confirm_delist')}</button>
+                    <button onclick="collapseHandshake()" class="btn btn-secondary btn-sm" style="font-size: 0.8rem; border-radius: var(--radius-lg); padding: 0.4rem 1rem; opacity: 0.7;">${__('deal.not_done_yet')}</button>
                 </div>
             </div>
         `;
@@ -500,8 +714,8 @@ function renderHandshakeBar(deal) {
                     </svg>
                 </div>
                 <div>
-                    <div style="font-weight: 700; font-size: 0.9rem; color: var(--secondary); line-height: 1.2;">Deal confirmed!</div>
-                    <div style="font-weight: 500; font-size: 0.75rem; color: var(--text-muted);">This item has been marked as sold.</div>
+                    <div style="font-weight: 700; font-size: 0.9rem; color: var(--secondary); line-height: 1.2;">${__('deal.deal_confirmed')}</div>
+                    <div style="font-weight: 500; font-size: 0.75rem; color: var(--text-muted);">${__('deal.item_marked_sold')}</div>
                 </div>
             </div>
         `;
@@ -514,10 +728,61 @@ function renderHandshakeBar(deal) {
     handshakeBar.innerHTML = html;
 }
 
-function confirmDeal() {
+function openProductSelector() {
+    document.getElementById('choose-product-initial').style.display = 'none';
+    document.getElementById('choose-product-selector').style.display = 'flex';
+    
+    const select = document.getElementById('deal-product-select');
+    
+    fetch('api_messages.php?action=get_active_products&other_user_id=' + otherUserId)
+        .then(res => res.json())
+        .then(data => {
+            if (data.success && data.products.length > 0) {
+                let options = '<option value="">' + __('deal.select_item_prompt') + '</option>';
+                data.products.forEach(p => {
+                    options += `<option value="${p.id}" data-is-mine="${p.is_mine}">${p.title} - ${p.price}</option>`;
+                });
+                select.innerHTML = options;
+            } else {
+                select.innerHTML = '<option value="">' + __('deal.no_active_items') + '</option>';
+            }
+        })
+        .catch(err => {
+            select.innerHTML = '<option value="">' + __('deal.error_loading') + '</option>';
+        });
+}
+
+function cancelChooseProduct() {
+    document.getElementById('choose-product-selector').style.display = 'none';
+    document.getElementById('choose-product-initial').style.display = 'flex';
+}
+
+function submitChosenProduct() {
+    const select = document.getElementById('deal-product-select');
+    if (select.selectedIndex <= 0) return;
+    
+    const option = select.options[select.selectedIndex];
+    const prodId = option.value;
+    const isSeller = option.getAttribute('data-is-mine') === 'true';
+    
+    confirmDeal(prodId, isSeller);
+}
+
+function confirmDeal(prodId = null, isSellerOverride = null) {
+    const finalProductId = prodId || productId || (window.currentDeal && window.currentDeal.product_id) || 0;
+    if (!finalProductId) return;
+
+    const isSeller = isSellerOverride !== null ? isSellerOverride : (window.currentDeal && window.currentDeal.is_seller);
+
+    if (isSeller) {
+        if (!confirm(__('deal.confirm_delist_warning'))) {
+            return;
+        }
+    }
+
     const formData = new FormData();
     formData.append('action', 'confirm_deal');
-    formData.append('product_id', productId);
+    formData.append('product_id', finalProductId);
     formData.append('other_user_id', otherUserId);
     formData.append('csrf_token', window.__csrfToken || '');
 

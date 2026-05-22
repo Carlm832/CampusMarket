@@ -130,9 +130,6 @@ function isDiscountEligible(array $product, int $minimumDays = LISTING_DISCOUNT_
     return ((time() - $created) >= ($minimumDays * 86400));
 }
 
-/**
- * Render product price with discount visual when applicable.
- */
 function renderProductPrice(array $product): string {
     $discountPercent = (int)($product['discount_percent'] ?? 0);
     $base = (float)($product['price'] ?? 0);
@@ -142,25 +139,36 @@ function renderProductPrice(array $product): string {
     }
     return
         '<span style="font-weight:800;color:var(--primary);">' . formatPrice($final) . '</span> ' .
-        '<span style="text-decoration:line-through;opacity:.65;font-weight:600;font-size:.9em;">' . formatPrice($base) . '</span> ' .
-        '<span class="badge badge-new" style="font-size:.68rem;padding:.15rem .45rem;">-' . $discountPercent . '%</span>';
+        '<span style="text-decoration:line-through;opacity:.65;font-weight:600;font-size:.9em;margin-left:0.35rem;">' . formatPrice($base) . '</span> ' .
+        '<span class="badge" style="font-size:.68rem;padding:.15rem .45rem;margin-left:0.35rem;background:#ef4444;color:white;font-weight:700;border-radius:4px;display:inline-block;vertical-align:middle;text-transform:uppercase;letter-spacing:0.02em;">Discounted</span> ' .
+        '<span class="badge badge-new" style="font-size:.68rem;padding:.15rem .45rem;margin-left:0.2rem;display:inline-block;vertical-align:middle;">-' . $discountPercent . '%</span>';
 }
 
 /**
  * Human-readable time ago (e.g., "3 hours ago")
  */
 function timeAgo(?string $datetime): string {
-    if (!$datetime) return 'Recently';
+    if (!$datetime) return __('time.recently');
     $now  = new DateTime();
     $ago  = new DateTime($datetime);
     $diff = $now->diff($ago);
 
-    if ($diff->y > 0) return $diff->y . ' year'   . ($diff->y > 1 ? 's' : '') . ' ago';
-    if ($diff->m > 0) return $diff->m . ' month'  . ($diff->m > 1 ? 's' : '') . ' ago';
-    if ($diff->d > 0) return $diff->d . ' day'    . ($diff->d > 1 ? 's' : '') . ' ago';
-    if ($diff->h > 0) return $diff->h . ' hour'   . ($diff->h > 1 ? 's' : '') . ' ago';
-    if ($diff->i > 0) return $diff->i . ' minute' . ($diff->i > 1 ? 's' : '') . ' ago';
-    return 'Just now';
+    if ($diff->y > 0) {
+        return $diff->y === 1 ? __('time.year_ago') : __('time.years_ago', ['count' => $diff->y]);
+    }
+    if ($diff->m > 0) {
+        return $diff->m === 1 ? __('time.month_ago') : __('time.months_ago', ['count' => $diff->m]);
+    }
+    if ($diff->d > 0) {
+        return $diff->d === 1 ? __('time.day_ago') : __('time.days_ago', ['count' => $diff->d]);
+    }
+    if ($diff->h > 0) {
+        return $diff->h === 1 ? __('time.hour_ago') : __('time.hours_ago', ['count' => $diff->h]);
+    }
+    if ($diff->i > 0) {
+        return $diff->i === 1 ? __('time.minute_ago') : __('time.minutes_ago', ['count' => $diff->i]);
+    }
+    return __('time.just_now');
 }
 
 /**
@@ -168,11 +176,11 @@ function timeAgo(?string $datetime): string {
  */
 function conditionBadge(?string $condition): array {
     return match($condition) {
-        'new'      => ['label' => 'New',      'class' => 'badge-new'],
-        'like_new' => ['label' => 'Like New', 'class' => 'badge-like-new'],
-        'used'     => ['label' => 'Used',     'class' => 'badge-used'],
-        'poor'     => ['label' => 'Poor',     'class' => 'badge-poor'],
-        default    => ['label' => 'Unknown',  'class' => 'badge-used'],
+        'new'      => ['label' => __('condition.new'),      'class' => 'badge-new'],
+        'like_new' => ['label' => __('condition.like_new'), 'class' => 'badge-like-new'],
+        'used'     => ['label' => __('condition.used'),     'class' => 'badge-used'],
+        'poor'     => ['label' => __('condition.poor'),     'class' => 'badge-poor'],
+        default    => ['label' => __('condition.unknown'),  'class' => 'badge-used'],
     };
 }
 
@@ -198,7 +206,19 @@ function handleUpload(array $file, string $subfolder = 'products/'): array {
         return ['success' => false, 'error' => 'Invalid file type'];
     }
 
-    $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
+    // Secure Extension Whitelist Check
+    $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+    $allowed_exts = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
+    if (!in_array($ext, $allowed_exts)) {
+        return ['success' => false, 'error' => 'Invalid file extension'];
+    }
+
+    // Verify file content is a valid image using getimagesize
+    $img_info = @getimagesize($file['tmp_name']);
+    if ($img_info === false) {
+        return ['success' => false, 'error' => 'Uploaded file is not a valid image'];
+    }
+
     $filename = uniqid('img_', true) . '.' . $ext;
     $subfolder = trim($subfolder, '/');
     $objectName = $subfolder . '/' . $filename;
@@ -207,6 +227,8 @@ function handleUpload(array $file, string $subfolder = 'products/'): array {
     require_once __DIR__ . '/../config/supabase.php';
     $supabaseUrl = supabaseUrl();
     $supabaseKey = supabaseAnonKey();
+    $supabaseServiceKey = function_exists('supabaseServiceRoleKey') ? supabaseServiceRoleKey() : '';
+    error_log("handleUpload debug: URL='" . $supabaseUrl . "', KeyLen=" . strlen($supabaseKey) . ", ServiceKeyLen=" . strlen($supabaseServiceKey));
 
     if (empty($supabaseUrl) || empty($supabaseKey)) {
         // Local upload fallback if Supabase not configured
@@ -228,9 +250,10 @@ function handleUpload(array $file, string $subfolder = 'products/'): array {
     $ch = curl_init($url);
     curl_setopt($ch, CURLOPT_POST, 1);
     curl_setopt($ch, CURLOPT_POSTFIELDS, $fileData);
+    $uploadKey = $supabaseServiceKey !== '' ? $supabaseServiceKey : $supabaseKey;
     curl_setopt($ch, CURLOPT_HTTPHEADER, [
-        "Authorization: Bearer " . $supabaseKey,
-        "apikey: " . $supabaseKey,
+        "Authorization: Bearer " . $uploadKey,
+        "apikey: " . $uploadKey,
         "Content-Type: " . $file['type']
     ]);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -246,6 +269,17 @@ function handleUpload(array $file, string $subfolder = 'products/'): array {
         $publicUrl = rtrim($supabaseUrl, '/') . '/storage/v1/object/public/' . $bucket . '/' . $objectName;
         return ['success' => true, 'path' => $publicUrl];
     } else {
+        error_log("Supabase storage upload failed. URL='" . $url . "', Code=" . $httpCode . ", Response='" . $response . "'");
+        // Resilient fallback: if cloud upload fails, still allow local upload path.
+        $relPath = 'uploads/' . $objectName;
+        $absPath = __DIR__ . '/../public/' . $relPath;
+        $dir = dirname($absPath);
+        if (!is_dir($dir)) {
+            mkdir($dir, 0755, true);
+        }
+        if (@move_uploaded_file($file['tmp_name'], $absPath)) {
+            return ['success' => true, 'path' => $relPath];
+        }
         return ['success' => false, 'error' => 'Upload failed: ' . $response];
     }
 }
@@ -418,14 +452,26 @@ function getTopCategories(PDO $pdo): array {
 function getDonors(PDO $pdo, int $limit = 5): array {
     static $hasPromotionPayments = null;
     if ($hasPromotionPayments === null) {
-        $tableStmt = $pdo->prepare("
-            SELECT 1
-            FROM information_schema.tables
-            WHERE table_schema = 'public'
-              AND table_name = 'promotion_payments'
-            LIMIT 1
-        ");
-        $tableStmt->execute();
+        $isPostgres = $pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'pgsql';
+        if ($isPostgres) {
+            $tableStmt = $pdo->prepare("
+                SELECT 1
+                FROM information_schema.tables
+                WHERE table_schema = 'public'
+                  AND table_name = 'promotion_payments'
+                LIMIT 1
+            ");
+            $tableStmt->execute();
+        } else {
+            $tableStmt = $pdo->prepare("
+                SELECT 1
+                FROM information_schema.tables
+                WHERE table_schema = DATABASE()
+                  AND table_name = 'promotion_payments'
+                LIMIT 1
+            ");
+            $tableStmt->execute();
+        }
         $hasPromotionPayments = (bool) $tableStmt->fetchColumn();
     }
 
@@ -472,12 +518,17 @@ function getSellerTrustScore(PDO $pdo, int $sellerId): array {
     $avgRating = (float)($rating['avg'] ?? 0);
     $reviewCount = (int)($rating['count'] ?? 0);
 
+    $isPostgres = $pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'pgsql';
+    $timeDiffSql = $isPostgres 
+        ? "EXTRACT(EPOCH FROM (o.updated_at - p.created_at)) / 3600" 
+        : "TIMESTAMPDIFF(HOUR, p.created_at, o.updated_at)";
+
     $orderStmt = $pdo->prepare("
         SELECT
             COUNT(*) AS total_orders,
             SUM(CASE WHEN o.status = 'completed' THEN 1 ELSE 0 END) AS completed_orders,
             SUM(CASE WHEN o.status = 'cancelled' THEN 1 ELSE 0 END) AS cancelled_orders,
-            AVG(CASE WHEN o.status = 'completed' THEN EXTRACT(EPOCH FROM (o.updated_at - p.created_at)) / 3600 END) AS avg_hours_to_sell
+            AVG(CASE WHEN o.status = 'completed' THEN {$timeDiffSql} END) AS avg_hours_to_sell
         FROM orders o
         JOIN products p ON p.id = o.product_id
         WHERE p.user_id = :sid
@@ -609,3 +660,41 @@ function verifyCsrfTokenJson(): void {
         exit;
     }
 }
+
+// ─── Language / i18n Helpers ─────────────────────────────────
+
+/**
+ * Get a user's preferred language from the database.
+ */
+function getUserPreferredLanguage(PDO $pdo, int $userId): string {
+    try {
+        $stmt = $pdo->prepare("SELECT preferred_language FROM users WHERE id = :id");
+        $stmt->execute([':id' => $userId]);
+        $lang = $stmt->fetchColumn();
+        if ($lang && array_key_exists($lang, SUPPORTED_LANGUAGES)) {
+            return $lang;
+        }
+    } catch (PDOException $e) {
+        // Column may not exist yet — graceful fallback
+    }
+    return DEFAULT_LANGUAGE;
+}
+
+/**
+ * Set a user's preferred language in the database and session.
+ */
+function setUserPreferredLanguage(PDO $pdo, int $userId, string $lang): bool {
+    if (!array_key_exists($lang, SUPPORTED_LANGUAGES)) {
+        return false;
+    }
+    try {
+        $stmt = $pdo->prepare("UPDATE users SET preferred_language = :lang WHERE id = :id");
+        $stmt->execute([':lang' => $lang, ':id' => $userId]);
+        $_SESSION['preferred_language'] = $lang;
+        return true;
+    } catch (PDOException $e) {
+        error_log("setUserPreferredLanguage error: " . $e->getMessage());
+        return false;
+    }
+}
+

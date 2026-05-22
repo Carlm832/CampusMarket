@@ -292,7 +292,7 @@ p {
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--border-light);
-  padding: max(0.6rem, var(--safe-top)) 0 0.6rem;
+  padding: max(1rem, var(--safe-top)) 0 1rem;
   transition: var(--transition);
   overflow: visible !important;
   max-height: none !important;
@@ -390,7 +390,7 @@ p {
 .nav-links {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
+  gap: 2rem;
 }
 
 .nav-links a {
@@ -865,6 +865,7 @@ body.dark-mode .flash-error {
 .badge-pending { background: var(--warning-bg); color: #b45309; }
 .badge-reviewed { background: var(--success-bg); color: #065f46; }
 .badge-dismissed { background: #f1f5f9; color: #475569; }
+.badge-not-taken { background: #e2e8f0; color: #64748b; border: 1px solid #cbd5e1; }
 
 /* Dashboard Tables */
 .table-responsive {
@@ -1489,7 +1490,7 @@ body {
 }
 
 .page-content-offset {
-  padding-top: 85px;
+  padding-top: 120px;
 }
 
 .container {
@@ -1548,5 +1549,50 @@ body {
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
   border: 1px solid rgba(0, 0, 0, 0.05);
   backdrop-filter: blur(8px);
+}
+
+/* Premium Horizontal Scroll Row Layout */
+.scroll-row {
+  display: flex;
+  overflow-x: auto;
+  overflow-y: hidden;
+  gap: 1.5rem;
+  padding: 0.5rem 0.25rem 1.5rem;
+  margin-bottom: 1rem;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary) transparent;
+}
+
+.scroll-row::-webkit-scrollbar {
+  height: 6px;
+}
+
+.scroll-row::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scroll-row::-webkit-scrollbar-thumb {
+  background: var(--border-light);
+  border-radius: var(--radius-full);
+  transition: var(--transition);
+}
+
+.scroll-row::-webkit-scrollbar-thumb:hover {
+  background: var(--primary);
+}
+
+/* Scroll snap alignment and card sizing */
+.scroll-row > * {
+  flex: 0 0 280px;
+  width: 280px;
+  scroll-snap-align: start;
+}
+
+/* Adjust category quick access cards inside scroll-row */
+.scroll-row > a.card {
+  flex: 0 0 220px;
+  width: 220px;
 }
 

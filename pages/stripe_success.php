@@ -4,9 +4,11 @@ require_once __DIR__ . '/../includes/bootstrap.php';
 requireLogin();
 
 $sessionId = $_GET['session_id'] ?? '';
+$paymentType = sanitize($_GET['type'] ?? 'promotion');
+$redirectPath = ($paymentType === 'donation') ? 'pages/donate.php' : 'pages/promotions.php';
 
 if (empty($sessionId)) {
-    redirect(BASE_URL . 'pages/promotions.php');
+    redirect(BASE_URL . $redirectPath);
 }
 
 // Verify the session with Stripe via cURL
@@ -42,7 +44,7 @@ if ($httpCode === 200 && $response['payment_status'] === 'paid') {
                 INSERT INTO promotion_payments 
                     (user_id, product_id, payment_type, payment_method, amount, transaction_ref, status, approved_at, notes)
                 VALUES 
-                    (:uid, :pid, :ptype, 'stripe', :amount, :tx, 'approved', NOW(), 'Automated Stripe Sandbox Payment')
+                    (:uid, :pid, :ptype, 'other', :amount, :tx, 'approved', NOW(), 'Automated Stripe Sandbox Payment')
             ");
             $ins->execute([
                 ':uid'    => $userId,
@@ -71,4 +73,4 @@ if ($httpCode === 200 && $response['payment_status'] === 'paid') {
     setFlash('error', 'Could not verify payment with Stripe.');
 }
 
-redirect(BASE_URL . 'pages/promotions.php');
+redirect(BASE_URL . $redirectPath);

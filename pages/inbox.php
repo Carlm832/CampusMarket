@@ -1,9 +1,13 @@
 <?php
-$pageTitle = "Inbox";
 require_once __DIR__ . '/../includes/bootstrap.php';
+$pageTitle = __('inbox.messages_tab');
 requireLogin();
 
 $currentUserId = currentUserId();
+
+// Fetch Admin ID for quick support link
+$adminStmt = $pdo->query("SELECT id FROM users WHERE role = 'admin' ORDER BY id ASC LIMIT 1");
+$adminId = $adminStmt->fetchColumn();
 
 // Fetch the latest message for each conversation
 $stmt = $pdo->prepare("
@@ -274,7 +278,7 @@ body.dark-mode .convo-card.unread {
     <!-- Inbox Tabs -->
     <div class="flex gap-4 mb-8" style="border-bottom: 1px solid var(--border-light); padding-bottom: 0.5rem;">
         <a href="<?= BASE_URL ?>/pages/inbox.php" class="flex items-center gap-2 px-4 py-2" style="font-weight: 700; border-bottom: 2px solid var(--primary); color: var(--primary);">
-            <span>Messages</span>
+            <span><?= __('inbox.messages_tab') ?></span>
             <?php 
                 $tabUnreadMessages = countUnreadMessages($pdo, $currentUserId);
                 if ($tabUnreadMessages > 0): 
@@ -283,7 +287,7 @@ body.dark-mode .convo-card.unread {
             <?php endif; ?>
         </a>
         <a href="<?= BASE_URL ?>/pages/notifications.php" class="flex items-center gap-2 px-4 py-2 text-muted hover-text-main" style="font-weight: 500;">
-            <span>Activity</span>
+            <span><?= __('inbox.activity_tab') ?></span>
             <?php 
                 $navUnreadNotifs = countUnreadNotifications($pdo, $currentUserId);
                 if ($navUnreadNotifs > 0): 
@@ -296,13 +300,13 @@ body.dark-mode .convo-card.unread {
     <!-- Header -->
     <div class="inbox-header">
         <div style="display: flex; align-items: center; gap: 0.75rem;">
-            <h1>Direct Messages</h1>
+            <h1><?= __('inbox.title') ?></h1>
             <?php if ($unreadCount > 0): ?>
-                <span class="inbox-unread-count"><?= $unreadCount ?> new</span>
+                <span class="inbox-unread-count"><?= $unreadCount ?> <?= __('inbox.new') ?></span>
             <?php endif; ?>
         </div>
         <?php if (!empty($conversations)): ?>
-            <span style="font-size: 0.82rem; color: var(--text-muted);"><?= count($conversations) ?> conversation<?= count($conversations) !== 1 ? 's' : '' ?></span>
+            <span style="font-size: 0.82rem; color: var(--text-muted);"><?= count($conversations) ?> <?= count($conversations) === 1 ? __('inbox.conversation') : __('inbox.conversations') ?></span>
         <?php endif; ?>
     </div>
 
@@ -314,7 +318,7 @@ body.dark-mode .convo-card.unread {
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
             </span>
-            <input type="text" id="user-search-input" placeholder="Search username to start a direct message..." 
+            <input type="text" id="user-search-input" placeholder="<?= __('inbox.search_placeholder') ?>" 
                    class="w-full bg-surface border-light py-3 pl-10 pr-4 text-main transition-all duration-200" 
                    style="width: 100%; border-radius: var(--radius-md); font-size: 0.95rem; border: 1px solid var(--border-light); outline: none; background: var(--bg-surface); padding: 0.75rem 1rem 0.75rem 2.75rem; box-sizing: border-box;" 
                    autocomplete="off">
@@ -329,15 +333,32 @@ body.dark-mode .convo-card.unread {
         </div>
     </div>
 
+    <?php if ($adminId && $adminId != $currentUserId): ?>
+    <div class="mb-6">
+        <a href="messages.php?other_user_id=<?= $adminId ?>&product_id=0" class="flex items-center gap-4 p-4 rounded-xl shadow-sm transition-all hover-scale" style="background: linear-gradient(135deg, rgba(99,102,241,0.08) 0%, rgba(139,92,246,0.08) 100%); border: 1px solid rgba(99,102,241,0.2); text-decoration: none;">
+            <div class="flex items-center justify-center text-primary bg-white shadow-sm flex-shrink-0" style="width: 42px; height: 42px; border-radius: 50%;">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+            </div>
+            <div>
+                <h4 class="m-0 font-bold" style="color: var(--primary); font-size: 1.05rem;"><?= __('inbox.need_help') ?></h4>
+                <p class="m-0 text-muted small" style="font-size: 0.85rem; font-weight: 500;"><?= __('inbox.reach_admin') ?></p>
+            </div>
+            <div class="ml-auto text-primary opacity-60">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+            </div>
+        </a>
+    </div>
+    <?php endif; ?>
+
     <?php if (empty($conversations)): ?>
         <!-- Empty State -->
         <div class="inbox-empty">
             <svg class="inbox-empty-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2v10z"></path>
             </svg>
-            <h3>Your inbox is empty</h3>
-            <p>When you reach out to sellers or receive inquiries about your items, conversations will appear here.</p>
-            <a href="<?= BASE_URL ?>/pages/browse.php" class="btn btn-primary" style="border-radius: var(--radius-lg); padding: 0.6rem 1.75rem; font-weight: 600; font-size: 0.9rem;">Browse Items</a>
+            <h3><?= __('inbox.empty_title') ?></h3>
+            <p><?= __('inbox.empty_desc') ?></p>
+            <a href="<?= BASE_URL ?>/pages/browse.php" class="btn btn-primary" style="border-radius: var(--radius-lg); padding: 0.6rem 1.75rem; font-weight: 600; font-size: 0.9rem;"><?= __('inbox.browse_items') ?></a>
         </div>
     <?php else: ?>
         <!-- Conversation List -->
@@ -369,15 +390,15 @@ body.dark-mode .convo-card.unread {
                         <?php 
                             $isSupport = ($conv['product_id'] == 0 && ($conv['other_role'] === 'admin' || isAdmin()));
                             $convoLabel = $conv['product_id'] == 0 
-                                ? ($isSupport ? 'CampusMarket Support' : 'Direct Message') 
-                                : 'Re: ' . htmlspecialchars($conv['product_title']);
+                                ? ($isSupport ? __('inbox.support_label') : __('inbox.direct_message')) 
+                                : __('inbox.re_prefix') . ' ' . htmlspecialchars($conv['product_title']);
                         ?>
                         <div class="convo-product" style="<?= $conv['product_id'] == 0 ? 'color: var(--secondary);' : '' ?>">
                             <?= $convoLabel ?>
                         </div>
                         <p class="convo-body">
                             <?php if ($conv['sender_id'] == $currentUserId): ?>
-                                <span class="convo-body-prefix">You:</span>
+                                <span class="convo-body-prefix"><?= __('inbox.you_prefix') ?></span>
                             <?php endif; ?>
                             <?= htmlspecialchars(mb_strimwidth($conv['body'], 0, 90, '...')) ?>
                         </p>
@@ -431,9 +452,11 @@ document.addEventListener('DOMContentLoaded', function() {
         suggestionsPanel.classList.remove('hidden');
 
         if (users.length === 0) {
+            const noUsersTemplate = <?= json_encode(__('inbox.no_users_found')) ?>;
+            const noUsersText = noUsersTemplate.replace('{query}', escapeHtml(query));
             suggestionsContainer.innerHTML = `
                 <div class="p-4 text-center text-muted small" style="color: var(--text-muted);">
-                    No users found matching "@${escapeHtml(query)}"
+                    ${noUsersText}
                 </div>
             `;
             return;
@@ -465,7 +488,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div style="flex-shrink: 0;">${avatarHTML}</div>
                 <div style="flex-grow: 1; min-width: 0;">
                     <span class="font-bold text-main" style="display: block; font-size: 0.9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: 'Outfit', sans-serif;">@${escapeHtml(user.username)}</span>
-                    <span class="text-muted small" style="font-size: 0.75rem; color: var(--text-muted);">Start conversation</span>
+                    <span class="text-muted small" style="font-size: 0.75rem; color: var(--text-muted);">${<?= json_encode(__('inbox.start_conversation')) ?>}</span>
                 </div>
                 <div style="flex-shrink: 0; color: var(--primary);">
                     <svg xmlns="http://www.w3.org/2000/svg" style="width: 18px; height: 18px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
