@@ -90,13 +90,11 @@ if ($action === 'fetch') {
         exit;
     }
     
-    // Mark messages sent to me as read
-    $stmtRead = $pdo->prepare("UPDATE messages SET is_read = TRUE WHERE receiver_id = :uid AND sender_id = :other AND (product_id = :pid1 OR (:pid2 = 0 AND product_id IS NULL)) AND is_read = FALSE");
+    // Mark messages sent to me as read (all messages from this sender to me, regardless of product)
+    $stmtRead = $pdo->prepare("UPDATE messages SET is_read = TRUE WHERE receiver_id = :uid AND sender_id = :other AND is_read = FALSE");
     $stmtRead->execute([
         ':uid' => $currentUserId,
-        ':other' => $otherUserId,
-        ':pid1' => $productId,
-        ':pid2' => $productId
+        ':other' => $otherUserId
     ]);
 
     // Keep notification badge in sync with read state in chat.
@@ -105,16 +103,32 @@ if ($action === 'fetch') {
         SET is_read = TRUE
         WHERE user_id = :uid
           AND type = 'message'
-          AND (reference_id = :pid1 OR (:pid2 = 0 AND reference_id IS NULL))
           AND is_read = FALSE
+          AND (
+              reference_id IN (
+                  SELECT DISTINCT COALESCE(product_id, 0)
+                  FROM messages
+                  WHERE sender_id = :other
+                    AND receiver_id = :uid
+              )
+              OR (
+                  reference_id IS NULL
+                  AND EXISTS (
+                      SELECT 1
+                      FROM messages
+                      WHERE sender_id = :other
+                        AND receiver_id = :uid
+                        AND product_id IS NULL
+                  )
+              )
+          )
     ");
     $stmtNotifRead->execute([
         ':uid' => $currentUserId,
-        ':pid1' => $productId,
-        ':pid2' => $productId
+        ':other' => $otherUserId
     ]);
     
-    // Fetch messages with translation for current user's preferred language
+    // Fetch messages with translation for current user's preferred language (all messages between these two users)
     $myLang = i18nGetLocale();
     $stmt = $pdo->prepare("
         SELECT m.*, u.username as sender_name,
@@ -122,8 +136,7 @@ if ($action === 'fetch') {
         FROM messages m 
         JOIN users u ON m.sender_id = u.id
         LEFT JOIN message_translations t ON m.id = t.message_id AND t.target_lang = :mylang
-        WHERE (m.product_id = :pid1 OR (:pid2 = 0 AND m.product_id IS NULL))
-          AND (
+        WHERE (
               (m.sender_id = :uid1 AND m.receiver_id = :other1 AND m.deleted_by_sender = 0) OR
               (m.sender_id = :other2 AND m.receiver_id = :uid2 AND m.deleted_by_receiver = 0)
           )
@@ -131,8 +144,6 @@ if ($action === 'fetch') {
     ");
     $stmt->execute([
         ':mylang' => $myLang,
-        ':pid1' => $productId,
-        ':pid2' => $productId,
         ':uid1' => $currentUserId,
         ':other1' => $otherUserId,
         ':other2' => $otherUserId,
@@ -719,13 +730,10 @@ if ($action === 'clear_chat') {
             UPDATE messages
             SET deleted_by_sender = 1
             WHERE sender_id = :uid AND receiver_id = :other
-              AND (product_id = :pid1 OR (:pid2 = 0 AND product_id IS NULL))
         ");
         $stmtUpSender->execute([
             ':uid' => $currentUserId,
-            ':other' => $otherUserId,
-            ':pid1' => $productId,
-            ':pid2' => $productId
+            ':other' => $otherUserId
         ]);
         
         // Update messages received by current user from other user
@@ -733,28 +741,22 @@ if ($action === 'clear_chat') {
             UPDATE messages
             SET deleted_by_receiver = 1
             WHERE receiver_id = :uid AND sender_id = :other
-              AND (product_id = :pid1 OR (:pid2 = 0 AND product_id IS NULL))
         ");
         $stmtUpReceiver->execute([
             ':uid' => $currentUserId,
-            ':other' => $otherUserId,
-            ':pid1' => $productId,
-            ':pid2' => $productId
+            ':other' => $otherUserId
         ]);
         
         // Clean up messages deleted by both sides
         $stmtClean = $pdo->prepare("
             DELETE FROM messages
             WHERE deleted_by_sender = 1 AND deleted_by_receiver = 1
-              AND (product_id = :pid1 OR (:pid2 = 0 AND product_id IS NULL))
               AND (
                   (sender_id = :uid1 AND receiver_id = :other1) OR
                   (sender_id = :other2 AND receiver_id = :uid2)
               )
         ");
         $stmtClean->execute([
-            ':pid1' => $productId,
-            ':pid2' => $productId,
             ':uid1' => $currentUserId,
             ':other1' => $otherUserId,
             ':other2' => $otherUserId,
