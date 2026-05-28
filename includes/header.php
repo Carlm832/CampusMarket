@@ -30,6 +30,14 @@ $navCategories = $pdo->query("SELECT id, name FROM categories ORDER BY name ASC"
         $cssVer = file_exists($cssPath) ? filemtime($cssPath) : '1';
     ?>
     <link rel="stylesheet" href="<?php echo BASE_URL; ?>public/css/style.css?v=<?php echo $cssVer; ?>">
+    
+    <!-- Chatbot Stylesheet -->
+    <?php
+        $chatbotCssPath = __DIR__ . '/../public/css/chatbot.css';
+        $chatbotCssVer = file_exists($chatbotCssPath) ? filemtime($chatbotCssPath) : '1';
+    ?>
+    <link rel="stylesheet" href="<?php echo BASE_URL; ?>public/css/chatbot.css?v=<?php echo $chatbotCssVer; ?>">
+
     <?php if (isAdmin()): ?>
     <link rel="stylesheet" href="<?php echo BASE_URL; ?>public/css/admin.css">
     <?php endif; ?>
