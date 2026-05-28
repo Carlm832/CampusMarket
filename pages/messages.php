@@ -4,7 +4,7 @@ require_once __DIR__ . '/../includes/bootstrap.php';
 requireLogin();
 
 $productId = (int)($_GET['product_id'] ?? 0);
-$otherUserId = (int)($_GET['other_user_id'] ?? 0);
+$otherUserId = (int)($_GET['other_user_id'] ?? $_GET['to'] ?? 0);
 $currentUserId = currentUserId();
 
 if (!$otherUserId) {
@@ -21,7 +21,7 @@ if ($productId > 0) {
     $stmt->execute([':id' => $productId]);
     $product = $stmt->fetch();
 
-    $stmt = $pdo->prepare("SELECT username, avatar FROM users WHERE id = :id");
+    $stmt = $pdo->prepare("SELECT username, avatar, role FROM users WHERE id = :id");
     $stmt->execute([':id' => $otherUserId]);
     $otherUser = $stmt->fetch();
 
@@ -81,20 +81,19 @@ require_once __DIR__ . '/../includes/header.php';
                     <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
                 </svg>
             </button>
-            <div style="width: 50px; height: 50px; flex-shrink: 0;">
-                <?php if (!empty($otherUser['avatar'])): ?>
-                    <img src="<?= avatarUrl($otherUser['avatar']) ?>" alt="<?= htmlspecialchars($otherUser['username']) ?>" style="width: 100%; height: 100%; object-fit: cover; border-radius: var(--radius-lg); border: 1px solid var(--border-light);">
-                <?php else: ?>
-                    <div style="width: 100%; height: 100%; background: var(--bg-surface); border-radius: var(--radius-lg); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.25rem; color: var(--primary);">
-                        <?php echo strtoupper(substr($otherUser['username'], 0, 2)); ?>
-                    </div>
-                <?php endif; ?>
-            </div>
-            <div>
-                <h3 class="mb-0 font-bold" style="line-height: 1.2;">@<?= htmlspecialchars($otherUser['username']) ?></h3>
-                <p class="text-muted small mb-0 flex items-center gap-1">
-                    <span style="display: inline-block; width: 8px; height: 8px; background: #10b981; border-radius: 2px;"></span> <?= __('chat.active_recently') ?>
-                </p>
+            <div class="flex items-center gap-3" style="display: flex; align-items: center; gap: 0.75rem;">
+                <div>
+                    <?php if (isset($otherUser['role']) && $otherUser['role'] === 'admin'): ?>
+                        <h3 class="mb-0 font-bold text-main" style="line-height: 1.2; margin: 0;">@<?= htmlspecialchars($otherUser['username']) ?></h3>
+                    <?php else: ?>
+                        <a href="<?= BASE_URL ?>pages/profile.php?id=<?= $otherUserId ?>" style="text-decoration: none;">
+                            <h3 class="mb-0 font-bold text-main hover:text-primary transition-colors" style="line-height: 1.2; margin: 0;">@<?= htmlspecialchars($otherUser['username']) ?></h3>
+                        </a>
+                    <?php endif; ?>
+                    <p class="text-muted small mb-0 flex items-center gap-1" style="margin: 0; margin-top: 2px;">
+                        <span style="display: inline-block; width: 8px; height: 8px; background: #10b981; border-radius: 2px;"></span> <?= __('chat.active_recently') ?>
+                    </p>
+                </div>
             </div>
         </div>
         <div class="flex items-center gap-3 text-right hidden sm:flex">

@@ -15,11 +15,11 @@ SET FOREIGN_KEY_CHECKS = 1;
 
 -- ─── Users ───────────────────────────────────────────────
 INSERT INTO users (id, username, email, password_hash, role) VALUES
-(1, 'admin', 'admin@campusmarketplace.site', '$2y$10$zJNHp8ZuFr.vSM3mq1ArGeGBem1UG2KFDM9nfoUgzpHJDyn7UcQ4G', 'admin'),
-(2, 'sarah_m', 'sarah@student.edu', '$2y$10$zJNHp8ZuFr.vSM3mq1ArGeGBem1UG2KFDM9nfoUgzpHJDyn7UcQ4G', 'user'),
-(3, 'alex_j', 'alex@student.edu', '$2y$10$zJNHp8ZuFr.vSM3mq1ArGeGBem1UG2KFDM9nfoUgzpHJDyn7UcQ4G', 'user'),
-(4, 'emma_w', 'emma@student.edu', '$2y$10$zJNHp8ZuFr.vSM3mq1ArGeGBem1UG2KFDM9nfoUgzpHJDyn7UcQ4G', 'user'),
-(5, 'chris_e', 'chris@student.edu', '$2y$10$zJNHp8ZuFr.vSM3mq1ArGeGBem1UG2KFDM9nfoUgzpHJDyn7UcQ4G', 'user');
+(1, 'admin', 'admin@campusmarketplace.site', '$2y$10$yH9NwmMe1YkBTVg1HVA.NOF0z/fdkuFG8nkklTJT250.7HmVHUlAO', 'admin'),
+(2, 'sarah_m', 'sarah@student.edu', '$2y$10$yH9NwmMe1YkBTVg1HVA.NOF0z/fdkuFG8nkklTJT250.7HmVHUlAO', 'user'),
+(3, 'alex_j', 'alex@student.edu', '$2y$10$yH9NwmMe1YkBTVg1HVA.NOF0z/fdkuFG8nkklTJT250.7HmVHUlAO', 'user'),
+(4, 'emma_w', 'emma@student.edu', '$2y$10$yH9NwmMe1YkBTVg1HVA.NOF0z/fdkuFG8nkklTJT250.7HmVHUlAO', 'user'),
+(5, 'chris_e', 'chris@student.edu', '$2y$10$yH9NwmMe1YkBTVg1HVA.NOF0z/fdkuFG8nkklTJT250.7HmVHUlAO', 'user');
 
 -- ─── Categories ───────────────────────────────────────────
 INSERT INTO categories (id, name, slug) VALUES

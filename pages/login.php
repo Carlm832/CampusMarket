@@ -7,7 +7,7 @@ require_once '../config/constants.php';
 require_once '../includes/bootstrap.php';
 
 if (isLoggedIn()) {
-    redirect(BASE_URL . 'pages/profile.php');
+    redirect(BASE_URL);
 }
 
 $errors    = [];
@@ -139,7 +139,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if ($target && strpos($target, '/') === 0 && strpos($target, '//') !== 0) {
                     redirect(BASE_URL . ltrim($target, '/'));
                 }
-                redirect(BASE_URL . 'pages/profile.php');
+                redirect(BASE_URL);
             }
         }
     }
