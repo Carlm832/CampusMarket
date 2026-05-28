@@ -286,58 +286,53 @@ $requestBody = [
     ]
 ];
 
-$modelsToTry = ['gemini-2.5-flash', 'gemini-1.5-flash'];
+$model = 'gemini-2.5-flash';
 $aiText = '';
 $httpCode = 0;
 
-foreach ($modelsToTry as $model) {
-    $url = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$apiKey}";
-    $response = false;
+$url = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$apiKey}";
+$response = false;
+
+if (function_exists('curl_init')) {
+    $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($requestBody));
+    curl_setopt($ch, CURLOPT_TIMEOUT, 4); // Fast fail-safe 4-second timeout to prevent gateway timeout
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
     
-    if (function_exists('curl_init')) {
-        $ch = curl_init($url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($requestBody));
-        curl_setopt($ch, CURLOPT_TIMEOUT, 6);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
-        
-        $response = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-    } else {
-        // Fallback to file_get_contents stream context if cURL is not available
-        $options = [
-            'http' => [
-                'header'  => "Content-Type: application/json\r\n",
-                'method'  => 'POST',
-                'content' => json_encode($requestBody),
-                'timeout' => 6,
-                'ignore_errors' => true
-            ],
-            'ssl' => [
-                'verify_peer' => false,
-                'verify_peer_name' => false,
-            ]
-        ];
-        $context  = stream_context_create($options);
-        $response = @file_get_contents($url, false, $context);
-        
-        if (isset($http_response_header)) {
-            preg_match('{HTTP\/\S*\s(\d\d\d)}', $http_response_header[0], $matches);
-            $httpCode = (int)($matches[1] ?? 0);
-        }
-    }
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+} else {
+    // Fallback to file_get_contents stream context if cURL is not available
+    $options = [
+        'http' => [
+            'header'  => "Content-Type: application/json\r\n",
+            'method'  => 'POST',
+            'content' => json_encode($requestBody),
+            'timeout' => 4, // Fast fail-safe 4-second timeout to prevent gateway timeout
+            'ignore_errors' => true
+        ],
+        'ssl' => [
+            'verify_peer' => false,
+            'verify_peer_name' => false,
+        ]
+    ];
+    $context  = stream_context_create($options);
+    $response = @file_get_contents($url, false, $context);
     
-    if ($httpCode === 200 && $response !== false) {
-        $data = json_decode($response, true);
-        $aiText = trim($data['candidates'][0]['content']['parts'][0]['text'] ?? '');
-        if ($aiText !== '') {
-            break;
-        }
+    if (isset($http_response_header)) {
+        preg_match('{HTTP\/\S*\s(\d\d\d)}', $http_response_header[0], $matches);
+        $httpCode = (int)($matches[1] ?? 0);
     }
+}
+
+if ($httpCode === 200 && $response !== false) {
+    $data = json_decode($response, true);
+    $aiText = trim($data['candidates'][0]['content']['parts'][0]['text'] ?? '');
 }
 
 // Evaluate AI response
