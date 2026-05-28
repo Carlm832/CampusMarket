@@ -9,23 +9,23 @@ $currentUserId = currentUserId();
 $adminStmt = $pdo->query("SELECT id FROM users WHERE role = 'admin' ORDER BY id ASC LIMIT 1");
 $adminId = $adminStmt->fetchColumn();
 
-// Fetch the latest message for each conversation
+// Fetch the latest message for each conversation (grouped per user, not per product)
 $stmt = $pdo->prepare("
     SELECT 
         m.id, m.sender_id, m.receiver_id, m.product_id, m.body, m.is_read, m.created_at,
-        COALESCE(p.title, 'General Support') as product_title,
         CASE WHEN m.sender_id = :uid1 THEN m.receiver_id ELSE m.sender_id END as other_user_id,
         u.username as other_username,
         u.avatar as other_avatar,
         u.role as other_role
     FROM messages m
-    LEFT JOIN products p ON m.product_id = p.id
     JOIN users u ON u.id = (CASE WHEN m.sender_id = :uid2 THEN m.receiver_id ELSE m.sender_id END)
     WHERE m.id IN (
         SELECT MAX(id)
         FROM messages 
-        WHERE sender_id = :uid3 OR receiver_id = :uid4
-        GROUP BY COALESCE(product_id, 0), (CASE WHEN sender_id = :uid5 THEN receiver_id ELSE sender_id END)
+        WHERE (sender_id = :uid3 OR receiver_id = :uid4)
+          AND NOT (sender_id = :uid5a AND deleted_by_sender = 1)
+          AND NOT (receiver_id = :uid5b AND deleted_by_receiver = 1)
+        GROUP BY (CASE WHEN sender_id = :uid6 THEN receiver_id ELSE sender_id END)
     )
     ORDER BY m.created_at DESC
 ");
@@ -34,7 +34,9 @@ $stmt->execute([
     ':uid2' => $currentUserId,
     ':uid3' => $currentUserId,
     ':uid4' => $currentUserId,
-    ':uid5' => $currentUserId,
+    ':uid5a' => $currentUserId,
+    ':uid5b' => $currentUserId,
+    ':uid6' => $currentUserId,
 ]);
 $conversations = $stmt->fetchAll();
 
@@ -112,23 +114,33 @@ require_once __DIR__ . '/../includes/header.php';
 .convo-avatar {
     width: 48px;
     height: 48px;
-    border-radius: var(--radius-lg);
+    border-radius: 50%;
     flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: 700;
     font-size: 1rem;
-    color: var(--primary);
-    background: var(--bg-main);
-    border: 1px solid var(--border-light);
+    color: #fff;
+    background: #dfe5e7;
     overflow: hidden;
+}
+
+body.dark-mode .convo-avatar {
+    background: #3b4a54;
 }
 
 .convo-avatar img {
     width: 100%;
     height: 100%;
     object-fit: cover;
+}
+
+.convo-avatar svg.default-avatar-icon {
+    width: 28px;
+    height: 28px;
+    color: #fff;
+    margin-top: 4px;
 }
 
 /* Content */
@@ -370,15 +382,13 @@ body.dark-mode .convo-card.unread {
                     $initials = strtoupper(substr($conv['other_username'], 0, 2));
                     $hasAvatar = !empty($conv['other_avatar']);
                 ?>
-                <a href="<?= BASE_URL ?>/pages/messages.php?product_id=<?= $conv['product_id'] ?>&other_user_id=<?= $conv['other_user_id'] ?>"
+                <a href="<?= BASE_URL ?>/pages/messages.php?product_id=0&other_user_id=<?= $conv['other_user_id'] ?>"
                    class="convo-card <?= $isUnread ? 'unread' : '' ?>">
 
                     <!-- Avatar -->
                     <div class="convo-avatar">
                         <?php if ($hasAvatar): ?>
-                            <img src="<?= avatarUrl($conv['other_avatar']) ?>" alt="<?= htmlspecialchars($conv['other_username']) ?>">
-                        <?php else: ?>
-                            <?= $initials ?>
+                            <img src="<?= avatarUrl($conv['other_avatar']) ?>" alt="<?= htmlspecialchars($conv['other_username']) ?>" onerror="this.style.display='none'">
                         <?php endif; ?>
                     </div>
 
@@ -387,15 +397,6 @@ body.dark-mode .convo-card.unread {
                         <div class="convo-top">
                             <span class="convo-username"><?= htmlspecialchars($conv['other_username']) ?></span>
                             <span class="convo-time"><?= timeAgo($conv['created_at']) ?></span>
-                        </div>
-                        <?php 
-                            $isSupport = ($conv['product_id'] == 0 && ($conv['other_role'] === 'admin' || isAdmin()));
-                            $convoLabel = $conv['product_id'] == 0 
-                                ? ($isSupport ? __('inbox.support_label') : __('inbox.direct_message')) 
-                                : __('inbox.re_prefix') . ' ' . htmlspecialchars($conv['product_title']);
-                        ?>
-                        <div class="convo-product" style="<?= $conv['product_id'] == 0 ? 'color: var(--secondary);' : '' ?>">
-                            <?= $convoLabel ?>
                         </div>
                         <p class="convo-body">
                             <?php if ($conv['sender_id'] == $currentUserId): ?>
@@ -482,8 +483,8 @@ document.addEventListener('DOMContentLoaded', function() {
             });
 
             const avatarHTML = user.avatar_url 
-                ? `<img src="${user.avatar_url}" style="width: 36px; height: 36px; border-radius: var(--radius-md); object-fit: cover; border: 1px solid var(--border-light);">`
-                : `<div style="width: 36px; height: 36px; border-radius: var(--radius-md); background: var(--bg-main); color: var(--primary); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem; border: 1px solid var(--border-light);">${user.username.substring(0, 2).toUpperCase()}</div>`;
+                ? `<div style="width: 36px; height: 36px; border-radius: 50%; background: #dfe5e7; border: 1px solid var(--border-light); overflow: hidden; display: flex; align-items: center; justify-content: center;"><img src="${user.avatar_url}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none'"></div>`
+                : `<div style="width: 36px; height: 36px; border-radius: 50%; background: #dfe5e7; border: 1px solid var(--border-light);"></div>`;
 
             item.innerHTML = `
                 <div style="flex-shrink: 0;">${avatarHTML}</div>
