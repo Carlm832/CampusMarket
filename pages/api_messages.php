@@ -301,7 +301,7 @@ if ($action === 'propose') {
     
     // Generate proposed message
     $quotedPrice = formatPrice(getDiscountedPrice($product));
-    $proposedBody = "Hi! I'm interested in purchasing your item '" . $product['title'] . "' for " . $quotedPrice . ". Can we arrange a meetup to complete the transaction? Please let me know your availability.";
+    $proposedBody = "Hi! I'm interested in purchasing '" . $product['title'] . "' for " . $quotedPrice . ".";
     
     try {
         $pdo->beginTransaction();
@@ -354,7 +354,7 @@ if ($action === 'get_propose') {
     
     // Generate proposed message
     $quotedPrice = formatPrice(getDiscountedPrice($product));
-    $proposedBody = "Hi! I'm interested in purchasing your item '" . $product['title'] . "' for " . $quotedPrice . ". Can we arrange a meetup to complete the transaction? Please let me know your availability.";
+    $proposedBody = "Hi! I'm interested in purchasing '" . $product['title'] . "' for " . $quotedPrice . ".";
     
     echo json_encode(['success' => true, 'proposed_text' => $proposedBody]);
     exit;
