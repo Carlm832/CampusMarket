@@ -13,12 +13,12 @@ if (($_GET['source'] ?? '') === 'supabase') {
     // Password recovery links must go to the reset password page, not here.
     if ($type === 'recovery') {
         if ($tokenHash !== '') {
-            redirect(BASE_URL . 'pages/reset_password.php?token_hash=' . urlencode($tokenHash));
+            redirect(BASE_URL . 'pages/reset_password?token_hash=' . urlencode($tokenHash));
         } elseif ($accessToken !== '') {
-            redirect(BASE_URL . 'pages/reset_password.php#access_token=' . urlencode($accessToken) . '&type=recovery');
+            redirect(BASE_URL . 'pages/reset_password#access_token=' . urlencode($accessToken) . '&type=recovery');
         } else {
             setFlash('error', 'Invalid password reset link. Please request a new one.');
-            redirect(BASE_URL . 'pages/forgot_password.php');
+            redirect(BASE_URL . 'pages/forgot_password');
         }
     }
 
@@ -48,7 +48,7 @@ if (($_GET['source'] ?? '') === 'supabase') {
             $verifiedEmail = strtolower(trim((string)($userDecoded['email'] ?? '')));
         } else {
             setFlash('error', 'Verification session expired. Please log in.');
-            redirect(BASE_URL . 'pages/login.php');
+            redirect(BASE_URL . 'pages/login');
         }
     }
     // Flow 2: Verification using token_hash (direct callback)
@@ -60,7 +60,7 @@ if (($_GET['source'] ?? '') === 'supabase') {
 
         if (!$verify['ok']) {
             setFlash('error', 'Verification failed or link expired. Please request a new verification email.');
-            redirect(BASE_URL . 'pages/login.php');
+            redirect(BASE_URL . 'pages/login');
         }
 
         $supabaseUser = $verify['data']['user'] ?? [];
@@ -83,14 +83,14 @@ if (($_GET['source'] ?? '') === 'supabase') {
                         const accessToken = params.get('access_token') || '';
                         if (accessToken) {
                             if (type === 'recovery' || hash.includes('type=recovery')) {
-                                window.location.href = '<?php echo BASE_URL; ?>pages/reset_password.php' + hash;
+                                window.location.href = '<?php echo BASE_URL; ?>pages/reset_password' + hash;
                             } else {
-                                window.location.href = '<?php echo BASE_URL; ?>pages/verify_email.php?source=supabase&access_token=' + encodeURIComponent(accessToken) + '&type=' + encodeURIComponent(type || 'email');
+                                window.location.href = '<?php echo BASE_URL; ?>pages/verify_email?source=supabase&access_token=' + encodeURIComponent(accessToken) + '&type=' + encodeURIComponent(type || 'email');
                             }
                             return;
                         }
                     }
-                    window.location.href = '<?php echo BASE_URL; ?>pages/login.php?error=invalid_link';
+                    window.location.href = '<?php echo BASE_URL; ?>pages/login?error=invalid_link';
                 })();
             </script>
         </head>
@@ -109,7 +109,7 @@ if (($_GET['source'] ?? '') === 'supabase') {
         $upd->execute([':e' => $verifiedEmail]);
     } else {
         setFlash('error', 'Could not retrieve user email. Verification failed.');
-        redirect(BASE_URL . 'pages/login.php');
+        redirect(BASE_URL . 'pages/login');
     }
 
     ?>
