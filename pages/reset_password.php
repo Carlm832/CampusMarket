@@ -20,13 +20,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 
         if (!$verify['ok']) {
             setFlash('error', 'This password reset link is invalid or has expired. Please request a new one.');
-            redirect(BASE_URL . 'pages/forgot_password.php');
+            redirect(BASE_URL . 'pages/forgot_password');
         }
 
         $accessToken = $verify['data']['access_token'] ?? '';
         if ($accessToken === '') {
             setFlash('error', 'Could not verify reset link. Please request a new one.');
-            redirect(BASE_URL . 'pages/forgot_password.php');
+            redirect(BASE_URL . 'pages/forgot_password');
         }
     }
 }
@@ -130,7 +130,7 @@ require_once '../includes/header.php';
         </div>
 
         <?php if ($success): ?>
-            <a href="<?= BASE_URL ?>pages/login.php" class="btn btn-primary w-full py-4 shadow-sm"
+            <a href="<?= BASE_URL ?>pages/login" class="btn btn-primary w-full py-4 shadow-sm"
                style="border-radius: var(--radius-md); font-weight: 600; font-size: 1.1rem; display: block; text-align: center;">
                 Log in now
             </a>
@@ -144,7 +144,7 @@ require_once '../includes/header.php';
             <!-- Error state -->
             <div id="reset-error-container" style="display: none;">
                 <div class="flash flash-error mb-6">Invalid, expired, or missing password reset link. Please request a new one.</div>
-                <a href="<?= BASE_URL ?>pages/forgot_password.php" class="btn btn-primary w-full py-4 text-center" style="display: block;">Request new link</a>
+                <a href="<?= BASE_URL ?>pages/forgot_password" class="btn btn-primary w-full py-4 text-center" style="display: block;">Request new link</a>
             </div>
 
             <!-- Form container -->
@@ -185,7 +185,7 @@ require_once '../includes/header.php';
                 </form>
 
                 <p class="auth-foot mt-8">
-                    Remembered it? <a href="<?= BASE_URL ?>pages/login.php" style="font-weight: 600;">Log in</a>
+                    Remembered it? <a href="<?= BASE_URL ?>pages/login" style="font-weight: 600;">Log in</a>
                 </p>
             </div>
         <?php endif; ?>
