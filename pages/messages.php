@@ -72,7 +72,8 @@ if ($productId > 0) {
 require_once __DIR__ . '/../includes/header.php';
 ?>
 
-<div class="container main-content mb-20" style="max-width: 900px; margin-top: 6rem;">
+<style>.site-footer { display: none !important; }</style>
+<div class="container main-content" style="max-width: 900px; margin-top: 5rem; height: calc(100vh - 6rem); display: flex; flex-direction: column; padding-bottom: 1rem;">
     <!-- Chat Header Context -->
     <div class="glass-panel mb-4 p-4 flex justify-between items-center" style="border-radius: var(--radius-lg); box-shadow: var(--shadow-md);">
         <div class="flex items-center gap-4">
@@ -136,10 +137,10 @@ require_once __DIR__ . '/../includes/header.php';
     </div>
     
     <!-- Chat Container -->
-    <div class="glass-panel" style="position: relative; border-radius: var(--radius-xl); overflow: hidden; box-shadow: var(--shadow-lg); background: var(--bg-surface);">
+    <div class="glass-panel" style="position: relative; border-radius: var(--radius-xl); overflow: hidden; box-shadow: var(--shadow-lg); background: var(--bg-surface); display: flex; flex-direction: column; flex-grow: 1; min-height: 0;">
         
         <!-- Messages Area -->
-        <div id="chat-box" style="height: 400px; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: 1rem; background: var(--bg-main); scroll-behavior: smooth;">
+        <div id="chat-box" style="flex-grow: 1; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: 1rem; background: var(--bg-main); scroll-behavior: smooth;">
             <!-- Messages will be loaded here via JS -->
         </div>
         
@@ -203,7 +204,7 @@ require_once __DIR__ . '/../includes/header.php';
         <?php endif; ?>
 
         <!-- Input Area -->
-        <div style="background: var(--bg-surface); border-top: 1px solid var(--border-light); padding: 0.75rem;">
+        <div style="background: var(--bg-surface); border-top: 1px solid var(--border-light); padding: 0.75rem; padding-right: 5rem;">
             <form id="chat-form" class="flex gap-3 relative m-0">
                 <input type="text" id="chat-input" class="premium-input" style="background: var(--bg-surface); color: var(--text-main); padding: 0.75rem 1.25rem; border-radius: var(--radius-lg); border: 1px solid var(--border-light); font-size: 1rem; flex-grow: 1;" placeholder="<?= htmlspecialchars(__('chat.placeholder')) ?>" required autocomplete="off">
                 <button type="submit" class="btn btn-primary hover-scale shadow-md" style="border-radius: var(--radius-lg); width: 54px; height: 54px; padding: 0; display: flex; align-items: center; justify-content: center; flex-shrink: 0;" title="<?= htmlspecialchars(__('chat.send')) ?>">
