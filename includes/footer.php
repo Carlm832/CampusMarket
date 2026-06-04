@@ -66,5 +66,54 @@
 ?>
 <script src="<?php echo BASE_URL; ?>public/js/search-suggestions.js?v=<?php echo $searchJsVer; ?>"></script>
 
+<!-- Floating AI Chatbot Widget -->
+<?php
+    // Admin exclusion: do not show chatbot in the /admin/ panel since admins don't need it
+    $isAdminPanel = strpos($_SERVER['SCRIPT_NAME'], '/admin/') !== false;
+    if (!$isAdminPanel):
+        // Fetch First Admin ID dynamically for the chatbot support panel
+        $adminStmt = $pdo->query("SELECT id FROM users WHERE role = 'admin' ORDER BY id ASC LIMIT 1");
+        $chatbotAdminId = (int)($adminStmt->fetchColumn() ?: 1);
+?>
+<button id="cm-chatbot-fab" class="cm-chatbot-fab" aria-label="Open support chat">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 28px; height: 28px;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10z"></path></svg>
+</button>
+
+<div id="cm-chatbot-window" class="cm-chatbot-window" data-admin-id="<?php echo $chatbotAdminId; ?>">
+    <div class="cm-chatbot-header">
+        <div class="cm-chatbot-profile">
+            <div class="cm-chatbot-avatar">🤖</div>
+            <div class="cm-chatbot-info">
+                <h3>CampusMarket AI</h3>
+                <div class="cm-chatbot-status">
+                    <span class="cm-chatbot-status-dot"></span>
+                    <span>Online</span>
+                </div>
+            </div>
+        </div>
+        <button id="cm-chatbot-close" class="cm-chatbot-close" aria-label="Close chat">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 20px; height: 20px;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+    </div>
+    
+    <div id="cm-chatbot-messages" class="cm-chatbot-messages">
+        <!-- Message bubbles are dynamically injected here -->
+    </div>
+    
+    <form id="cm-chatbot-form" class="cm-chatbot-input-bar">
+        <input type="text" id="cm-chatbot-input" class="cm-chatbot-input" placeholder="Type a message..." required autocomplete="off">
+        <button type="submit" class="cm-chatbot-submit" aria-label="Send message">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 20px; height: 20px; transform: rotate(45deg);"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+        </button>
+    </form>
+</div>
+
+<?php
+    $chatbotJsPath = __DIR__ . '/../public/js/chatbot.js';
+    $chatbotJsVer = file_exists($chatbotJsPath) ? filemtime($chatbotJsPath) : '1';
+?>
+<script src="<?php echo BASE_URL; ?>public/js/chatbot.js?v=<?php echo $chatbotJsVer; ?>"></script>
+<?php endif; ?>
+
 </body>
 </html>
