@@ -64,7 +64,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ]);
         $body   = curl_exec($ch);
         $status = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
 
         if ($status >= 200 && $status < 300) {
             // Fetch email from Supabase using the access token to safely update the local DB
@@ -82,7 +81,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ]);
             $userBody = curl_exec($chUser);
             $userStatus = (int) curl_getinfo($chUser, CURLINFO_HTTP_CODE);
-            curl_close($chUser);
 
             if ($userStatus >= 200 && $userStatus < 300) {
                 $userDecoded = json_decode((string)$userBody, true);
@@ -160,9 +158,15 @@ require_once '../includes/header.php';
 
                     <div class="form-row mb-5">
                         <label for="password" class="form-label">New Password</label>
-                        <input type="password" id="password" name="password"
-                               class="premium-input w-full" required autocomplete="new-password"
-                               placeholder="At least 8 characters">
+                        <div class="password-wrapper">
+                            <input type="password" id="password" name="password"
+                                   class="premium-input w-full" required autocomplete="new-password"
+                                   placeholder="At least 8 characters">
+                            <button type="button" class="pw-toggle" aria-label="Toggle password visibility" onclick="togglePw('password', this)">
+                                <svg class="eye-icon eye-open" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                <svg class="eye-icon eye-closed" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                            </button>
+                        </div>
                         <?php if (!empty($errors['password'])): ?>
                             <div class="text-sm mt-1" style="color: var(--error);"><?= sanitize($errors['password']) ?></div>
                         <?php endif; ?>
@@ -170,9 +174,15 @@ require_once '../includes/header.php';
 
                     <div class="form-row mb-6">
                         <label for="confirm_password" class="form-label">Confirm New Password</label>
-                        <input type="password" id="confirm_password" name="confirm_password"
-                               class="premium-input w-full" required autocomplete="new-password"
-                               placeholder="Re-enter your new password">
+                        <div class="password-wrapper">
+                            <input type="password" id="confirm_password" name="confirm_password"
+                                   class="premium-input w-full" required autocomplete="new-password"
+                                   placeholder="Re-enter your new password">
+                            <button type="button" class="pw-toggle" aria-label="Toggle password visibility" onclick="togglePw('confirm_password', this)">
+                                <svg class="eye-icon eye-open" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                <svg class="eye-icon eye-closed" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                            </button>
+                        </div>
                         <?php if (!empty($errors['confirm_password'])): ?>
                             <div class="text-sm mt-1" style="color: var(--error);"><?= sanitize($errors['confirm_password']) ?></div>
                         <?php endif; ?>
@@ -221,6 +231,48 @@ require_once '../includes/header.php';
 <style>
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 @keyframes pop { from { transform: scale(.4); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+.password-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+.password-wrapper .premium-input {
+    padding-right: 2.75rem;
+}
+.pw-toggle {
+    position: absolute;
+    right: 0.75rem;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    color: var(--text-muted, #94a3b8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s;
+    line-height: 1;
+}
+.pw-toggle:hover {
+    color: var(--primary, #6366f1);
+}
+.eye-icon {
+    width: 18px;
+    height: 18px;
+    pointer-events: none;
+}
 </style>
+
+<script>
+function togglePw(fieldId, btn) {
+    const input = document.getElementById(fieldId);
+    const isHidden = input.type === 'password';
+    input.type = isHidden ? 'text' : 'password';
+    btn.querySelector('.eye-open').style.display  = isHidden ? 'none'  : '';
+    btn.querySelector('.eye-closed').style.display = isHidden ? ''     : 'none';
+    btn.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
+}
+</script>
 
 <?php require_once '../includes/footer.php'; ?>
