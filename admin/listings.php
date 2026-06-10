@@ -1,12 +1,11 @@
 <?php
 // admin/listings.php
 require_once __DIR__ . '/../config/constants.php';
-require_once __DIR__ . '/../includes/header.php';
+require_once __DIR__ . '/../includes/bootstrap.php';
 
-// Auth Check (Admin Only)
 if (!isAdmin()) {
     setFlash('error', 'Unauthorized access.');
-    redirect('../index.php');
+    redirect(BASE_URL . 'index.php');
 }
 
 $pageTitle = "Manage Listings";
@@ -46,7 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } elseif ($action === 'feature') {
             if (!$promoPaymentsTableExists) {
                 setFlash('error', 'Promotion payment table is missing. Apply the schema update first.');
-                redirect('listings.php');
+                redirect(BASE_URL . 'admin/listings.php');
             }
 
             // FEAT requires an approved, unused promotion payment for this listing.
@@ -65,7 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if ($paymentId <= 0) {
                 setFlash('error', 'Cannot FEAT this listing yet. Seller needs an approved promotion payment.');
-                redirect('listings.php');
+                redirect(BASE_URL . 'admin/listings.php');
             }
 
             try {
@@ -88,7 +87,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    redirect('listings.php');
+    redirect(BASE_URL . 'admin/listings.php');
 }
 
 // Fetch Listings
@@ -118,6 +117,8 @@ if ($promoPaymentsTableExists) {
     ");
 }
 $listings = $stmt->fetchAll();
+
+require_once __DIR__ . '/../includes/header.php';
 ?>
 
 <div class="container mt-24 mb-16 admin-listings-page">

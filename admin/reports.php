@@ -1,12 +1,11 @@
 <?php
 // admin/reports.php
 require_once __DIR__ . '/../config/constants.php';
-require_once __DIR__ . '/../includes/header.php';
+require_once __DIR__ . '/../includes/bootstrap.php';
 
-// Auth Check
 if (!isAdmin()) {
     setFlash('error', 'Unauthorized access.');
-    redirect('../index.php');
+    redirect(BASE_URL . 'index.php');
 }
 
 $pageTitle = "Moderation Queue";
@@ -33,7 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'], $_POST['rep
         $pdo->prepare("UPDATE reports SET status = 'reviewed' WHERE id = ?")->execute([$reportId]);
         setFlash('success', 'Report marked as resolved.');
     }
-    redirect('reports.php');
+    redirect(BASE_URL . 'admin/reports.php');
 }
 
 // Fetch pending reports
@@ -46,6 +45,8 @@ $stmt = $pdo->query("
     ORDER BY r.created_at ASC
 ");
 $reports = $stmt->fetchAll();
+
+require_once __DIR__ . '/../includes/header.php';
 ?>
 
 <div class="container mt-24 mb-16">
