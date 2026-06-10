@@ -39,7 +39,11 @@ $navCategories = $pdo->query("SELECT id, name FROM categories ORDER BY name ASC"
     <link rel="stylesheet" href="<?php echo BASE_URL; ?>public/css/chatbot.css?v=<?php echo $chatbotCssVer; ?>">
 
     <?php if (isAdmin()): ?>
-    <link rel="stylesheet" href="<?php echo BASE_URL; ?>public/css/admin.css">
+    <?php
+        $adminCssPath = __DIR__ . '/../public/css/admin.css';
+        $adminCssVer = file_exists($adminCssPath) ? filemtime($adminCssPath) : '1';
+    ?>
+    <link rel="stylesheet" href="<?php echo BASE_URL; ?>public/css/admin.css?v=<?php echo $adminCssVer; ?>">
     <?php endif; ?>
     
     <!-- Theme Initialization -->
@@ -75,6 +79,12 @@ $navCategories = $pdo->query("SELECT id, name FROM categories ORDER BY name ASC"
             SUPABASE_ANON_KEY: <?php echo json_encode(supabaseAnonKey()); ?>,
             WEB_PUSH_PUBLIC_KEY: <?php echo json_encode(WEB_PUSH_PUBLIC_KEY); ?>
         };
+        <?php if (isLoggedIn() && !empty($_SESSION['supabase_access_token'])): ?>
+        window.__supabaseSession = {
+            access_token: <?php echo json_encode($_SESSION['supabase_access_token']); ?>,
+            refresh_token: <?php echo json_encode($_SESSION['supabase_refresh_token'] ?? ''); ?>
+        };
+        <?php endif; ?>
     </script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="<?php echo BASE_URL; ?>public/js/supabase-client.js"></script>
@@ -243,19 +253,19 @@ $navCategories = $pdo->query("SELECT id, name FROM categories ORDER BY name ASC"
                 ?>
                 <?php if (isAdmin()): ?>
                     <a href="<?php echo BASE_URL; ?>admin/index.php" style="color: var(--secondary); font-weight: bold;"><?= __('nav.admin_panel') ?></a>
-                    <a href="<?php echo BASE_URL; ?>pages/inbox.php" class="flex items-center gap-1" title="<?= __('nav.inbox') ?>">
+                    <a href="<?php echo BASE_URL; ?>pages/inbox.php" data-nav-badge="inbox" class="flex items-center gap-1" title="<?= __('nav.inbox') ?>">
                         <?= __('nav.inbox') ?> <?php if ($unreadMessages > 0): ?><span class="badge badge-primary"><?php echo $unreadMessages; ?></span><?php endif; ?>
                     </a>
-                    <a href="<?php echo BASE_URL; ?>pages/notifications.php" class="flex items-center gap-1" title="<?= __('nav.notifications') ?>">
+                    <a href="<?php echo BASE_URL; ?>pages/notifications.php" data-nav-badge="notifications" class="flex items-center gap-1" title="<?= __('nav.notifications') ?>">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 18px; height: 18px;"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
                         <?php if ($unreadNotifs > 0): ?><span class="badge badge-accent"><?php echo $unreadNotifs; ?></span><?php endif; ?>
                     </a>
                     <a href="<?php echo BASE_URL; ?>pages/logout.php" style="color: var(--error); font-weight: 500;"><?= __('nav.logout') ?></a>
                 <?php else: ?>
-                    <a href="<?php echo BASE_URL; ?>pages/inbox.php" class="flex items-center gap-1" title="<?= __('nav.inbox') ?>">
+                    <a href="<?php echo BASE_URL; ?>pages/inbox.php" data-nav-badge="inbox" class="flex items-center gap-1" title="<?= __('nav.inbox') ?>">
                         <?= __('nav.inbox') ?> <?php if ($unreadMessages > 0): ?><span class="badge badge-primary"><?php echo $unreadMessages; ?></span><?php endif; ?>
                     </a>
-                    <a href="<?php echo BASE_URL; ?>pages/notifications.php" class="flex items-center gap-1" title="<?= __('nav.notifications') ?>">
+                    <a href="<?php echo BASE_URL; ?>pages/notifications.php" data-nav-badge="notifications" class="flex items-center gap-1" title="<?= __('nav.notifications') ?>">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 18px; height: 18px;"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
                         <?php if ($unreadNotifs > 0): ?><span class="badge badge-accent"><?php echo $unreadNotifs; ?></span><?php endif; ?>
                     </a>
@@ -310,7 +320,11 @@ $navCategories = $pdo->query("SELECT id, name FROM categories ORDER BY name ASC"
 <script src="<?php echo BASE_URL; ?>public/js/mobile-menu.js?v=<?php echo $menuJsVer; ?>"></script>
 <script src="<?php echo BASE_URL; ?>public/js/i18n-client.js?v=<?php echo $i18nJsVer; ?>"></script>
 <?php if (isLoggedIn()): ?>
-<script src="<?php echo BASE_URL; ?>public/js/notifications-realtime.js"></script>
+<?php
+    $notifJsPath = __DIR__ . '/../public/js/notifications-realtime.js';
+    $notifJsVer = file_exists($notifJsPath) ? filemtime($notifJsPath) : '1';
+?>
+<script src="<?php echo BASE_URL; ?>public/js/notifications-realtime.js?v=<?php echo $notifJsVer; ?>"></script>
 <?php endif; ?>
 
 <script>

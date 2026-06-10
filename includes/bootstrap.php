@@ -151,6 +151,12 @@ if (isLoggedIn()) {
                 // Column may not exist yet on older installs — fail silently
             }
         }
+
+        if (!empty($_SESSION['supabase_access_token']) && empty($_SESSION['supabase_meta_synced'])) {
+            require_once ROOT_PATH . 'includes/web_push.php';
+            syncSupabaseAppUserMetadata($pdo, $uid, $_SESSION['role'] ?? 'user');
+            $_SESSION['supabase_meta_synced'] = true;
+        }
     }
 }
 

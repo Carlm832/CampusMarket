@@ -133,6 +133,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['supabase_access_token'] = (string) ($auth['data']['access_token'] ?? '');
                 $_SESSION['supabase_refresh_token'] = (string) ($auth['data']['refresh_token'] ?? '');
 
+                require_once __DIR__ . '/../includes/web_push.php';
+                syncSupabaseAppUserMetadata($pdo, (int)$user['id'], (string)$user['role']);
+
                 setFlash('success', 'Welcome back, ' . sanitize($user['username']) . '!');
 
                 $target = $_GET['redirect'] ?? '';

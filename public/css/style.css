@@ -1753,6 +1753,107 @@ body {
   overflow: visible !important;
 }
 
+/* ── Account / profile hub pages (mobile) ─────────────────── */
+.page-hero-title {
+  font-size: clamp(1.75rem, 5vw, 2.75rem) !important;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+.order-hub-card {
+  display: flex;
+  gap: 1.25rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.order-hub-card .order-hub-main {
+  flex: 1 1 180px;
+  min-width: 0;
+}
+
+.order-hub-card .order-hub-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.order-hub-cancel-btn {
+  min-width: 44px;
+  min-height: 44px;
+  flex-shrink: 0;
+}
+
+.edit-profile-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.edit-profile-avatar-row {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+@media (max-width: 640px) {
+  .page-hero-title br {
+    display: none;
+  }
+
+  .order-hub-card {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .order-hub-card .order-hub-actions {
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .edit-profile-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .edit-profile-avatar-row {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .edit-profile-panel-body {
+    padding: 1.25rem !important;
+  }
+
+  .promotions-amount-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 900px) {
+  .profile-tabs {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    flex-wrap: nowrap;
+    max-width: 100%;
+  }
+
+  .profile-tab {
+    flex-shrink: 0;
+  }
+
+  .profile-body {
+    padding: 0 1rem;
+    margin-top: 1.5rem;
+    gap: 1.5rem;
+  }
+}
+
 
 
 /* Utility: Badges */

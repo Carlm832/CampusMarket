@@ -133,7 +133,7 @@ require_once __DIR__ . '/../includes/header.php';
         </div>
     </div>
 
-    <div class="glass-panel table-responsive" style="border-radius: var(--radius-lg); overflow: hidden; border: 1px solid rgba(0,0,0,0.05); box-shadow: var(--shadow-md);">
+    <div class="glass-panel table-responsive" style="border-radius: var(--radius-lg); border: 1px solid rgba(0,0,0,0.05); box-shadow: var(--shadow-md);">
         <table class="table w-full text-left admin-listings-table" style="border-collapse: collapse; margin: 0; min-width: 920px;">
             <thead>
                 <tr style="background: rgba(248, 250, 252, 0.8);">
@@ -229,10 +229,6 @@ require_once __DIR__ . '/../includes/header.php';
 </div>
 
 <style>
-.admin-page-toolbar {
-    gap: 1rem;
-    flex-wrap: wrap;
-}
 .admin-listings-table th,
 .admin-listings-table td {
     vertical-align: middle;
@@ -242,21 +238,11 @@ require_once __DIR__ . '/../includes/header.php';
     gap: 0.45rem;
     max-width: 320px;
 }
-.listing-badge-row,
-.admin-action-row {
+.listing-badge-row {
     display: flex;
     align-items: center;
     gap: 0.4rem;
     flex-wrap: wrap;
-}
-.admin-action-row {
-    justify-content: flex-end;
-}
-@media (max-width: 720px) {
-    .admin-page-toolbar {
-        align-items: flex-start !important;
-        flex-direction: column;
-    }
 }
 </style>
 

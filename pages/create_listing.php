@@ -183,7 +183,7 @@ include '../includes/header.php';
 
     <div class="w-full max-w-3xl" style="min-width: 0;">
         <div class="text-center mb-8">
-            <h1 class="mb-2" style="font-size: 2.75rem;"><?= __('create_listing.title') ?></h1>
+            <h1 class="mb-2 page-hero-title"><?= __('create_listing.title') ?></h1>
             <p class="text-muted text-lg"><?= __('create_listing.subtitle') ?></p>
         </div>
 

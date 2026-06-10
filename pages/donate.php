@@ -98,36 +98,12 @@ require_once __DIR__ . '/../includes/header.php';
 
 <?php
 $donors = getDonors($pdo, 12);
-if (!empty($donors)):
+$hallShowCta = false;
+$hallSectionClass = 'hall-of-fame-section--below-form';
+if (!empty($donors)) {
+    include __DIR__ . '/../includes/partials/hall_of_fame_section.php';
+}
 ?>
-<div class="container mt-16 mb-24" style="max-width: 950px; padding: 0 1rem;">
-    <div class="text-center mb-8">
-        <div class="inline-flex items-center gap-2 font-bold" style="font-size: 0.85rem; color: var(--primary); letter-spacing: 0.08em; text-transform: uppercase;">
-            <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg> Wall of Supporters
-        </div>
-        <h2 class="font-bold text-2xl mt-2 mb-2" style="color: var(--text-main); letter-spacing: -0.02em;">Community Hall of Fame</h2>
-        <p class="text-muted" style="font-size: 0.9rem; opacity: 0.7;">Thank you to everyone who has supported CampusMarket.</p>
-    </div>
-
-    <div class="hall-carousel" aria-label="Community Hall of Fame supporters">
-        <?php foreach ($donors as $donor): ?>
-            <div class="donor-card hall-carousel-card flex flex-col items-center gap-2">
-                <div style="position: relative; display: inline-block;">
-                    <img src="<?php echo avatarUrl($donor['avatar']); ?>"
-                         alt="<?php echo sanitize($donor['username']); ?>"
-                         style="width: 64px; height: 64px; border-radius: 18px; border: 3px solid white; box-shadow: var(--shadow-md); object-fit: cover; transform: rotate(-3deg); transition: var(--transition); background: white;">
-                    <div style="position: absolute; top: -6px; right: -6px; background: #fbbf24; color: white; width: 22px; height: 22px; border-radius: var(--radius-lg); display: flex; align-items: center; justify-content: center; font-size: 0.65rem; border: 2px solid white; box-shadow: var(--shadow-sm); z-index: 2;">★</div>
-                </div>
-                <p style="font-weight: 800; font-size: 0.8rem; color: var(--text-main);">@<?php echo sanitize($donor['username']); ?></p>
-            </div>
-        <?php endforeach; ?>
-    </div>
-    <div class="hall-carousel-actions" aria-hidden="true">
-        <button type="button" class="hall-carousel-btn" data-hall-dir="-1">&lsaquo;</button>
-        <button type="button" class="hall-carousel-btn" data-hall-dir="1">&rsaquo;</button>
-    </div>
-</div>
-<?php endif; ?>
 
 <style>
 @media (max-width: 768px) {
@@ -194,47 +170,6 @@ if (!empty($donors)):
 
 #custom-amount:focus { outline: none; border-color: var(--primary); background: white; box-shadow: 0 0 0 5px rgba(99, 102, 241, 0.1); }
 input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-
-.donor-card { transition: var(--transition); cursor: default; }
-.donor-card:hover { transform: translateY(-5px); }
-.donor-card:hover img { transform: rotate(0deg); }
-.hall-carousel {
-    display: grid;
-    grid-auto-flow: column;
-    grid-auto-columns: minmax(108px, 1fr);
-    gap: 1.25rem;
-    overflow-x: auto;
-    overscroll-behavior-inline: contain;
-    scroll-snap-type: inline mandatory;
-    padding: 0.5rem 0.25rem 1rem;
-    scrollbar-width: thin;
-}
-.hall-carousel-card {
-    scroll-snap-align: center;
-    background: var(--bg-surface);
-    border: 1px solid var(--border-light);
-    border-radius: var(--radius-lg);
-    padding: 1rem 0.75rem;
-    min-width: 108px;
-}
-.hall-carousel-actions {
-    display: flex;
-    justify-content: center;
-    gap: 0.75rem;
-    margin-top: 1rem;
-}
-.hall-carousel-btn {
-    width: 38px;
-    height: 38px;
-    border-radius: var(--radius-full);
-    border: 1px solid var(--border-light);
-    background: var(--bg-surface);
-    color: var(--text-main);
-    cursor: pointer;
-    font-size: 1.35rem;
-    line-height: 1;
-    box-shadow: var(--shadow-sm);
-}
 </style>
 
 <script>
@@ -253,17 +188,6 @@ document.addEventListener('DOMContentLoaded', function() {
         pills.forEach(p => {
             if (parseFloat(p.dataset.amount) === val) p.classList.add('active');
             else p.classList.remove('active');
-        });
-    });
-
-    const hallCarousel = document.querySelector('.hall-carousel');
-    document.querySelectorAll('[data-hall-dir]').forEach(btn => {
-        btn.addEventListener('click', function() {
-            if (!hallCarousel) return;
-            hallCarousel.scrollBy({
-                left: Number(this.dataset.hallDir) * Math.max(180, hallCarousel.clientWidth * 0.65),
-                behavior: 'smooth'
-            });
         });
     });
 });

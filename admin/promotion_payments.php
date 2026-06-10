@@ -123,7 +123,7 @@ require_once __DIR__ . '/../includes/header.php';
         </div>
     </div>
 
-    <div class="glass-panel table-responsive" style="border-radius: var(--radius-lg); overflow: hidden; border: 1px solid rgba(0,0,0,0.05); box-shadow: var(--shadow-md);">
+    <div class="glass-panel table-responsive" style="border-radius: var(--radius-lg); border: 1px solid rgba(0,0,0,0.05); box-shadow: var(--shadow-md);">
         <table class="table w-full text-left admin-payments-table" style="border-collapse: collapse; margin: 0; min-width: 980px;">
             <thead>
                 <tr style="background: rgba(248, 250, 252, 0.8);">
@@ -186,26 +186,9 @@ require_once __DIR__ . '/../includes/header.php';
 </div>
 
 <style>
-.admin-page-toolbar {
-    gap: 1rem;
-    flex-wrap: wrap;
-}
 .admin-payments-table th,
 .admin-payments-table td {
     vertical-align: middle;
-}
-.admin-payment-action-form {
-    display: grid;
-    grid-template-columns: minmax(130px, 1fr) auto auto;
-    gap: 0.4rem;
-    justify-content: end;
-    align-items: center;
-}
-@media (max-width: 720px) {
-    .admin-page-toolbar {
-        align-items: flex-start !important;
-        flex-direction: column;
-    }
 }
 </style>
 

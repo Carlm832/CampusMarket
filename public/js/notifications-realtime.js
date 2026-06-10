@@ -1,16 +1,22 @@
-(function() {
-    // Check for Supabase and User ID
-    const supabase = window.CampusMarketSupabase;
+(function () {
     const userMeta = document.querySelector('meta[name="user-id"]');
     const baseUrl = window.__baseUrl || '/';
-    const normalizePath = (p) => baseUrl.replace(/\/+$/, '') + '/' + p.replace(/^\/+/, '');
+    const normalizePath = (p) => baseUrl.replace(/\/+$/, '') + '/' + String(p || '').replace(/^\/+/, '');
+
     let refreshTimer = null;
     let pollingIntervalId = null;
+    let lastMessages = null;
+    let lastNotifs = null;
+    const syncChannel = ('BroadcastChannel' in window) ? new BroadcastChannel('campusmarket-counts') : null;
 
-    // Polling fallback (works even if Supabase is not configured on the server).
     async function refreshCounts() {
         try {
-            const response = await fetch(normalizePath('pages/api_counts.php'), { cache: 'no-store' });
+            const response = await fetch(normalizePath('pages/api_counts.php'), {
+                cache: 'no-store',
+                credentials: 'same-origin',
+                headers: { 'Accept': 'application/json' },
+            });
+            if (!response.ok) return;
             const data = await response.json();
             if (data.success) {
                 updateBadges(data.unreadMessages, data.unreadNotifs);
@@ -20,9 +26,9 @@
         }
     }
 
-    function scheduleRefresh() {
+    function scheduleRefresh(delayMs) {
         if (refreshTimer) clearTimeout(refreshTimer);
-        refreshTimer = setTimeout(refreshCounts, 120);
+        refreshTimer = setTimeout(refreshCounts, delayMs || 150);
     }
 
     function startPolling(intervalMs) {
@@ -30,55 +36,64 @@
         pollingIntervalId = setInterval(refreshCounts, intervalMs);
     }
 
+    function setBadgeCount(links, count, badgeClass) {
+        links.forEach((link) => {
+            let badge = link.querySelector('.badge');
+            if (count > 0) {
+                if (!badge) {
+                    badge = document.createElement('span');
+                    badge.className = 'badge ' + badgeClass;
+                    link.appendChild(badge);
+                }
+                badge.textContent = String(count);
+            } else if (badge) {
+                badge.remove();
+            }
+        });
+    }
+
     function updateBadges(messages, notifs) {
-        // Update header badges
-        const msgLinks = document.querySelectorAll('a[href*="inbox.php"]');
-        const notifLinks = document.querySelectorAll('a[href*="notifications.php"]');
+        lastMessages = messages;
+        lastNotifs = notifs;
 
-        msgLinks.forEach(link => {
-            let badge = link.querySelector('.badge');
-            if (messages > 0) {
-                if (!badge) {
-                    badge = document.createElement('span');
-                    badge.className = 'badge badge-primary';
-                    link.appendChild(badge);
-                }
-                badge.textContent = messages;
-            } else if (badge) {
-                badge.remove();
-            }
-        });
+        setBadgeCount(
+            document.querySelectorAll('[data-nav-badge="inbox"], a[href*="inbox.php"]'),
+            messages,
+            'badge-primary'
+        );
+        setBadgeCount(
+            document.querySelectorAll('[data-nav-badge="notifications"], a[href*="notifications.php"]'),
+            notifs,
+            'badge-accent'
+        );
 
-        notifLinks.forEach(link => {
-            let badge = link.querySelector('.badge');
-            if (notifs > 0) {
-                if (!badge) {
-                    badge = document.createElement('span');
-                    badge.className = 'badge badge-accent';
-                    link.appendChild(badge);
-                }
-                badge.textContent = notifs;
-            } else if (badge) {
-                badge.remove();
-            }
-        });
-
-        // Trigger a custom event for pages like notifications.php to refresh their lists if needed
         window.dispatchEvent(new CustomEvent('campusmarket:notifications-updated', {
-            detail: { messages, notifs }
+            detail: { messages, notifs },
         }));
+
+        if (syncChannel) {
+            syncChannel.postMessage({ messages, notifs });
+        }
+    }
+
+    function bumpBadge(type) {
+        if (type === 'messages') {
+            updateBadges((lastMessages ?? 0) + 1, lastNotifs ?? 0);
+        } else {
+            updateBadges(lastMessages ?? 0, (lastNotifs ?? 0) + 1);
+        }
+        scheduleRefresh(100);
     }
 
     function showBrowserNotification(title, body, url) {
         if (!('Notification' in window) || Notification.permission !== 'granted') return;
-        // Show when tab is hidden OR app is not focused (mobile/desktop).
         if (!document.hidden && document.hasFocus && document.hasFocus()) return;
 
         const options = {
             body: body || 'You have a new update on CampusMarket.',
             icon: normalizePath('public/images/logo.png'),
             badge: normalizePath('public/images/logo.png'),
-            data: { url: url || normalizePath('pages/notifications.php') }
+            data: { url: url || normalizePath('pages/notifications.php') },
         };
 
         if ('serviceWorker' in navigator) {
@@ -97,104 +112,108 @@
         n.onclick = () => window.open(options.data.url, '_blank');
     }
 
-    // Manual opt-in hook (call from a button in UI when needed).
-    window.CampusMarketEnableBrowserNotifications = async function() {
+    window.CampusMarketEnableBrowserNotifications = async function () {
         if (!('Notification' in window)) return false;
         if (Notification.permission === 'granted') return true;
         const result = await Notification.requestPermission();
         return result === 'granted';
     };
 
-    // ── Refresh immediately when user switches back to the tab ───────────────
-    document.addEventListener('visibilitychange', () => {
-        if (!document.hidden) refreshCounts();
-    });
-
-    // ── Refresh on window focus (e.g. alt-tab back to browser) ──────────────
-    window.addEventListener('focus', refreshCounts);
-
-    // ── Initial fetch on load ────────────────────────────────────────────────
-    refreshCounts();
-
-    // If Supabase is missing, keep the UI fresh with polling only.
-    if (!supabase || !userMeta) {
-        startPolling(15000);
-        return;
+    function applyPollingStrategy() {
+        startPolling(document.hidden ? 15000 : 5000);
     }
 
-    const currentUserId = parseInt(userMeta.content);
-    if (!currentUserId) return;
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) refreshCounts();
+        applyPollingStrategy();
+    });
 
-    console.log('Realtime notifications initialized for user:', currentUserId);
+    window.addEventListener('focus', refreshCounts);
 
-    // ── Reliable polling always runs alongside Supabase realtime ────────────
-    // Realtime events can be missed due to network blips, reconnects, or
-    // Supabase table replication not being enabled — polling guarantees
-    // the badge stays accurate even when realtime delivery fails.
-    startPolling(30000);
+    if (syncChannel) {
+        syncChannel.onmessage = (event) => {
+            const messages = Number(event?.data?.messages);
+            const notifs = Number(event?.data?.notifs);
+            if (!Number.isNaN(messages) && !Number.isNaN(notifs)) {
+                updateBadges(messages, notifs);
+            }
+        };
+    }
 
-    // ── Supabase Realtime subscriptions ─────────────────────────────────────
-
-    // Subscribe to messages table (INSERT = new incoming message)
-    supabase
-        .channel('messages-unread')
-        .on('postgres_changes', {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'messages',
-            filter: `receiver_id=eq.${currentUserId}`
-        }, (payload) => {
-            scheduleRefresh();
-            showBrowserNotification(
-                'New message',
-                payload?.new?.body || 'You received a new message.',
-                normalizePath('pages/inbox.php')
-            );
-        })
-        .subscribe((status) => {
-            // If realtime fails for messages, speed up polling to compensate
-            if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
-                console.warn('Messages realtime channel error:', status, '— falling back to 10s poll');
-                startPolling(10000);
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.addEventListener('message', (event) => {
+            if (event?.data?.type === 'COUNTS_REFRESH') {
+                scheduleRefresh(50);
             }
         });
+    }
 
-    // Subscribe to notifications table (INSERT = new notification)
-    supabase
-        .channel('notifications-unread')
-        .on('postgres_changes', {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'notifications',
-            filter: `user_id=eq.${currentUserId}`
-        }, (payload) => {
-            scheduleRefresh();
-            showBrowserNotification(
-                payload?.new?.title || 'New notification',
-                payload?.new?.body || 'You have a new activity update.',
-                normalizePath('pages/notifications.php')
-            );
-        })
-        .subscribe((status) => {
-            if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
-                console.warn('Notifications realtime channel error:', status, '— falling back to 10s poll');
-                startPolling(10000);
-            }
-        });
+    async function initRealtime() {
+        refreshCounts();
+        applyPollingStrategy();
 
-    // Subscribe to UPDATE events (e.g. marked-as-read in another tab)
-    supabase
-        .channel('sync-read-status')
-        .on('postgres_changes', {
-            event: 'UPDATE',
-            schema: 'public',
-            table: 'messages'
-        }, () => scheduleRefresh())
-        .on('postgres_changes', {
-            event: 'UPDATE',
-            schema: 'public',
-            table: 'notifications'
-        }, () => scheduleRefresh())
-        .subscribe();
+        const currentUserId = userMeta ? parseInt(userMeta.content, 10) : 0;
+        if (!currentUserId) return;
 
+        const supabase = window.CampusMarketSupabase;
+        if (!supabase) return;
+
+        if (window.CampusMarketSupabaseReady) {
+            await window.CampusMarketSupabaseReady;
+        }
+
+        supabase
+            .channel('messages-unread-' + currentUserId)
+            .on('postgres_changes', {
+                event: 'INSERT',
+                schema: 'public',
+                table: 'messages',
+                filter: 'receiver_id=eq.' + currentUserId,
+            }, (payload) => {
+                bumpBadge('messages');
+                showBrowserNotification(
+                    'New message',
+                    payload?.new?.body || 'You received a new message.',
+                    normalizePath('pages/inbox.php')
+                );
+            })
+            .subscribe((status) => {
+                if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+                    startPolling(8000);
+                }
+            });
+
+        supabase
+            .channel('notifications-unread-' + currentUserId)
+            .on('postgres_changes', {
+                event: 'INSERT',
+                schema: 'public',
+                table: 'notifications',
+                filter: 'user_id=eq.' + currentUserId,
+            }, (payload) => {
+                bumpBadge('notifications');
+                showBrowserNotification(
+                    payload?.new?.title || 'New notification',
+                    payload?.new?.body || 'You have a new activity update.',
+                    normalizePath('pages/notifications.php')
+                );
+            })
+            .subscribe((status) => {
+                if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+                    startPolling(8000);
+                }
+            });
+
+        supabase
+            .channel('sync-read-status-' + currentUserId)
+            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages' }, () => scheduleRefresh(150))
+            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'notifications' }, () => scheduleRefresh(150))
+            .subscribe();
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initRealtime);
+    } else {
+        initRealtime();
+    }
 })();

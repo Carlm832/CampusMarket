@@ -1,4 +1,4 @@
-const CACHE_VERSION = "campusmarket-v5";
+const CACHE_VERSION = "campusmarket-v6";
 const OFFLINE_URL = "public/offline.html";
 
 const CORE_ASSETS = [
@@ -111,5 +111,15 @@ self.addEventListener("push", (event) => {
     }
   };
 
-  event.waitUntil(self.registration.showNotification(title, options));
+  event.waitUntil(
+    self.registration.showNotification(title, options).then(() =>
+      clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
+        clientList.forEach((client) => {
+          if (client && typeof client.postMessage === "function") {
+            client.postMessage({ type: "COUNTS_REFRESH" });
+          }
+        });
+      })
+    )
+  );
 });

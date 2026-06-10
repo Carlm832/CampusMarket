@@ -192,58 +192,12 @@ if (!empty($featuredProducts)):
 </section>
 
 <!-- Donation Hall of Fame -->
-<?php 
+<?php
 $donors = getDonors($pdo, 12);
-if (!empty($donors)): 
+$hallShowCta = true;
+if (!empty($donors)) {
+    include __DIR__ . '/includes/partials/hall_of_fame_section.php';
+}
 ?>
-<section class="mb-24">
-    <div class="container">
-        <div class="glass-panel py-16 px-8 text-center" style="border-radius: var(--radius-lg); background: var(--bg-card); border: 1px solid var(--border-light); position: relative; overflow: hidden; text-align: center;">
-            
-            <div class="inline-flex items-center gap-2 mb-6 font-bold" style="font-size: 0.9rem; color: var(--text-muted); text-transform: uppercase;">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
-                <?= __('home.wall_supporters') ?>
-            </div>
-            
-            <h2 class="font-bold text-4xl mb-4" style="color: var(--text-main);"><?= __('home.hall_of_fame') ?></h2>
-            <p class="text-muted text-lg mb-8" style="line-height: 1.6; text-align: center; width: 100%;">
-                <?= __('home.hall_of_fame_desc') ?>
-            </p>
-            
-            <div class="flex flex-wrap justify-center gap-8 md:gap-12" style="min-height: 120px; align-items: center;">
-                <?php foreach ($donors as $donor): ?>
-                    <div class="donor-card" style="transition: var(--transition); cursor: pointer;">
-                        <div style="position: relative; display: inline-block;">
-                            <img src="<?php echo avatarUrl($donor['avatar']); ?>" 
-                                 alt="<?php echo sanitize($donor['username']); ?>"
-                                 style="width: 80px; height: 80px; border-radius: 22px; border: 3px solid white; box-shadow: var(--shadow-lg); object-fit: cover; transform: rotate(-3deg); transition: var(--transition); background: white;">
-                            <div style="position: absolute; top: -8px; right: -8px; background: #fbbf24; color: white; width: 26px; height: 26px; border-radius: var(--radius-lg); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; border: 2px solid white; box-shadow: var(--shadow-sm); z-index: 2;">
-                                ★
-                            </div>
-                        </div>
-                        <p style="font-weight: 800; font-size: 0.9rem; color: var(--text-main); margin-top: 1rem; letter-spacing: -0.01em;">@<?php echo sanitize($donor['username']); ?></p>
-                    </div>
-                <?php endforeach; ?>
-            </div>
-
-            <div class="mt-10" style="padding-bottom: 2rem;">
-                <a href="pages/donate.php" class="btn btn-primary" style="padding: 1rem 3.5rem; border-radius: var(--radius-md); font-weight: 600;">
-                    <?= __('home.become_supporter') ?>
-                </a>
-            </div>
-        </div>
-    </div>
-</section>
-
-<style>
-.donor-card:hover {
-    transform: translateY(-6px);
-}
-.donor-card:hover img {
-    transform: rotate(0deg);
-    border-color: var(--primary-light);
-}
-</style>
-<?php endif; ?>
 
 <?php require_once 'includes/footer.php'; ?>
