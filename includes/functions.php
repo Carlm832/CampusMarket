@@ -546,6 +546,88 @@ function getTopCategories(PDO $pdo): array {
 }
 
 /**
+ * Core marketplace tags used by AI suggestions and the create-listing form.
+ */
+function getDefaultMarketplaceTags(): array {
+    return [
+        ['Electronics', 'electronics'],
+        ['Books', 'books'],
+        ['Study Guides', 'study-guides'],
+        ['Dorm Decor', 'dorm-decor'],
+        ['Furniture', 'furniture'],
+        ['Kitchenwear', 'kitchenwear'],
+        ['Bikes', 'bikes'],
+        ['Scooters', 'scooters'],
+        ['Clothing', 'clothing'],
+        ['Stationery', 'stationery'],
+        ['Snacks', 'snacks'],
+        ['Sports & Fitness', 'sports-fitness'],
+    ];
+}
+
+/**
+ * Re-insert any missing default tags (safe to run multiple times).
+ */
+function seedDefaultTags(PDO $pdo): int {
+    $added = 0;
+    $check = $pdo->prepare('SELECT id FROM tags WHERE slug = ? LIMIT 1');
+    $insert = $pdo->prepare('INSERT INTO tags (name, slug) VALUES (?, ?)');
+
+    foreach (getDefaultMarketplaceTags() as [$name, $slug]) {
+        $check->execute([$slug]);
+        if (!$check->fetchColumn()) {
+            $insert->execute([$name, $slug]);
+            $added++;
+        }
+    }
+
+    return $added;
+}
+
+/**
+ * Remove all donation payment records (test checkout data, Hall of Fame, etc.).
+ * Promotion payments are not affected.
+ */
+function clearDonationData(PDO $pdo): int {
+    $stmt = $pdo->prepare("DELETE FROM promotion_payments WHERE payment_type = 'donation'");
+    $stmt->execute();
+    return $stmt->rowCount();
+}
+
+/**
+ * Count donation payment records currently stored.
+ */
+function countDonationRecords(PDO $pdo): int {
+    try {
+        $isPostgres = $pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'pgsql';
+        if ($isPostgres) {
+            $tableStmt = $pdo->prepare("
+                SELECT 1
+                FROM information_schema.tables
+                WHERE table_schema = 'public'
+                  AND table_name = 'promotion_payments'
+                LIMIT 1
+            ");
+        } else {
+            $tableStmt = $pdo->prepare("
+                SELECT 1
+                FROM information_schema.tables
+                WHERE table_schema = DATABASE()
+                  AND table_name = 'promotion_payments'
+                LIMIT 1
+            ");
+        }
+        $tableStmt->execute();
+        if (!(bool)$tableStmt->fetchColumn()) {
+            return 0;
+        }
+        return (int)$pdo->query("SELECT COUNT(*) FROM promotion_payments WHERE payment_type = 'donation'")->fetchColumn();
+    } catch (PDOException $e) {
+        return 0;
+    }
+}
+
+/**
  * Fetch top donors for the Hall of Fame
  */
 function getDonors(PDO $pdo, int $limit = 5): array {

@@ -1,12 +1,11 @@
 <?php
 // admin/reports.php
 require_once __DIR__ . '/../config/constants.php';
-require_once __DIR__ . '/../includes/header.php';
+require_once __DIR__ . '/../includes/bootstrap.php';
 
-// Auth Check
 if (!isAdmin()) {
     setFlash('error', 'Unauthorized access.');
-    redirect('../index.php');
+    redirect(BASE_URL . 'index.php');
 }
 
 $pageTitle = "Moderation Queue";
@@ -33,7 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'], $_POST['rep
         $pdo->prepare("UPDATE reports SET status = 'reviewed' WHERE id = ?")->execute([$reportId]);
         setFlash('success', 'Report marked as resolved.');
     }
-    redirect('reports.php');
+    redirect(BASE_URL . 'admin/reports.php');
 }
 
 // Fetch pending reports
@@ -46,6 +45,8 @@ $stmt = $pdo->query("
     ORDER BY r.created_at ASC
 ");
 $reports = $stmt->fetchAll();
+
+require_once __DIR__ . '/../includes/header.php';
 ?>
 
 <div class="container mt-24 mb-16">
@@ -57,7 +58,7 @@ $reports = $stmt->fetchAll();
         <div class="badge" style="background: var(--bg-main); color: var(--text-muted); border: 1px solid var(--border-light); font-size: 0.9rem; padding: 0.5rem 1rem; border-radius: var(--radius-lg);"><?php echo count($reports); ?> Pending Reviews</div>
     </div>
 
-    <div class="glass-panel table-responsive" style="border-radius: var(--radius-lg); overflow: hidden; border: 1px solid rgba(0,0,0,0.05); box-shadow: var(--shadow-md);">
+    <div class="glass-panel table-responsive" style="border-radius: var(--radius-lg); border: 1px solid rgba(0,0,0,0.05); box-shadow: var(--shadow-md);">
         <table class="table w-full text-left" style="border-collapse: collapse; margin: 0;">
             <thead>
                 <tr style="background: rgba(248, 250, 252, 0.8);">
@@ -100,7 +101,7 @@ $reports = $stmt->fetchAll();
                                 <span style="background: var(--bg-main); padding: 0.2rem 0.5rem; border-radius: 4px; border: 1px solid var(--border-light); font-size: 0.75rem;"><?php echo timeAgo($r['created_at']); ?></span>
                             </td>
                             <td class="p-4 text-right" style="border-bottom: 1px solid var(--border-light);">
-                                <form method="POST" class="flex justify-end gap-2 m-0">
+                                <form method="POST" class="admin-reports-actions m-0">
                                     <?php echo csrfTokenField(); ?>
                                     <input type="hidden" name="report_id" value="<?php echo $r['id']; ?>">
                                     <button type="submit" name="action" value="dismiss" class="btn btn-secondary btn-sm hover-scale shadow-sm" style="border-radius: var(--radius-lg);">Keep & Dismiss</button>

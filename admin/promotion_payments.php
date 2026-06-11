@@ -1,11 +1,11 @@
 <?php
 // admin/promotion_payments.php
 require_once __DIR__ . '/../config/constants.php';
-require_once __DIR__ . '/../includes/header.php';
+require_once __DIR__ . '/../includes/bootstrap.php';
 
 if (!isAdmin()) {
     setFlash('error', 'Unauthorized access.');
-    redirect('../index.php');
+    redirect(BASE_URL . 'index.php');
 }
 
 $pageTitle = 'Promotion & Donation Payments';
@@ -18,22 +18,21 @@ try {
 
 if (!$promoPaymentsTableExists) {
     setFlash('error', 'Promotion payment table is missing. Apply the schema update first.');
-    redirect('listings.php');
+    redirect(BASE_URL . 'admin/listings.php');
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     verifyCsrfToken();
     $action = sanitize($_POST['action']);
 
-    if ($action === 'clear_supporters') {
+    if ($action === 'clear_donations') {
         try {
-            $stmt = $pdo->prepare("DELETE FROM promotion_payments WHERE payment_type = 'donation' AND status = 'approved'");
-            $stmt->execute();
-            setFlash('success', 'Supporter Hall of Fame has been reset.');
+            $removed = clearDonationData($pdo);
+            setFlash('success', "Cleared {$removed} donation record(s). Hall of Fame and payment history are reset for go-live.");
         } catch (Exception $e) {
-            setFlash('error', 'Failed to reset supporters: ' . $e->getMessage());
+            setFlash('error', 'Failed to clear donation data: ' . $e->getMessage());
         }
-        redirect('promotion_payments.php');
+        redirect(BASE_URL . 'admin/promotion_payments.php');
     }
 
     $paymentId = (int)($_POST['payment_id'] ?? 0);
@@ -88,7 +87,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         }
     }
 
-    redirect('promotion_payments.php');
+    redirect(BASE_URL . 'admin/promotion_payments.php');
 }
 
 $rows = $pdo->query('
@@ -100,6 +99,10 @@ $rows = $pdo->query('
         CASE pp.status WHEN \'pending\' THEN 0 WHEN \'approved\' THEN 1 ELSE 2 END,
         pp.created_at DESC
 ')->fetchAll();
+
+$donationCount = countDonationRecords($pdo);
+
+require_once __DIR__ . '/../includes/header.php';
 ?>
 
 <div class="container mt-24 mb-16 admin-payments-page">
@@ -111,14 +114,16 @@ $rows = $pdo->query('
         </div>
         <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
             <div class="badge" style="background: var(--bg-main); color: var(--text-muted); border: 1px solid var(--border-light); font-size: 0.9rem; padding: 0.5rem 1rem; border-radius: var(--radius-lg);"><?php echo count($rows); ?> Requests</div>
+            <?php if ($donationCount > 0): ?>
             <form method="post" style="margin: 0;">
                 <?php echo csrfTokenField(); ?>
-                <button type="submit" name="action" value="clear_supporters" class="btn btn-danger btn-sm" onclick="return confirm('This will remove all approved donations from the Supporter Hall of Fame. Continue?');">Reset Hall of Fame</button>
+                <button type="submit" name="action" value="clear_donations" class="btn btn-danger btn-sm" onclick="return confirm('This will permanently delete all <?php echo (int)$donationCount; ?> donation record(s) — including test checkout data and the Hall of Fame. Promotion payments will not be affected. Continue?');">Clear Donation Data (<?php echo (int)$donationCount; ?>)</button>
             </form>
+            <?php endif; ?>
         </div>
     </div>
 
-    <div class="glass-panel table-responsive" style="border-radius: var(--radius-lg); overflow: hidden; border: 1px solid rgba(0,0,0,0.05); box-shadow: var(--shadow-md);">
+    <div class="glass-panel table-responsive" style="border-radius: var(--radius-lg); border: 1px solid rgba(0,0,0,0.05); box-shadow: var(--shadow-md);">
         <table class="table w-full text-left admin-payments-table" style="border-collapse: collapse; margin: 0; min-width: 980px;">
             <thead>
                 <tr style="background: rgba(248, 250, 252, 0.8);">
@@ -181,30 +186,10 @@ $rows = $pdo->query('
 </div>
 
 <style>
-.admin-page-toolbar {
-    gap: 1rem;
-    flex-wrap: wrap;
-}
 .admin-payments-table th,
 .admin-payments-table td {
     vertical-align: middle;
 }
-.admin-payment-action-form {
-    display: grid;
-    grid-template-columns: minmax(130px, 1fr) auto auto;
-    gap: 0.4rem;
-    justify-content: end;
-    align-items: center;
-}
-@media (max-width: 720px) {
-    .admin-page-toolbar {
-        align-items: flex-start !important;
-        flex-direction: column;
-    }
-}
 </style>
 
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>
-
-
-

@@ -178,7 +178,7 @@ require_once '../includes/header.php';
 <div class="container mt-24 mb-20 flex justify-center">
   <div class="glass-panel" style="width: 100%; max-width: 650px; border-radius: var(--radius-lg); overflow: hidden;">
       <div style="background: var(--bg-surface); padding: 2rem; border-bottom: 1px solid var(--border-light);">
-        <div class="flex items-center justify-between">
+        <div class="edit-profile-header">
             <h1 class="mb-0 text-main font-bold" style="letter-spacing: -0.5px;"><?= __('profile.edit_title') ?></h1>
             <a href="<?php echo BASE_URL; ?>/pages/profile.php" class="btn btn-secondary btn-sm hover-scale shadow-sm flex items-center gap-1" style="border-radius: var(--radius-lg); display: inline-flex;">
                 <svg xmlns="http://www.w3.org/2000/svg" style="width: 14px; height: 14px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
@@ -190,12 +190,12 @@ require_once '../includes/header.php';
         <p class="text-muted mt-2 mb-0"><?= __('profile.update_desc') ?></p>
       </div>
 
-      <div style="padding: 2.5rem;">
+      <div class="edit-profile-panel-body" style="padding: 2.5rem;">
         <form method="post" enctype="multipart/form-data" novalidate>
             <?php echo csrfTokenField(); ?>
             <!-- Avatar Section -->
             <div class="flex flex-col gap-6 mb-8 p-6" style="background: rgba(255,255,255,0.5); border-radius: var(--radius-md); border: 1px dashed var(--border-focus);">
-                <div class="flex items-center gap-6">
+                <div class="edit-profile-avatar-row">
                     <img id="avatar-preview" src="<?php echo sanitize(avatarUrl($user['avatar'])); ?>" alt="Avatar" class="shadow-sm" style="width: 90px; height: 90px; border-radius: var(--radius-xl); object-fit: cover; border: 3px solid white; transition: var(--transition);">
                     <div class="flex-grow">
                         <label class="form-label font-bold mb-2"><?= __('profile.upload_picture') ?></label>

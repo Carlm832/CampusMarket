@@ -173,7 +173,7 @@ foreach ($deals as $d) {
     </form>
 
     <!-- Deals Table -->
-    <div class="glass-panel table-responsive" style="border-radius: var(--radius-lg); overflow: hidden; border: 1px solid rgba(0,0,0,0.05); box-shadow: var(--shadow-md);">
+    <div class="glass-panel table-responsive" style="border-radius: var(--radius-lg); border: 1px solid rgba(0,0,0,0.05); box-shadow: var(--shadow-md);">
         <table class="table w-full text-left" style="border-collapse: collapse; margin: 0;">
             <thead>
                 <tr style="background: rgba(248, 250, 252, 0.8);">

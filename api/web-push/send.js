@@ -7,6 +7,11 @@ function json(res, status, data) {
   res.end(JSON.stringify(data));
 }
 
+function isExpiredSubscriptionError(err) {
+  if (!err || !err.statusCode) return false;
+  return err.statusCode === 410 || err.statusCode === 404;
+}
+
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
     return json(res, 405, { ok: false, error: 'Method not allowed' });
@@ -68,7 +73,7 @@ module.exports = async (req, res) => {
   }
 
   if (!subs || subs.length === 0) {
-    return json(res, 200, { ok: true, sent: 0, failed: 0, note: 'No subscriptions for user' });
+    return json(res, 200, { ok: true, sent: 0, failed: 0, removed: 0, note: 'No subscriptions for user' });
   }
 
   webpush.setVapidDetails(subject, vapidPublicKey, vapidPrivateKey);
@@ -83,6 +88,7 @@ module.exports = async (req, res) => {
 
   let sent = 0;
   let failed = 0;
+  let removed = 0;
 
   await Promise.all(
     subs.map(async (s) => {
@@ -92,10 +98,11 @@ module.exports = async (req, res) => {
       };
 
       const options = {
-        TTL: 86400, // 24 hours
+        TTL: 3600,
+        urgency: 'high',
         headers: {
-          'Urgency': 'high'
-        }
+          Urgency: 'high',
+        },
       };
 
       try {
@@ -103,10 +110,17 @@ module.exports = async (req, res) => {
         sent += 1;
       } catch (e) {
         failed += 1;
+        if (isExpiredSubscriptionError(e)) {
+          await supabase
+            .from('web_push_subscriptions')
+            .delete()
+            .eq('user_id', userId)
+            .eq('endpoint', s.endpoint);
+          removed += 1;
+        }
       }
     })
   );
 
-  return json(res, 200, { ok: true, sent, failed });
+  return json(res, 200, { ok: true, sent, failed, removed });
 };
-

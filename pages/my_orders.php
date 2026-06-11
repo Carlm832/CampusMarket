@@ -207,7 +207,7 @@ require_once __DIR__ . '/../includes/header.php';
     <?php endif; ?>
 
     <div class="text-center mb-12">
-        <h1 class="mb-2" style="font-size: 2.75rem;">Transaction Hub</h1>
+        <h1 class="mb-2 page-hero-title">Transaction Hub</h1>
         <p class="text-muted text-lg">Track your purchases and manage your sales</p>
     </div>
 
@@ -230,12 +230,12 @@ require_once __DIR__ . '/../includes/header.php';
                     </div>
                 <?php else: ?>
                     <?php foreach ($buyingOrders as $order): ?>
-                        <div class="glass-panel p-5 flex gap-5 items-center hover-scale" style="border-radius: var(--radius-lg); border-left: 4px solid var(--primary); transition: all 0.3s;">
+                        <div class="glass-panel p-5 order-hub-card hover-scale" style="border-radius: var(--radius-lg); border-left: 4px solid var(--primary); transition: all 0.3s;">
                             <div style="width: 80px; height: 80px; background: var(--bg-main); border-radius: var(--radius-md); overflow: hidden; flex-shrink: 0; box-shadow: var(--shadow-sm);">
                                 <img src="<?php echo getProductImage($order['image_path'] ?? null); ?>" style="width: 100%; height: 100%; object-fit: cover;" alt="<?php echo sanitize($order['product_title']); ?>">
                             </div>
-                            <div class="flex-grow">
-                                <div class="flex justify-between items-start mb-1">
+                            <div class="flex-grow order-hub-main">
+                                <div class="order-hub-title-row mb-1">
                                     <h4 class="mb-0 text-main font-bold" style="line-height: 1.2;"><?php echo sanitize($order['product_title']); ?></h4>
                                     <span class="badge badge-<?php echo str_replace(' ', '-', $order['status']); ?> shadow-sm" style="font-size: 0.70rem; padding: 0.2rem 0.5rem;"><?php echo ucfirst($order['status']); ?></span>
                                 </div>
@@ -247,12 +247,13 @@ require_once __DIR__ . '/../includes/header.php';
                                 </p>
                             </div>
                             <?php if ($order['status'] === 'pending'): ?>
-                                <form method="post" class="ml-2 m-0">
+                                <form method="post" class="ml-2 m-0 order-hub-actions">
                                     <?php echo csrfTokenField(); ?>
                                     <input type="hidden" name="order_id" value="<?php echo (int)$order['id']; ?>">
-                                    <button type="submit" name="action" value="cancel" class="btn btn-danger btn-sm shadow-sm hover-scale" style="border-radius: var(--radius-lg); width: 35px; height: 35px; padding: 0; display: flex; align-items: center; justify-content: center;" title="Cancel Order" onclick="return confirm('Cancel this purchase request?')">X</button>
+                                    <button type="submit" name="action" value="cancel" class="btn btn-danger btn-sm shadow-sm hover-scale order-hub-cancel-btn" style="border-radius: var(--radius-lg); padding: 0; display: flex; align-items: center; justify-content: center;" title="Cancel Order" onclick="return confirm('Cancel this purchase request?')">X</button>
                                 </form>
                             <?php elseif ($order['status'] === 'completed' && isset($pendingReviewByOrder[(int)$order['id']])): ?>
+                                <div class="order-hub-actions">
                                 <button
                                     type="button"
                                     class="btn btn-primary btn-sm shadow-sm hover-scale open-review-btn"
@@ -262,6 +263,7 @@ require_once __DIR__ . '/../includes/header.php';
                                     style="border-radius: var(--radius-lg);">
                                     Review Seller
                                 </button>
+                                </div>
                             <?php endif; ?>
                         </div>
                     <?php endforeach; ?>

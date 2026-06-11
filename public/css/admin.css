@@ -160,3 +160,96 @@
 }
 
 .admin-empty-icon { font-size: 2.5rem; display: block; margin-bottom: 0.75rem; }
+
+/* ── Legacy list pages (users, listings, orders, etc.) ───── */
+.glass-panel.table-responsive {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+}
+
+.admin-listings-table,
+.admin-payments-table {
+    min-width: 720px;
+}
+
+.admin-page-toolbar,
+.container.mt-24 > .flex.justify-between.items-end,
+.container.mt-24 > .flex.justify-between {
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.admin-action-row {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.admin-payment-action-form {
+    display: grid;
+    grid-template-columns: minmax(130px, 1fr) auto auto;
+    gap: 0.4rem;
+    justify-content: end;
+    align-items: center;
+}
+
+.admin-reports-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+/* ── Dashboard (index.php) ───────────────────────────────── */
+@media (max-width: 640px) {
+    .admin-wrap {
+        padding: 0 1rem;
+    }
+
+    .module-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .admin-title-row h1 {
+        font-size: 1.5rem;
+    }
+
+    .reports-alert {
+        flex-direction: column;
+        align-items: flex-start !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .container.mt-24 {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    .admin-page-header {
+        flex-direction: column;
+        align-items: flex-start !important;
+    }
+
+    .admin-payment-action-form {
+        grid-template-columns: 1fr;
+        min-width: 200px;
+    }
+
+    .admin-payment-action-form .btn {
+        width: 100%;
+    }
+
+    .admin-reports-actions {
+        justify-content: flex-start;
+    }
+
+    .admin-reports-actions .btn {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
+    .table th,
+    .table td {
+        padding: 0.75rem 0.85rem;
+    }
+}

@@ -126,7 +126,7 @@ require_once __DIR__ . '/../includes/header.php';
             <div class="inline-flex items-center gap-2 mb-3 font-bold" style="font-size: 0.85rem; color: var(--primary); letter-spacing: 0.1em; text-transform: uppercase;">
                 <svg style="width: 18px; height: 18px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg> Seller Spotlight • Boost Sales
             </div>
-            <h1 class="font-bold text-6xl mb-4 text-main" style="letter-spacing: -0.03em; line-height: 1.1;">Elevate Your Listings <br><span>Reach More Buyers</span></h1>
+            <h1 class="font-bold page-hero-title mb-4 text-main" style="letter-spacing: -0.03em; line-height: 1.1;">Elevate Your Listings <br><span>Reach More Buyers</span></h1>
             <p class="text-main" style="font-size: 1.1rem; line-height: 1.6; font-weight: 500; opacity: 0.8; text-align: center; width: 100%;">
                 Promoted items stay at the top of search results and categories. Increase your visibility by up to 10x with a featured boost.
             </p>
@@ -151,7 +151,7 @@ require_once __DIR__ . '/../includes/header.php';
 
                 <div class="mb-8">
                     <label class="block mb-4 font-bold text-center" style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase;">2. Choose Boost Amount</label>
-                    <div class="grid grid-cols-3 gap-4">
+                    <div class="grid grid-cols-3 gap-4 promotions-amount-grid">
                         <div class="amount-pill active" data-amount="50.00">₺50 <br><span style="font-size: 0.65rem; opacity: 0.8; display: block; margin-top: 2px;">~3 DAYS</span></div>
                         <div class="amount-pill" data-amount="100.00">₺100 <br><span style="font-size: 0.65rem; opacity: 0.8; display: block; margin-top: 2px;">~6 DAYS</span></div>
                         <div class="amount-pill" data-amount="200.00">₺200 <br><span style="font-size: 0.65rem; opacity: 0.8; display: block; margin-top: 2px;">~13 DAYS</span></div>

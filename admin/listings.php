@@ -1,12 +1,11 @@
 <?php
 // admin/listings.php
 require_once __DIR__ . '/../config/constants.php';
-require_once __DIR__ . '/../includes/header.php';
+require_once __DIR__ . '/../includes/bootstrap.php';
 
-// Auth Check (Admin Only)
 if (!isAdmin()) {
     setFlash('error', 'Unauthorized access.');
-    redirect('../index.php');
+    redirect(BASE_URL . 'index.php');
 }
 
 $pageTitle = "Manage Listings";
@@ -46,7 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } elseif ($action === 'feature') {
             if (!$promoPaymentsTableExists) {
                 setFlash('error', 'Promotion payment table is missing. Apply the schema update first.');
-                redirect('listings.php');
+                redirect(BASE_URL . 'admin/listings.php');
             }
 
             // FEAT requires an approved, unused promotion payment for this listing.
@@ -65,7 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if ($paymentId <= 0) {
                 setFlash('error', 'Cannot FEAT this listing yet. Seller needs an approved promotion payment.');
-                redirect('listings.php');
+                redirect(BASE_URL . 'admin/listings.php');
             }
 
             try {
@@ -88,7 +87,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    redirect('listings.php');
+    redirect(BASE_URL . 'admin/listings.php');
 }
 
 // Fetch Listings
@@ -118,6 +117,8 @@ if ($promoPaymentsTableExists) {
     ");
 }
 $listings = $stmt->fetchAll();
+
+require_once __DIR__ . '/../includes/header.php';
 ?>
 
 <div class="container mt-24 mb-16 admin-listings-page">
@@ -132,7 +133,7 @@ $listings = $stmt->fetchAll();
         </div>
     </div>
 
-    <div class="glass-panel table-responsive" style="border-radius: var(--radius-lg); overflow: hidden; border: 1px solid rgba(0,0,0,0.05); box-shadow: var(--shadow-md);">
+    <div class="glass-panel table-responsive" style="border-radius: var(--radius-lg); border: 1px solid rgba(0,0,0,0.05); box-shadow: var(--shadow-md);">
         <table class="table w-full text-left admin-listings-table" style="border-collapse: collapse; margin: 0; min-width: 920px;">
             <thead>
                 <tr style="background: rgba(248, 250, 252, 0.8);">
@@ -228,10 +229,6 @@ $listings = $stmt->fetchAll();
 </div>
 
 <style>
-.admin-page-toolbar {
-    gap: 1rem;
-    flex-wrap: wrap;
-}
 .admin-listings-table th,
 .admin-listings-table td {
     vertical-align: middle;
@@ -241,21 +238,11 @@ $listings = $stmt->fetchAll();
     gap: 0.45rem;
     max-width: 320px;
 }
-.listing-badge-row,
-.admin-action-row {
+.listing-badge-row {
     display: flex;
     align-items: center;
     gap: 0.4rem;
     flex-wrap: wrap;
-}
-.admin-action-row {
-    justify-content: flex-end;
-}
-@media (max-width: 720px) {
-    .admin-page-toolbar {
-        align-items: flex-start !important;
-        flex-direction: column;
-    }
 }
 </style>
 

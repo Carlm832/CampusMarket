@@ -1,15 +1,25 @@
 <?php
 // admin/index.php
 require_once __DIR__ . '/../config/constants.php';
-require_once __DIR__ . '/../includes/header.php';
+require_once __DIR__ . '/../includes/bootstrap.php';
 
-// Auth Check
 if (!isAdmin()) {
     setFlash('error', 'Unauthorized access.');
-    redirect('../index.php');
+    redirect(BASE_URL . 'index.php');
 }
 
 $pageTitle = "Admin Dashboard";
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'clear_donations') {
+    verifyCsrfToken();
+    try {
+        $removed = clearDonationData($pdo);
+        setFlash('success', "Cleared {$removed} donation record(s). Ready for go-live.");
+    } catch (Exception $e) {
+        setFlash('error', 'Failed to clear donation data: ' . $e->getMessage());
+    }
+    redirect(BASE_URL . 'admin/index.php');
+}
 
 // Fetch Stats
 $stats = [
@@ -37,6 +47,9 @@ $sellerTxnStmt = $pdo->query("
     LIMIT 10
 ");
 $sellerTransactionStats = $sellerTxnStmt->fetchAll(PDO::FETCH_ASSOC);
+$donationCount = countDonationRecords($pdo);
+
+require_once __DIR__ . '/../includes/header.php';
 ?>
 
 <style>
@@ -455,6 +468,19 @@ $sellerTransactionStats = $sellerTxnStmt->fetchAll(PDO::FETCH_ASSOC);
             </a>
             <?php endif; ?>
 
+            <?php if ($donationCount > 0): ?>
+            <div class="reports-alert" style="background: #fef2f2; border-color: #fecaca; border-left-color: #ef4444; margin-bottom: 1.5rem;">
+                <div>
+                    <div class="reports-alert-text" style="color: #991b1b;">Go-Live: Test Donation Data</div>
+                    <div class="reports-alert-sub" style="color: #b91c1c;"><?php echo (int)$donationCount; ?> donation record(s) from test checkout are still stored. Clear them before launch.</div>
+                </div>
+                <form method="POST" style="margin: 0; flex-shrink: 0;" onsubmit="return confirm('Permanently delete all <?php echo (int)$donationCount; ?> donation record(s)? This clears the Hall of Fame and payment history. Promotion payments are not affected.');">
+                    <?php echo csrfTokenField(); ?>
+                    <button type="submit" name="action" value="clear_donations" class="btn btn-danger btn-sm">Clear Donation Data</button>
+                </form>
+            </div>
+            <?php endif; ?>
+
             <div class="card" style="padding: 1.5rem;">
                 <h3 style="margin-bottom: 1.25rem; font-size: 1.1rem;">Management Modules</h3>
 
@@ -505,6 +531,14 @@ $sellerTransactionStats = $sellerTxnStmt->fetchAll(PDO::FETCH_ASSOC);
                         <div class="module-info">
                             <div class="module-name">Support Chat</div>
                             <div class="module-desc">Reply to student messages</div>
+                        </div>
+                        <span class="module-arrow">›</span>
+                    </a>
+                    <a href="promotion_payments.php" class="module-card" style="--module-color: #d97706; --module-bg: #fffbeb;">
+                        <div class="module-icon"><svg style="width: 24px; height: 24px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div>
+                        <div class="module-info">
+                            <div class="module-name">Payments & Donations</div>
+                            <div class="module-desc">Review promotion and donation requests</div>
                         </div>
                         <span class="module-arrow">›</span>
                     </a>
