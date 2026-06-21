@@ -90,6 +90,11 @@ $navCategories = $pdo->query("SELECT id, name FROM categories ORDER BY name ASC"
     <script src="<?php echo BASE_URL; ?>public/js/supabase-client.js"></script>
     <?php endif; ?>
     <script>window.__csrfToken = <?php echo json_encode(csrfToken()); ?>;</script>
+    <script>window.__isLoggedIn = <?php echo isLoggedIn() ? 'true' : 'false'; ?>;</script>
+    <?php if (isLoggedIn() && !empty($_SESSION['prompt_push'])): ?>
+    <script>window.__promptPush = true;</script>
+    <?php unset($_SESSION['prompt_push']); ?>
+    <?php endif; ?>
     
     <!-- i18n Client Data -->
     <script>
@@ -323,8 +328,13 @@ $navCategories = $pdo->query("SELECT id, name FROM categories ORDER BY name ASC"
 <?php
     $notifJsPath = __DIR__ . '/../public/js/notifications-realtime.js';
     $notifJsVer = file_exists($notifJsPath) ? filemtime($notifJsPath) : '1';
+    $pushJsPath = __DIR__ . '/../public/js/push-notifications.js';
+    $pushJsVer = file_exists($pushJsPath) ? filemtime($pushJsPath) : '1';
 ?>
 <script src="<?php echo BASE_URL; ?>public/js/notifications-realtime.js?v=<?php echo $notifJsVer; ?>"></script>
+<?php if (WEB_PUSH_PUBLIC_KEY !== ''): ?>
+<script src="<?php echo BASE_URL; ?>public/js/push-notifications.js?v=<?php echo $pushJsVer; ?>"></script>
+<?php endif; ?>
 <?php endif; ?>
 
 <script>

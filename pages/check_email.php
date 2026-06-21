@@ -62,6 +62,9 @@ require_once '../includes/header.php';
       <p class="verify-email-spam-tip">
         Don&rsquo;t see it within a few minutes? Check your <strong>Spam</strong> or <strong>Junk</strong> folder and mark the message as &ldquo;Not spam&rdquo; so future emails arrive in your inbox.
       </p>
+      <p class="verify-email-spam-tip" style="border-top: none; padding-top: 0.5rem;">
+        After you log in, you can enable <strong>phone notifications</strong> for new messages and marketplace activity.
+      </p>
     </div>
 
     <form method="post" class="mb-6">

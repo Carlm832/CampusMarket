@@ -156,6 +156,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 require_once __DIR__ . '/../includes/web_push.php';
                 syncSupabaseAppUserMetadata($pdo, (int)$user['id'], (string)$user['role']);
 
+                $_SESSION['prompt_push'] = true;
                 setFlash('success', 'Welcome back, ' . sanitize($user['username']) . '!');
 
                 $target = $_GET['redirect'] ?? '';
