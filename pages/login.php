@@ -144,6 +144,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $unverified = true;
                 $unverifiedEmail = $authEmail;
                 $errors['form'] = __('auth.error_verify_email');
+            } elseif (isUserSuspended($pdo, (int)$user['id'])) {
+                $errors['form'] = __('auth.error_suspended');
             } else {
                 if ((int) $user['is_verified'] !== 1) {
                     $upd = $pdo->prepare('UPDATE users SET is_verified = TRUE WHERE id = :id');

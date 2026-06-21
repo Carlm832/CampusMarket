@@ -62,6 +62,7 @@ require_once ROOT_PATH . 'includes/functions.php';
 require_once ROOT_PATH . 'includes/mailer.php';
 require_once ROOT_PATH . 'includes/i18n.php';
 require_once ROOT_PATH . 'includes/translation.php';
+require_once ROOT_PATH . 'includes/report_moderation.php';
 
 // ─── Stateless Cookie-Based Session Replication (Vercel Serverless Compatibility) ───
 $isSecureRequest = (
@@ -155,6 +156,8 @@ if (isLoggedIn()) {
             syncSupabaseAppUserMetadata($pdo, $uid, $_SESSION['role'] ?? 'user');
             $_SESSION['supabase_meta_synced'] = true;
         }
+
+        enforceActiveAccount($pdo);
     }
 }
 

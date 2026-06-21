@@ -18,6 +18,7 @@ CREATE TABLE users (
     role          ENUM('user', 'admin') NOT NULL DEFAULT 'user',
     phone         VARCHAR(20)  NULL,
     avatar        VARCHAR(255) NULL,
+    account_status    ENUM('active', 'suspended') NOT NULL DEFAULT 'active',
     created_at    TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
