@@ -5,6 +5,7 @@
 
 require_once '../config/constants.php';
 require_once '../includes/bootstrap.php';
+require_once '../includes/functions_member2.php';
 
 if (isLoggedIn()) {
     redirect(BASE_URL);
@@ -12,11 +13,33 @@ if (isLoggedIn()) {
 
 $errors    = [];
 $identity  = '';
-$unverified = false;   // true → render "check your inbox" message instead of the generic error
+$unverified = false;
+$unverifiedEmail = '';
+$resendMessage = '';
+$resendError = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     verifyCsrfToken();
+
+    if (($_POST['action'] ?? '') === 'resend_verification') {
+        $resendEmail = trim(strtolower($_POST['resend_email'] ?? ''));
+        if ($resendEmail === '' || !filter_var($resendEmail, FILTER_VALIDATE_EMAIL)) {
+            $resendError = 'Please enter a valid email address.';
+        } else {
+            $result = resendSignupVerificationEmail($resendEmail);
+            if ($result['ok']) {
+                $resendMessage = $result['message'] ?? 'Verification email sent.';
+                $unverified = true;
+                $unverifiedEmail = $resendEmail;
+                $identity = $resendEmail;
+            } else {
+                $resendError = $result['error'] ?? 'Could not resend verification email.';
+                $unverifiedEmail = $resendEmail;
+                $identity = $resendEmail;
+            }
+        }
+    } else {
 
     $identity = trim($_POST['identity'] ?? '');
     $password = $_POST['password'] ?? '';
@@ -43,7 +66,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $msg = strtolower((string) ($auth['error'] ?? ''));
             if (strpos($msg, 'email not confirmed') !== false) {
                 $unverified = true;
-                $errors['form'] = 'Please verify your email before logging in. Check your inbox at ' . sanitize($loginEmail) . '.';
+                $unverifiedEmail = strtolower($loginEmail);
+                $errors['form'] = 'Please verify your email before logging in. Check your inbox and spam folder.';
             } else {
                 // Local Fallback: Check local MySQL database if Supabase fails
                 $stmt = $pdo->prepare('SELECT id, password_hash, is_verified FROM users WHERE LOWER(email) = LOWER(:email) LIMIT 1');
@@ -97,11 +121,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     INSERT INTO users (username, email, student_id, password_hash, role, phone, is_verified)
                     VALUES (:u, :e, :s, :h, 'user', :p, :v)
                 ");
-                $studentId = null;
-                $parts = explode('@', $authEmail);
-                if (($parts[1] ?? '') === 'std.neu.edu.tr' && preg_match('/^\d+$/', $parts[0])) {
-                    $studentId = $parts[0];
-                }
+                $studentId = studentIdFromUniversityEmail($authEmail);
                 $ins->execute([
                     ':u' => $tryUsername,
                     ':e' => $authEmail,
@@ -117,9 +137,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!$user) {
                 $errors['form'] = 'Could not initialize your account profile.';
             } elseif ($isVerified !== 1) {
-                // Should be rare if Supabase already returned a session.
                 $unverified = true;
-                $errors['form'] = 'Please verify your email before logging in. Check your inbox at ' . sanitize($authEmail) . '.';
+                $unverifiedEmail = $authEmail;
+                $errors['form'] = 'Please verify your email before logging in. Check your inbox and spam folder.';
             } else {
                 if ((int) $user['is_verified'] !== 1) {
                     $upd = $pdo->prepare('UPDATE users SET is_verified = TRUE WHERE id = :id');
@@ -146,6 +166,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
     }
+    }
 }
 
 $pageTitle = 'Log in';
@@ -165,13 +186,33 @@ require_once '../includes/header.php';
             </div>
         <?php endif; ?>
 
+        <?php if ($resendMessage !== ''): ?>
+            <div class="flash flash-success mb-8"><?php echo sanitize($resendMessage); ?></div>
+        <?php endif; ?>
+        <?php if ($resendError !== ''): ?>
+            <div class="flash flash-error mb-8"><?php echo sanitize($resendError); ?></div>
+        <?php endif; ?>
+
+        <?php if ($unverified && $unverifiedEmail !== ''): ?>
+            <form method="post" class="mb-8 verify-resend-box">
+                <?php echo csrfTokenField(); ?>
+                <input type="hidden" name="action" value="resend_verification">
+                <input type="hidden" name="resend_email" value="<?php echo sanitize($unverifiedEmail); ?>">
+                <p class="hint mb-3">Didn&rsquo;t get the email? Check spam, then resend to <strong><?php echo sanitize($unverifiedEmail); ?></strong>.</p>
+                <button type="submit" class="btn btn-secondary w-full py-3" style="border-radius: var(--radius-md); font-weight: 600;">
+                    Resend verification email
+                </button>
+            </form>
+        <?php endif; ?>
+
         <form method="post" novalidate>
+            <input type="hidden" name="action" value="login">
             <?php echo csrfTokenField(); ?>
             <div class="form-row mb-6">
                 <label for="identity" class="form-label">Email or username</label>
                 <input type="text" id="identity" name="identity"
                        value="<?php echo sanitize($identity); ?>"
-                       placeholder="you@std.neu.edu.tr"
+                       placeholder="20227014@ciu.edu.tr"
                        class="premium-input w-full"
                        required autofocus autocomplete="username">
             </div>

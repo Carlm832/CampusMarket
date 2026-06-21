@@ -108,3 +108,48 @@ function supabaseAdminRequest(string $method, string $path, ?array $payload = nu
         'data' => is_array($decoded) ? $decoded : [],
     ];
 }
+
+function supabaseSignupRedirectUrl(): string {
+    $isSecureRequest = (
+        (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+        || (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https')
+        || (!empty($_SERVER['HTTP_X_FORWARDED_SSL']) && $_SERVER['HTTP_X_FORWARDED_SSL'] === 'on')
+    );
+    $originHost = $_SERVER['HTTP_HOST'] ?? '';
+    $originScheme = $isSecureRequest ? 'https' : 'http';
+    return $originHost !== ''
+        ? ($originScheme . '://' . $originHost . '/pages/verify_email.php?source=supabase')
+        : (BASE_URL . 'pages/verify_email.php?source=supabase');
+}
+
+/**
+ * Ask Supabase to resend the signup confirmation email.
+ */
+function resendSignupVerificationEmail(string $email): array {
+    $email = strtolower(trim($email));
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        return ['ok' => false, 'error' => 'Please enter a valid email address.'];
+    }
+
+    $result = supabaseAuthRequest('POST', 'resend', [
+        'email' => $email,
+        'type' => 'signup',
+        'options' => [
+            'emailRedirectTo' => supabaseSignupRedirectUrl(),
+        ],
+    ]);
+
+    if ($result['ok']) {
+        return ['ok' => true, 'message' => 'Verification email sent. Check your inbox and spam folder.'];
+    }
+
+    $rawErr = strtolower(trim((string) ($result['error'] ?? 'unknown')));
+    $status = (int) ($result['status'] ?? 0);
+
+    if ($status === 429 || str_contains($rawErr, 'rate limit')) {
+        return ['ok' => false, 'error' => 'Too many requests. Please wait a minute and try again.'];
+    }
+
+    // Supabase may return errors for unknown emails; keep the response generic.
+    return ['ok' => true, 'message' => 'If an account exists for this email, a new verification link has been sent.'];
+}
