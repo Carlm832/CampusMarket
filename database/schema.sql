@@ -186,12 +186,20 @@ CREATE TABLE reports (
     reporter_id INT  NOT NULL,
     product_id  INT  NULL,
     reported_user_id INT NULL,
+    issue_type  VARCHAR(32) NULL,
+    description TEXT NULL,
+    reference_link TEXT NULL,
     reason      TEXT NOT NULL,
     status      ENUM('pending', 'reviewed', 'dismissed') NOT NULL DEFAULT 'pending',
+    resolution  VARCHAR(32) NULL,
+    resolved_at TIMESTAMP NULL,
+    resolved_by_admin_id INT NULL,
+    admin_notes TEXT NULL,
     created_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (reporter_id) REFERENCES users(id)    ON DELETE CASCADE,
     FOREIGN KEY (product_id)  REFERENCES products(id) ON DELETE CASCADE,
-    FOREIGN KEY (reported_user_id) REFERENCES users(id) ON DELETE SET NULL
+    FOREIGN KEY (reported_user_id) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (resolved_by_admin_id) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
 -- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€

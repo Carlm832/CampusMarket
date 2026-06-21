@@ -194,6 +194,7 @@ $navCategories = getNavCategories($pdo);
                         </button>
                         <div class="user-dropdown-content">
                             <a href="<?php echo BASE_URL; ?>pages/my_orders.php"><?= __('nav.my_orders') ?></a>
+                            <a href="<?php echo BASE_URL; ?>pages/my_reports.php"><?= __('nav.my_reports') ?></a>
                             <a href="<?php echo BASE_URL; ?>pages/wishlist.php"><?= __('nav.wishlist') ?></a>
                             <a href="<?php echo BASE_URL; ?>pages/promotions.php"><?= __('nav.promotions') ?></a>
                             <a href="<?php echo BASE_URL; ?>pages/profile.php"><?= __('nav.my_profile') ?></a>

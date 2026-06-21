@@ -2,6 +2,7 @@
 require_once __DIR__ . '/../includes/bootstrap.php';
 require_once __DIR__ . '/../includes/mailer.php';
 require_once __DIR__ . '/../includes/rate_limit.php';
+require_once __DIR__ . '/../includes/report_moderation.php';
 requireLogin();
 
 $pageTitle = __('report.page_title');
@@ -161,35 +162,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if ($isDuplicate) {
                     $message = '<div class="alert alert-danger report-alert report-alert--error">' . __('report.error_duplicate') . '</div>';
                 } else {
-                    $reason = '[' . strtoupper($issueType) . '] ' . $description;
-                    if ($link !== '') {
-                        $reason .= "\n\n" . __('report.reference_link_label') . ': ' . $link;
-                    }
-
-                    $stmt = $pdo->prepare("
-                        INSERT INTO reports (reporter_id, product_id, reported_user_id, reason, status)
-                        VALUES (:rid, :pid, :uid, :reason, 'pending')
-                    ");
-                    try {
-                        $stmt->execute([
-                            ':rid' => $currentUserId,
-                            ':pid' => $productId,
-                            ':uid' => $reportedUserId,
-                            ':reason' => $reason,
-                        ]);
-                    } catch (PDOException $insertEx) {
-                        $stmt = $pdo->prepare("
-                            INSERT INTO reports (reporter_id, product_id, reason, status)
-                            VALUES (:rid, :pid, :reason, 'pending')
-                        ");
-                        $stmt->execute([
-                            ':rid' => $currentUserId,
-                            ':pid' => $productId,
-                            ':reason' => $reason,
-                        ]);
-                    }
-
-                    $reportId = (int)$pdo->lastInsertId();
+                    $reportId = reportInsert(
+                        $pdo,
+                        $currentUserId,
+                        $productId ?: null,
+                        $reportedUserId ?: null,
+                        $issueType,
+                        $description,
+                        $link
+                    );
 
                     $supportEmail = defined('SUPPORT_EMAIL')
                         ? SUPPORT_EMAIL
@@ -220,6 +201,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     if (empty($emailResult['ok'])) {
                         error_log('[report] report submitted but email notification failed: ' . json_encode($emailResult));
                     }
+
+                    reportEmailUser(
+                        $pdo,
+                        $currentUserId,
+                        __('report.received_email_subject'),
+                        __('report.received_email_title'),
+                        __('report.received_email_body'),
+                        rtrim(BASE_URL, '/') . '/pages/my_reports.php',
+                        __('report.my_reports_cta')
+                    );
 
                     setFlash('success', __('report.success'));
                     redirect(BASE_URL . 'pages/report.php' . ($contextProductId ? '?product_id=' . $contextProductId : ($contextUserId ? '?user_id=' . $contextUserId : '')));
