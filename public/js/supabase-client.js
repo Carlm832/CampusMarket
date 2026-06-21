@@ -20,9 +20,11 @@
     },
   });
 
+  // Chatbot edge functions work for guests via the anon key JWT.
+  window.CampusMarketSupabaseReady = Promise.resolve(true);
+
   var session = window.__supabaseSession || null;
   if (!session || !session.access_token) {
-    window.CampusMarketSupabaseReady = Promise.resolve(false);
     return;
   }
 
