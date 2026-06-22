@@ -50,12 +50,11 @@ require_once __DIR__ . '/../includes/header.php';
             <h3 style="margin-top: 1.5rem; color: var(--primary);"><?= __('policy.privacy.s6_title') ?></h3>
             <p><?= __('policy.privacy.s6_intro') ?></p>
             <ul style="padding-left: 1.25rem;">
-                <li><?= __('policy.privacy.s6_li_supabase') ?></li>
-                <li><?= __('policy.privacy.s6_li_vercel') ?></li>
-                <li><?= __('policy.privacy.s6_li_stripe') ?></li>
-                <li><?= __('policy.privacy.s6_li_resend') ?></li>
-                <li><?= __('policy.privacy.s6_li_google') ?></li>
-                <li><?= __('policy.privacy.s6_li_openrouter') ?></li>
+                <li><?= __('policy.privacy.s6_li_hosting') ?></li>
+                <li><?= __('policy.privacy.s6_li_auth') ?></li>
+                <li><?= __('policy.privacy.s6_li_payments') ?></li>
+                <li><?= __('policy.privacy.s6_li_email') ?></li>
+                <li><?= __('policy.privacy.s6_li_safety') ?></li>
             </ul>
             <p><?= __('policy.privacy.s6_outro') ?></p>
 
