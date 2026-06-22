@@ -81,6 +81,7 @@ if (!empty($paginationQuery)) {
 $categories = $pdo->query("SELECT * FROM categories ORDER BY name ASC")->fetchAll();
 
 $pageTitle = __('browse.page_title');
+$pageDescription = __('seo.browse_description');
 include '../includes/header.php';
 ?>
 

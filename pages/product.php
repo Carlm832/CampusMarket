@@ -346,6 +346,18 @@ if (isLoggedIn()) {
 }
 
 $pageTitle = $product['title'];
+$primaryImagePath = $images[0]['image_path'] ?? null;
+$pageDescription = trim(strip_tags((string)($product['description'] ?? '')));
+if ($pageDescription === '') {
+    $pageDescription = $product['title'] . ' — ' . __('seo.default_description');
+}
+$seoOgImage = getProductImage($primaryImagePath);
+$seoOgType = 'product';
+$seoCanonical = rtrim(BASE_URL, '/') . '/pages/product?id=' . $productId;
+if (($product['status'] ?? '') !== 'active') {
+    $seoNoindex = true;
+}
+$seoJsonLd = seoProductJsonLd($product, $seoOgImage, $productId);
 require_once __DIR__ . '/../includes/header.php';
 ?>
 

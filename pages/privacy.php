@@ -3,7 +3,7 @@ require_once __DIR__ . '/../includes/bootstrap.php';
 require_once __DIR__ . '/../includes/policy_i18n.php';
 $supportEmail = defined('SUPPORT_EMAIL') ? SUPPORT_EMAIL : (getenv('SUPPORT_EMAIL') ?: 'support@campusmarketplace.site');
 $p = policyI18nParams($supportEmail);
-$page_title = __('policy.privacy.page_title');
+$pageTitle = __('policy.privacy.page_title');
 require_once __DIR__ . '/../includes/header.php';
 ?>
 

@@ -34,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && substr($path, -4) === '.php') {
 $normalizedPath = $path === '' ? '/' : $path;
 $isAllowedStaticPath =
     str_starts_with($normalizedPath, '/public/')
-    || in_array($normalizedPath, ['/manifest.webmanifest', '/sw.js', '/robots.txt', '/favicon.ico', '/favicon.png'], true);
+    || in_array($normalizedPath, ['/manifest.webmanifest', '/sw.js', '/robots.txt', '/favicon.ico', '/favicon.png', '/sitemap.xml'], true);
 
 if ($isAllowedStaticPath) {
     $staticTarget = $projectRoot . $normalizedPath;
@@ -66,6 +66,10 @@ if ($isAllowedStaticPath) {
 // Default to index.php for root
 if ($path === '' || $path === '/') {
     $targetFile = $projectRoot . '/index.php';
+} elseif ($normalizedPath === '/sitemap.xml') {
+    $targetFile = $projectRoot . '/pages/sitemap.php';
+} elseif ($normalizedPath === '/robots.txt') {
+    $targetFile = $projectRoot . '/pages/robots.php';
 } else {
     // Try exact path first (e.g., /pages/browse.php)
     $targetFile = $projectRoot . $path;

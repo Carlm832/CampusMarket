@@ -55,7 +55,7 @@
       "dest": "/api/index.php"
     },
     {
-      "src": "/(manifest\\.webmanifest|sw\\.js|robots\\.txt)",
+      "src": "/(manifest\\.webmanifest|sw\\.js|robots\\.txt|sitemap\\.xml)",
       "dest": "/api/index.php"
     },
     {
@@ -67,7 +67,7 @@
       "dest": "/api/stripe/webhook"
     },
     {
-      "src": "/((?!public/|manifest\\.webmanifest|sw\\.js|favicon\\.|robots\\.txt|api/web-push/|api/stripe/).*)$",
+      "src": "/((?!public/|manifest\\.webmanifest|sw\\.js|favicon\\.|robots\\.txt|sitemap\\.xml|api/web-push/|api/stripe/).*)$",
       "dest": "/api/index.php"
     }
   ]

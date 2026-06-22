@@ -6,6 +6,9 @@ $query = sanitize($_GET['q'] ?? '');
 $categoryId = $_GET['category'] ?? '';
 $page = max(1, (int)($_GET['page'] ?? 1));
 $pageTitle = __('search.page_title') . ($query ? ": " . $query : "");
+$pageDescription = $query !== ''
+    ? __('search.page_title') . ': ' . $query . ' — ' . __('seo.default_description')
+    : __('seo.search_description');
 
 $results = [];
 $totalItems = 0;

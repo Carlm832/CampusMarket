@@ -3,6 +3,7 @@
 require_once __DIR__ . '/../includes/bootstrap.php';
 
 $pageTitle = __('categories.browse_categories');
+$pageDescription = __('seo.categories_description');
 
 require_once __DIR__ . '/../includes/header.php';
 

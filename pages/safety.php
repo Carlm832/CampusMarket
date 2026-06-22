@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/../includes/bootstrap.php';
-$page_title = __('policy.safety.page_title');
+$pageTitle = __('policy.safety.page_title');
 require_once __DIR__ . '/../includes/header.php';
 ?>
 

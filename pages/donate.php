@@ -3,6 +3,7 @@
 require_once __DIR__ . '/../includes/bootstrap.php';
 
 $pageTitle = __('donate.page_title');
+$pageDescription = __('footer.tagline');
 require_once __DIR__ . '/../includes/header.php';
 ?>
 

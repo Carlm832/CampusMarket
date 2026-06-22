@@ -3,6 +3,8 @@
 require_once __DIR__ . '/includes/bootstrap.php';
 
 $pageTitle = __('home.page_title');
+$pageDescription = __('seo.home_description');
+$seoJsonLd = seoWebsiteJsonLd();
 
 require_once __DIR__ . '/includes/header.php';
 
