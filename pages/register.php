@@ -16,65 +16,34 @@ $errors = [];
 $old    = [
     'username' => '',
     'email' => '',
-    'email_local' => '',
-    'university_domain' => '',
-    'university_domain_custom' => '',
-    'neu_domain' => 'std.neu.edu.tr',
     'phone' => '',
 ];
-$universityDomains = allowedUniversityDomains();
-$customDomainOption = universityDomainCustomOption();
-$neuDomainOption = nearEastUniversityDomainOption();
-$neuEmailDomains = nearEastUniversityEmailDomains();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     verifyCsrfToken();
-    // Gather + normalize
     $username = trim($_POST['username'] ?? '');
-    $emailLocal = trim(strtolower($_POST['email_local'] ?? ''));
-    $universitySelect = trim(strtolower($_POST['university_domain'] ?? ''));
-    $universityDomainCustom = trim(strtolower($_POST['university_domain_custom'] ?? ''));
-    $neuDomain = trim(strtolower($_POST['neu_domain'] ?? ''));
-    $universityDomain = resolveRegistrationUniversityDomain(
-        $universitySelect,
-        $universityDomainCustom,
-        $neuDomain
-    );
-    $email    = $emailLocal !== '' && $universityDomain !== ''
-        ? buildUniversityEmail($emailLocal, $universityDomain)
-        : trim(strtolower($_POST['email'] ?? ''));
+    $email    = trim(strtolower($_POST['email'] ?? ''));
     $phone    = trim($_POST['phone'] ?? '');
     $password = $_POST['password'] ?? '';
     $confirm  = $_POST['password_confirm'] ?? '';
 
     $old['username'] = $username;
     $old['email']    = $email;
-    $old['email_local'] = $emailLocal;
-    $old['university_domain'] = $universitySelect;
-    $old['university_domain_custom'] = $universityDomainCustom;
-    $old['neu_domain'] = in_array($neuDomain, $neuEmailDomains, true) ? $neuDomain : 'std.neu.edu.tr';
     $old['phone']    = $phone;
 
-    // Validate username
     if ($username === '') {
         $errors['username'] = __('auth.register_error_username_required');
     } elseif (!preg_match('/^[A-Za-z0-9_]{3,50}$/', $username)) {
         $errors['username'] = __('auth.register_error_username_format');
     }
 
-    if ($emailLocal === '' || $universitySelect === '') {
-        $errors['email'] = __('auth.register_error_email_university');
-    } elseif ($universitySelect === $neuDomainOption && !in_array($neuDomain, $neuEmailDomains, true)) {
-        $errors['email'] = __('auth.register_error_email_university');
-    } elseif ($universitySelect === $customDomainOption && $universityDomainCustom === '') {
-        $errors['email'] = __('auth.register_error_email_custom_domain');
-    } elseif (!isEduTrEmailDomain($universityDomain)) {
-        $errors['email'] = __('auth.register_error_email_edutr');
+    if ($email === '') {
+        $errors['email'] = __('auth.register_error_email_required');
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($email) > 100) {
         $errors['email'] = __('auth.register_error_email_invalid');
     } elseif (!isAllowedUniversityEmail($email)) {
-        $errors['email'] = __('auth.register_error_email_domains', ['domains' => allowedDomainsList()]);
+        $errors['email'] = __('auth.register_error_email_edutr');
     } elseif (($studentEmailError = validateUniversityStudentEmail($email)) !== null) {
         $errors['email'] = $studentEmailError;
     }
@@ -95,7 +64,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors['terms'] = __('auth.register_terms_error');
     }
 
-    // Uniqueness check (case-insensitive on email)
     if (!$errors) {
         $stmt = $pdo->prepare('
             SELECT username, email FROM users
@@ -114,7 +82,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    // Persist with Supabase Auth + local app profile (no auto-login)
     if (!$errors) {
         $emailRedirectTo = supabaseSignupRedirectUrl();
 
@@ -126,7 +93,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ],
             'data' => [
                 'username'  => $username,
-                'full_name' => $username, // shown as display name in Supabase Auth dashboard
+                'full_name' => $username,
                 'phone'     => $phone,
             ],
         ]);
@@ -160,6 +127,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $hash = password_hash(bin2hex(random_bytes(24)), PASSWORD_DEFAULT);
         $supabaseUser = $signup['data']['user'] ?? [];
         $isVerified = !empty($supabaseUser['email_confirmed_at']) ? 1 : 0;
+        $emailDomain = '';
+        $atIdx = strrpos($email, '@');
+        if ($atIdx !== false) {
+            $emailDomain = substr($email, $atIdx + 1);
+        }
 
         $pdo->beginTransaction();
         try {
@@ -180,11 +152,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $newUserId = (int)$pdo->lastInsertId();
             if ($newUserId > 0) {
-                // Find an admin to send the welcome message
                 $adminStmt = $pdo->query("SELECT id FROM users WHERE role = 'admin' ORDER BY id ASC LIMIT 1");
                 $adminId = $adminStmt->fetchColumn();
                 if (!$adminId) {
-                    $adminId = 1; // Fallback to 1
+                    $adminId = 1;
                 }
 
                 $welcomeMsg = "Welcome to CampusMarket, " . $username . "!\n\nBuy and sell with fellow students, and please meet in public campus spots for safety.\n\nNeed help? Reply to this chat and Support will assist you.\n\n- The CampusMarket Team";
@@ -199,7 +170,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     ':body' => $welcomeMsg
                 ]);
 
-                // Notify user of the welcome message
                 createNotification($pdo, $newUserId, 'message', 'Welcome to CampusMarket', 'You received a welcome message from Support.', null);
             }
 
@@ -207,7 +177,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['pending_verify_email'] = $email;
             $_SESSION['posthog_event'] = [
                 'name' => 'user_signed_up',
-                'properties' => ['university' => $universityDomain]
+                'properties' => ['university' => $emailDomain]
             ];
             redirect(BASE_URL . 'pages/check_email.php');
         } catch (Throwable $e) {
@@ -257,66 +227,12 @@ require_once '../includes/header.php';
     </div>
 
     <div class="form-row mb-5">
-      <label for="university_domain" class="form-label"><?= __('auth.register_university_label') ?></label>
-      <select id="university_domain" name="university_domain" required
-              class="premium-input <?php echo isset($errors['email']) ? 'input-invalid' : ''; ?>">
-        <option value=""><?= __('auth.register_university_placeholder') ?></option>
-        <?php foreach ($universityDomains as $domain => $label): ?>
-          <option value="<?php echo sanitize($domain); ?>"
-            <?php echo $old['university_domain'] === $domain ? 'selected' : ''; ?>>
-            <?php echo sanitize($label); ?>
-          </option>
-        <?php endforeach; ?>
-        <option value="<?php echo sanitize($customDomainOption); ?>"
-          <?php echo $old['university_domain'] === $customDomainOption ? 'selected' : ''; ?>>
-          <?php echo sanitize(__('auth.register_university_other')); ?>
-        </option>
-      </select>
-    </div>
-
-    <div class="form-row mb-5" id="neu_domain_row"
-         style="<?php echo $old['university_domain'] === $neuDomainOption ? '' : 'display:none;'; ?>">
-      <label for="neu_domain" class="form-label"><?= __('auth.register_neu_type_label') ?></label>
-      <select id="neu_domain" name="neu_domain"
-              class="premium-input <?php echo isset($errors['email']) ? 'input-invalid' : ''; ?>">
-        <option value="std.neu.edu.tr" <?php echo $old['neu_domain'] === 'std.neu.edu.tr' ? 'selected' : ''; ?>>
-          <?= __('auth.register_neu_student') ?>
-        </option>
-        <option value="staff.neu.edu.tr" <?php echo $old['neu_domain'] === 'staff.neu.edu.tr' ? 'selected' : ''; ?>>
-          <?= __('auth.register_neu_staff') ?>
-        </option>
-      </select>
-    </div>
-
-    <div class="form-row mb-5" id="university_domain_custom_row"
-         style="<?php echo $old['university_domain'] === $customDomainOption ? '' : 'display:none;'; ?>">
-      <label for="university_domain_custom" class="form-label"><?= __('auth.register_university_custom_label') ?></label>
-      <input type="text" id="university_domain_custom" name="university_domain_custom"
-             value="<?php echo sanitize($old['university_domain_custom']); ?>"
-             placeholder="<?= addslashes(__('auth.register_university_custom_placeholder')) ?>"
-             maxlength="100" autocomplete="off"
-             class="premium-input <?php echo isset($errors['email']) ? 'input-invalid' : ''; ?>">
-      <div class="hint"><?= __('auth.register_university_custom_hint') ?></div>
-    </div>
-
-    <div class="form-row mb-5">
-      <label for="email_local" class="form-label"><?= __('auth.register_email_label') ?></label>
-      <div class="email-compose <?php echo isset($errors['email']) ? 'input-invalid' : ''; ?>">
-        <input type="text" id="email_local" name="email_local"
-               value="<?php echo sanitize($old['email_local']); ?>"
-               placeholder="<?= addslashes(__('auth.register_email_placeholder')) ?>"
-               maxlength="64" required autocomplete="username"
-               class="premium-input email-compose-input"
-               aria-describedby="email_domain_suffix">
-        <span id="email_domain_suffix" class="email-compose-suffix">@<?php
-          $suffixDomain = $old['university_domain'] === $customDomainOption
-              ? ($old['university_domain_custom'] !== '' ? $old['university_domain_custom'] : 'university.edu')
-              : ($old['university_domain'] === $neuDomainOption
-                  ? $old['neu_domain']
-                  : ($old['university_domain'] !== '' ? $old['university_domain'] : 'university.edu'));
-          echo sanitize($suffixDomain);
-        ?></span>
-      </div>
+      <label for="email" class="form-label"><?= __('auth.register_email_label') ?></label>
+      <input type="email" id="email" name="email"
+             value="<?php echo sanitize($old['email']); ?>"
+             placeholder="<?= addslashes(__('auth.register_email_placeholder')) ?>"
+             maxlength="100" required autocomplete="email"
+             class="premium-input w-full <?php echo isset($errors['email']) ? 'input-invalid' : ''; ?>">
       <?php if (isset($errors['email'])): ?>
         <div class="error"><?php echo sanitize($errors['email']); ?></div>
       <?php else: ?>
@@ -421,47 +337,6 @@ require_once '../includes/header.php';
 </div>
 
 <script>
-  (function () {
-    var customOption = <?php echo json_encode($customDomainOption); ?>;
-    var neuOption = <?php echo json_encode($neuDomainOption); ?>;
-    var domainSelect = document.getElementById('university_domain');
-    var neuRow = document.getElementById('neu_domain_row');
-    var neuSelect = document.getElementById('neu_domain');
-    var customRow = document.getElementById('university_domain_custom_row');
-    var customInput = document.getElementById('university_domain_custom');
-    var suffix = document.getElementById('email_domain_suffix');
-    if (!domainSelect || !suffix) return;
-
-    function syncEmailUi() {
-      var isCustom = domainSelect.value === customOption;
-      var isNeu = domainSelect.value === neuOption;
-      if (customRow) {
-        customRow.style.display = isCustom ? '' : 'none';
-      }
-      if (neuRow) {
-        neuRow.style.display = isNeu ? '' : 'none';
-      }
-      var domain;
-      if (isCustom) {
-        domain = customInput && customInput.value ? customInput.value : 'university.edu';
-      } else if (isNeu) {
-        domain = neuSelect && neuSelect.value ? neuSelect.value : 'std.neu.edu.tr';
-      } else {
-        domain = domainSelect.value || 'university.edu';
-      }
-      suffix.textContent = '@' + domain;
-    }
-
-    domainSelect.addEventListener('change', syncEmailUi);
-    if (customInput) {
-      customInput.addEventListener('input', syncEmailUi);
-    }
-    if (neuSelect) {
-      neuSelect.addEventListener('change', syncEmailUi);
-    }
-    syncEmailUi();
-  })();
-
   document.querySelectorAll('.password-toggle').forEach(function (btn) {
     btn.addEventListener('click', function () {
       var input = document.getElementById(btn.dataset.target);
@@ -475,4 +350,3 @@ require_once '../includes/header.php';
 </script>
 
 <?php require_once '../includes/footer.php'; ?>
-

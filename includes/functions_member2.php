@@ -14,12 +14,12 @@
  * University domains (registration dropdown — convenience only)
  *
  * Any *@*.edu.tr address is accepted at signup. This list is for
- * quick selection in the UI; use "Other" for subdomains like staff.*.
+ * quick selection in the UI; use "Other" for subdomains like std.*.
  * ───────────────────────────────────────────────────────────── */
 if (!function_exists('allowedUniversityDomains')) {
     function allowedUniversityDomains(): array {
         return [
-            nearEastUniversityDomainOption() => 'Near East University',
+            'neu.edu.tr'         => 'Near East University',
             'ciu.edu.tr'         => 'Cyprus International University',
             'baucyprus.edu.tr'   => 'Bahçeşehir Cyprus University',
             'eul.edu.tr'         => 'European University of Lefke',
@@ -28,39 +28,6 @@ if (!function_exists('allowedUniversityDomains')) {
             'metu.edu.tr'        => 'Middle East Technical University NCC',
             'kyrenia.edu.tr'     => 'University of Kyrenia',
         ];
-    }
-}
-
-/** Select option value for Near East University (student or staff subdomain). */
-if (!function_exists('nearEastUniversityDomainOption')) {
-    function nearEastUniversityDomainOption(): string {
-        return '__neu__';
-    }
-}
-
-/** Valid @ domains for Near East University accounts. */
-if (!function_exists('nearEastUniversityEmailDomains')) {
-    function nearEastUniversityEmailDomains(): array {
-        return ['std.neu.edu.tr', 'staff.neu.edu.tr'];
-    }
-}
-
-/**
- * Resolve the email domain from registration form fields.
- */
-if (!function_exists('resolveRegistrationUniversityDomain')) {
-    function resolveRegistrationUniversityDomain(string $select, string $custom, string $neuDomain = ''): string {
-        if ($select === universityDomainCustomOption()) {
-            return $custom;
-        }
-        if ($select === nearEastUniversityDomainOption()) {
-            $neuDomain = strtolower(trim($neuDomain));
-            if (in_array($neuDomain, nearEastUniversityEmailDomains(), true)) {
-                return $neuDomain;
-            }
-            return '';
-        }
-        return $select;
     }
 }
 
