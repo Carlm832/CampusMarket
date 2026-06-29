@@ -638,6 +638,143 @@ body.dark-mode .scc-badge {
     border-color: var(--border-light) !important;
 }
 
+.scc-mgmt-section {
+    margin-bottom: 2rem;
+}
+
+.scc-mgmt-section h4 {
+    font-size: 1.15rem;
+    color: var(--text-main);
+    font-weight: 700;
+    margin: 0 0 1rem;
+}
+
+.scc-mgmt-form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+    gap: 0.75rem;
+    width: 100%;
+}
+
+.scc-mgmt-form + .scc-mgmt-form {
+    margin-top: 1rem;
+}
+
+.scc-mgmt-field {
+    flex: 1 1 10rem;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    height: 42px;
+    padding: 0 1rem;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.scc-mgmt-field input,
+.scc-mgmt-field select {
+    width: 100%;
+    min-width: 0;
+    background: transparent;
+    border: none;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-main);
+    outline: none;
+}
+
+.scc-mgmt-field select {
+    cursor: pointer;
+}
+
+.scc-mgmt-field-prefix {
+    color: var(--text-muted);
+    font-weight: 700;
+    font-size: 0.8rem;
+    margin-right: 0.35rem;
+    flex-shrink: 0;
+}
+
+.scc-mgmt-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    flex: 0 0 auto;
+    height: 42px;
+    padding: 0 1rem;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-light);
+    background: var(--bg-surface);
+    color: var(--primary);
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: filter 0.2s ease, border-color 0.2s ease;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.scc-mgmt-btn:hover {
+    filter: brightness(0.97);
+    border-color: var(--primary);
+}
+
+.scc-mgmt-btn--danger {
+    color: #fff;
+    background: #ef4444;
+    border-color: #dc2626;
+}
+
+.scc-mgmt-btn--danger:hover {
+    filter: brightness(0.95);
+    border-color: #dc2626;
+}
+
+.scc-mgmt-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+    padding-top: 1.5rem;
+    margin-top: 0.5rem;
+    border-top: 1px solid var(--border-light);
+}
+
+.scc-mgmt-actions form {
+    margin: 0;
+}
+
+@media (max-width: 640px) {
+    .scc-mgmt-form {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .scc-mgmt-field {
+        flex: 1 1 auto;
+        width: 100%;
+    }
+
+    .scc-mgmt-btn {
+        width: 100%;
+    }
+
+    .scc-mgmt-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .scc-mgmt-actions form {
+        width: 100%;
+    }
+}
+
 .text-main {
     color: var(--text-main) !important;
 }
@@ -1033,28 +1170,26 @@ body.dark-mode .scc-badge {
                     </div>
 
                     <!-- PRICING STRATEGY -->
-                    <div class="mb-8">
-                        <h4 class="font-bold text-main mb-4" style="font-size: 1.15rem; color: var(--text-main);"><?= __('product.pricing_strategy') ?></h4>
-                        <form method="post" class="flex flex-wrap items-center gap-4">
+                    <div class="scc-mgmt-section">
+                        <h4><?= __('product.pricing_strategy') ?></h4>
+                        <form method="post" class="scc-mgmt-form">
                             <?php echo csrfTokenField(); ?>
                             <input type="hidden" name="action" value="update_price">
-                            <div class="flex items-center bg-white border border-slate-200 px-4" style="border-radius: 10px; height: 38px; min-width: 120px;">
-                                <span class="text-slate-400 font-bold mr-1" style="font-size: 0.8rem;">&#8377;</span>
-                                <input type="number" name="new_price" step="0.01" value="<?php echo (float)$product['price']; ?>" 
-                                       style="width: 100%; background: transparent; border: none; font-size: 0.95rem; font-weight: 800; color: #1e293b; outline: none;" required>
+                            <div class="scc-mgmt-field">
+                                <span class="scc-mgmt-field-prefix">&#8377;</span>
+                                <input type="number" name="new_price" step="0.01" value="<?php echo (float)$product['price']; ?>" required>
                             </div>
-                            <button type="submit" class="flex items-center gap-2 font-black text-[0.72rem] uppercase tracking-[0.14em] transition-all hover:brightness-95 shadow-sm" style="height: 38px; color: var(--primary); background: var(--bg-surface); border: 1px solid var(--border-light); padding: 0 1rem; border-radius: 10px; cursor: pointer;">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <button type="submit" class="scc-mgmt-btn">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                                 <?= __('product.update_price') ?>
                             </button>
                         </form>
-                        
-                        <!-- Set Discount Form -->
-                        <form method="post" class="flex flex-wrap items-center gap-4 mt-4">
+
+                        <form method="post" class="scc-mgmt-form">
                             <?php echo csrfTokenField(); ?>
                             <input type="hidden" name="action" value="set_discount">
-                            <div class="flex items-center bg-white border border-slate-200 px-4" style="border-radius: 10px; height: 38px; min-width: 120px;">
-                                <select name="discount_percent" style="width: 100%; background: transparent; border: none; font-size: 0.95rem; font-weight: 800; color: #1e293b; outline: none; cursor: pointer;">
+                            <div class="scc-mgmt-field">
+                                <select name="discount_percent">
                                     <?php foreach ([0, 5, 10, 15, 20, 25, 30, 40, 50] as $d): ?>
                                         <option value="<?php echo $d; ?>" <?php echo ((int)($product['discount_percent'] ?? 0) === $d) ? 'selected' : ''; ?>>
                                             <?php echo $d === 0 ? __('product.no_discount') : ('-' . $d . '%'); ?>
@@ -1062,21 +1197,21 @@ body.dark-mode .scc-badge {
                                     <?php endforeach; ?>
                                 </select>
                             </div>
-                            <button type="submit" class="flex items-center gap-2 font-black text-[0.72rem] uppercase tracking-[0.14em] transition-all hover:brightness-95 shadow-sm" style="height: 38px; color: white; background: #ef4444; border: 1px solid #dc2626; padding: 0 1rem; border-radius: 10px; cursor: pointer;">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                            <button type="submit" class="scc-mgmt-btn scc-mgmt-btn--danger">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
                                 <?= __('product.apply_discount') ?>
                             </button>
                         </form>
                     </div>
 
                     <!-- LOCATION -->
-                    <div class="mb-8">
-                        <h4 class="font-bold text-main mb-4" style="font-size: 1.15rem; color: var(--text-main);"><?= __('product.listing_location') ?></h4>
-                        <form method="post" class="flex flex-wrap items-center gap-4">
+                    <div class="scc-mgmt-section">
+                        <h4><?= __('product.listing_location') ?></h4>
+                        <form method="post" class="scc-mgmt-form">
                             <?php echo csrfTokenField(); ?>
                             <input type="hidden" name="action" value="update_location_town">
-                            <div class="flex items-center bg-white border border-slate-200 px-4" style="border-radius: 10px; height: 38px; min-width: 200px;">
-                                <select name="location_town" style="width: 100%; background: transparent; border: none; font-size: 0.95rem; font-weight: 700; color: #1e293b; outline: none; cursor: pointer;">
+                            <div class="scc-mgmt-field">
+                                <select name="location_town" aria-label="<?= htmlspecialchars(__('product.listing_location')) ?>">
                                     <?php foreach (locationTownSlugs() as $townSlug): ?>
                                         <option value="<?php echo $townSlug; ?>" <?php echo (($product['location_town'] ?? 'other') === $townSlug) ? 'selected' : ''; ?>>
                                             <?php echo formatLocationTown($townSlug); ?>
@@ -1084,19 +1219,19 @@ body.dark-mode .scc-badge {
                                     <?php endforeach; ?>
                                 </select>
                             </div>
-                            <button type="submit" class="flex items-center gap-2 font-black text-[0.72rem] uppercase tracking-[0.14em] transition-all hover:brightness-95 shadow-sm" style="height: 38px; color: var(--primary); background: var(--bg-surface); border: 1px solid var(--border-light); padding: 0 1rem; border-radius: 10px; cursor: pointer;">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                            <button type="submit" class="scc-mgmt-btn">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                                 <?= __('product.update_town') ?>
                             </button>
                         </form>
                     </div>
 
-                    <div class="flex flex-wrap items-center gap-4">
+                    <div class="scc-mgmt-actions">
                         <form method="post" onsubmit="return confirm('<?= addslashes(__('product.confirm_mark_sold')) ?>')">
                             <?php echo csrfTokenField(); ?>
                             <input type="hidden" name="action" value="mark_sold">
-                            <button type="submit" class="flex items-center gap-2 font-bold text-[0.75rem] uppercase tracking-wider transition-all hover-scale" style="height: 38px; color: var(--primary); background: var(--bg-surface); border: 1px solid var(--border-light); padding: 0 1rem; border-radius: var(--radius-sm); cursor: pointer;">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            <button type="submit" class="scc-mgmt-btn">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                                 <?= __('product.mark_sold_btn') ?>
                             </button>
                         </form>
@@ -1104,8 +1239,8 @@ body.dark-mode .scc-badge {
                         <form method="post" onsubmit="return confirm('<?= addslashes(__('product.confirm_delete')) ?>')">
                             <?php echo csrfTokenField(); ?>
                             <input type="hidden" name="action" value="delete_listing">
-                            <button type="submit" class="flex items-center gap-2 font-bold text-[0.75rem] uppercase tracking-wider transition-all hover-scale" style="height: 38px; color: #ef4444; background: var(--bg-surface); border: 1px solid var(--border-light); padding: 0 0.75rem; border-radius: var(--radius-sm); cursor: pointer;">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            <button type="submit" class="scc-mgmt-btn" style="color: #ef4444;">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                 <?= __('product.delete_listing_btn') ?>
                             </button>
                         </form>
