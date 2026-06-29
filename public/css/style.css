@@ -1602,6 +1602,90 @@ body.dark-mode .auth-card {
     pointer-events: none;
 }
 
+/* Push notification toast — matches welcome-back flash style at top */
+.cm-push-toast-container {
+    z-index: 1095;
+}
+
+.cm-push-toast-container--stacked {
+    top: max(9.75rem, calc(var(--safe-top) + 9.75rem));
+}
+
+.flash-push {
+    background: color-mix(in srgb, var(--primary) 12%, var(--bg-surface));
+    color: var(--text-main);
+    border-left: 4px solid var(--primary);
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+body.dark-mode .flash-push {
+    background: color-mix(in srgb, var(--primary) 18%, var(--bg-surface));
+    color: var(--text-main);
+}
+
+.cm-push-toast__main {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+}
+
+.cm-push-toast__icon {
+    flex: 0 0 auto;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: color-mix(in srgb, var(--primary) 16%, transparent);
+    color: var(--primary);
+}
+
+.cm-push-toast__icon svg {
+    width: 18px;
+    height: 18px;
+}
+
+.cm-push-toast__text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.cm-push-toast__text strong {
+    font-size: 0.95rem;
+    line-height: 1.3;
+}
+
+.cm-push-toast__text span {
+    font-size: 0.85rem;
+    line-height: 1.45;
+    color: var(--text-muted);
+}
+
+.cm-push-toast__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding-left: calc(36px + 0.75rem);
+}
+
+@media (max-width: 480px) {
+    .cm-push-toast__actions {
+        padding-left: 0;
+        width: 100%;
+    }
+
+    .cm-push-toast__actions .btn {
+        flex: 1 1 auto;
+        justify-content: center;
+    }
+}
+
 .cm-push-prompt__content {
     pointer-events: auto;
     max-width: 520px;

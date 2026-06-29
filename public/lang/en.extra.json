@@ -497,5 +497,12 @@
     "stripe.flash_already_processed": "This payment was already processed.",
     "stripe.flash_promo_success": "Payment successful! Your listing is now featured.",
     "stripe.flash_donate_success": "Payment successful! Your donation has been received. Thank you!",
-    "stripe.flash_db_failed": "Payment confirmed but database update failed. Please contact support with Session ID: {session_id}"
+    "stripe.flash_db_failed": "Payment confirmed but database update failed. Please contact support with Session ID: {session_id}",
+    "push.toast_title_pwa": "Turn on notifications",
+    "push.toast_title_browser": "Get notified on this device",
+    "push.toast_body_pwa": "Alerts for messages, orders, and marketplace activity — even when the app is closed.",
+    "push.toast_body_browser": "Enable notifications to get message and order alerts on this device.",
+    "push.enable_btn": "Enable",
+    "push.not_now_btn": "Not now",
+    "push.enabling_btn": "Enabling…"
 }

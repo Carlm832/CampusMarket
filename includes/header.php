@@ -279,7 +279,18 @@ $navCategories = getNavCategories($pdo);
     $pushJsVer = file_exists($pushJsPath) ? filemtime($pushJsPath) : '1';
 ?>
 <script src="<?php echo BASE_URL; ?>public/js/notifications-realtime.js?v=<?php echo $notifJsVer; ?>"></script>
-<?php if (WEB_PUSH_PUBLIC_KEY !== ''): ?>
+    <?php if (WEB_PUSH_PUBLIC_KEY !== ''): ?>
+<script>
+window.__pushI18n = <?php echo json_encode([
+    'titlePwa' => __('push.toast_title_pwa'),
+    'titleBrowser' => __('push.toast_title_browser'),
+    'bodyPwa' => __('push.toast_body_pwa'),
+    'bodyBrowser' => __('push.toast_body_browser'),
+    'enable' => __('push.enable_btn'),
+    'notNow' => __('push.not_now_btn'),
+    'enabling' => __('push.enabling_btn'),
+], JSON_UNESCAPED_UNICODE); ?>;
+</script>
 <script src="<?php echo BASE_URL; ?>public/js/push-notifications.js?v=<?php echo $pushJsVer; ?>"></script>
 <?php endif; ?>
 <?php endif; ?>

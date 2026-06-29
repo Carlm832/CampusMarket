@@ -3,6 +3,7 @@
  */
 (function (global) {
   const STORAGE_DISMISS = 'cm_push_prompt_dismissed_until';
+  const PROMPT_DELAY_MS = 1800;
 
   function urlBase64ToUint8Array(base64String) {
     const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
@@ -28,6 +29,10 @@
 
   function getVapidPublicKey() {
     return (global.__env && global.__env.WEB_PUSH_PUBLIC_KEY) || '';
+  }
+
+  function labels() {
+    return global.__pushI18n || {};
   }
 
   function isPushSupported() {
@@ -139,17 +144,21 @@
     }
   }
 
-  function showPrompt(force) {
+  function hasWelcomeToast() {
+    return !!document.querySelector('.flash-toast-container:not(#cm-push-prompt)');
+  }
+
+  function showPrompt() {
     if (!isPushSupported()) {
       return;
     }
     if (Notification.permission === 'granted') {
       return;
     }
-    if (!force && isPromptDismissed()) {
+    if (isPromptDismissed()) {
       return;
     }
-    if (Notification.permission === 'denied' && !force) {
+    if (Notification.permission === 'denied') {
       return;
     }
 
@@ -157,53 +166,61 @@
       return;
     }
 
-    const banner = document.createElement('div');
-    banner.id = 'cm-push-prompt';
-    banner.className = 'cm-push-prompt';
-    banner.setAttribute('role', 'region');
-    banner.setAttribute('aria-label', 'Enable notifications');
-
+    const i18n = labels();
     const isStandalone = isStandalonePwa();
-    const title = isStandalone ? 'Turn on notifications' : 'Get notified on your phone';
+    const title = isStandalone ? (i18n.titlePwa || 'Turn on notifications') : (i18n.titleBrowser || 'Get notified on your phone');
     const body = isStandalone
-      ? 'Receive alerts for new messages, orders, and marketplace activity — even when the app is closed.'
-      : 'Install CampusMarket or enable notifications to get message and order alerts on your device.';
+      ? (i18n.bodyPwa || 'Alerts for messages, orders, and marketplace activity — even when the app is closed.')
+      : (i18n.bodyBrowser || 'Enable notifications to get message and order alerts on this device.');
 
-    banner.innerHTML =
-      '<div class="cm-push-prompt__content">' +
-        '<div class="cm-push-prompt__icon" aria-hidden="true">' +
-          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>' +
+    const toast = document.createElement('div');
+    toast.id = 'cm-push-prompt';
+    toast.className = 'flash-toast-container cm-push-toast-container';
+    if (hasWelcomeToast()) {
+      toast.classList.add('cm-push-toast-container--stacked');
+    }
+    toast.setAttribute('role', 'region');
+    toast.setAttribute('aria-label', title);
+
+    toast.innerHTML =
+      '<div class="flash flash-push">' +
+        '<div class="cm-push-toast__main">' +
+          '<div class="cm-push-toast__icon" aria-hidden="true">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>' +
+          '</div>' +
+          '<div class="cm-push-toast__text">' +
+            '<strong>' + title + '</strong>' +
+            '<span>' + body + '</span>' +
+          '</div>' +
         '</div>' +
-        '<div class="cm-push-prompt__text">' +
-          '<strong>' + title + '</strong>' +
-          '<p>' + body + '</p>' +
-        '</div>' +
-        '<div class="cm-push-prompt__actions">' +
-          '<button type="button" class="btn btn-primary btn-sm cm-push-prompt__enable">Enable</button>' +
-          '<button type="button" class="btn btn-secondary btn-sm cm-push-prompt__dismiss">Not now</button>' +
+        '<div class="cm-push-toast__actions">' +
+          '<button type="button" class="btn btn-primary btn-sm cm-push-toast__enable">' + (i18n.enable || 'Enable') + '</button>' +
+          '<button type="button" class="btn btn-secondary btn-sm cm-push-toast__dismiss">' + (i18n.notNow || 'Not now') + '</button>' +
         '</div>' +
       '</div>';
 
-    document.body.appendChild(banner);
+    document.body.appendChild(toast);
 
-    banner.querySelector('.cm-push-prompt__enable').addEventListener('click', async function () {
-      const btn = this;
-      btn.disabled = true;
-      btn.textContent = 'Enabling…';
+    const enableBtn = toast.querySelector('.cm-push-toast__enable');
+    const dismissBtn = toast.querySelector('.cm-push-toast__dismiss');
+
+    enableBtn.addEventListener('click', async function () {
+      enableBtn.disabled = true;
+      enableBtn.textContent = i18n.enabling || 'Enabling…';
       const result = await subscribe();
-      btn.disabled = false;
-      btn.textContent = 'Enable';
+      enableBtn.disabled = false;
+      enableBtn.textContent = i18n.enable || 'Enable';
       if (result.ok) {
         hidePrompt();
       }
     });
 
-    banner.querySelector('.cm-push-prompt__dismiss').addEventListener('click', function () {
+    dismissBtn.addEventListener('click', function () {
       dismissPrompt(14);
     });
   }
 
-  async function maybeShowPrompt(force) {
+  async function maybeShowPromptAfterLogin() {
     if (!global.__isLoggedIn) {
       return;
     }
@@ -211,7 +228,7 @@
       hidePrompt();
       return;
     }
-    showPrompt(!!force);
+    showPrompt();
   }
 
   global.CampusMarketPush = {
@@ -219,7 +236,7 @@
     isStandalonePwa,
     subscribe,
     hasActiveSubscription,
-    maybeShowPrompt,
+    maybeShowPrompt: maybeShowPromptAfterLogin,
     dismissPrompt,
     hidePrompt,
   };
@@ -229,19 +246,15 @@
       return;
     }
 
+    if (!global.__promptPush) {
+      return;
+    }
+
     hasActiveSubscription().then(function (subscribed) {
       if (subscribed) {
         return;
       }
-      if (global.__promptPush) {
-        maybeShowPrompt(true);
-        return;
-      }
-      if (isStandalonePwa()) {
-        setTimeout(function () {
-          maybeShowPrompt(false);
-        }, 2000);
-      }
+      setTimeout(maybeShowPromptAfterLogin, PROMPT_DELAY_MS);
     });
   });
 })(window);

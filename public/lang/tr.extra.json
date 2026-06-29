@@ -497,5 +497,12 @@
     "stripe.flash_already_processed": "Bu ödeme zaten işlendi.",
     "stripe.flash_promo_success": "Ödeme başarılı! İlanınız artık öne çıkarıldı.",
     "stripe.flash_donate_success": "Ödeme başarılı! Bağışınız alındı. Teşekkürler!",
-    "stripe.flash_db_failed": "Ödeme onaylandı ancak veritabanı güncellemesi başarısız oldu. Lütfen destekle iletişime geçin. Oturum ID: {session_id}"
+    "stripe.flash_db_failed": "Ödeme onaylandı ancak veritabanı güncellemesi başarısız oldu. Lütfen destekle iletişime geçin. Oturum ID: {session_id}",
+    "push.toast_title_pwa": "Bildirimleri aç",
+    "push.toast_title_browser": "Bu cihazda bildirim al",
+    "push.toast_body_pwa": "Mesajlar, siparişler ve pazar aktivitesi için uyarılar — uygulama kapalıyken bile.",
+    "push.toast_body_browser": "Mesaj ve sipariş uyarıları almak için bildirimleri etkinleştir.",
+    "push.enable_btn": "Etkinleştir",
+    "push.not_now_btn": "Şimdi değil",
+    "push.enabling_btn": "Etkinleştiriliyor…"
 }
